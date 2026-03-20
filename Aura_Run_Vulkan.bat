@@ -11,6 +11,9 @@ echo Avvio del server Ollama...
 start /min "" "C:\Users\Asus\AppData\Local\Programs\Ollama\ollama.exe" serve
 timeout /t 8
 
+:avvio_aura
 echo Avvio di Aura...
 python main.py
+if %ERRORLEVEL% equ 42 goto avvio_aura
+
 pause

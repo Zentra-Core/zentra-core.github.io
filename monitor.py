@@ -46,12 +46,18 @@ def avvia_e_monitora():
                 print("[MONITOR] Reset completato. Riavvio tra 2 secondi...")
                 time.sleep(2) # Pausa di sicurezza per far rifiatare la GPU
                 return True
+                
+        # Quando termina naturalmente:
+        if processo.returncode == 42:
+            return True # Riavvia su richiesta F6
+        else:
+            return False # Chiusura normale o errore diverso, non riavviare
                     
     except Exception as e:
         print(f"[MONITOR] Errore: {e}")
         processo.kill()
     
-    return True
+    return False
 
 if __name__ == "__main__":
     while True:
