@@ -194,13 +194,17 @@ class AuraApplication:
             self._handle_f3(config)
             
         elif key == "F4":
-            self.state_manager.stato_voce = not self.state_manager.stato_voce
-            print(f"\n\033[96m[SISTEMA] Voce: {'ON' if self.state_manager.stato_voce else 'OFF'}\033[0m")
+            self.state_manager.stato_ascolto = not self.state_manager.stato_ascolto
+            verb = "ON" if self.state_manager.stato_ascolto else "OFF"
+            color = "\033[96m" if self.state_manager.stato_ascolto else "\033[91m"
+            print(f"\n{color}[SISTEMA] Ascolto: {verb}\033[0m")
             time.sleep(0.5)
             
         elif key == "F5":
-            self.state_manager.stato_ascolto = not self.state_manager.stato_ascolto
-            print(f"\n\033[96m[SISTEMA] Ascolto: {'ON' if self.state_manager.stato_ascolto else 'OFF'}\033[0m")
+            self.state_manager.stato_voce = not self.state_manager.stato_voce
+            verb = "ON" if self.state_manager.stato_voce else "OFF"
+            color = "\033[96m" if self.state_manager.stato_voce else "\033[91m"
+            print(f"\n{color}[SISTEMA] Voce: {verb}\033[0m")
             time.sleep(0.5)
             
         elif key == "F6":
@@ -270,12 +274,20 @@ class AuraApplication:
                 self._handle_function_key(evento, config)
                 # Ricarica config nel caso sia stato modificato
                 config = self.config_manager.config
-                interfaccia.mostra_ui_completa(
-                    config,
-                    self.state_manager.stato_voce,
-                    self.state_manager.stato_ascolto,
-                    dashboard.get_backend_status()
-                )
+                if evento in ["F4", "F5"]:
+                    interfaccia.aggiorna_barra_stato_in_place(
+                        config,
+                        self.state_manager.stato_voce,
+                        self.state_manager.stato_ascolto,
+                        dashboard.get_backend_status()
+                    )
+                else:
+                    interfaccia.mostra_ui_completa(
+                        config,
+                        self.state_manager.stato_voce,
+                        self.state_manager.stato_ascolto,
+                        dashboard.get_backend_status()
+                    )
                 sys.stdout.write(prefisso + input_utente)
                 sys.stdout.flush()
             elif evento == "PROCESSED":

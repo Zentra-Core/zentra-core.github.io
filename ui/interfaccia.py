@@ -74,8 +74,17 @@ def mostra_ui_completa(config, stato_voce, stato_ascolto, stato_sistema="PRONTA"
     print(f"\033[46m\033[30m{titolo}\033[0m")
     
     # 2. BARRA DI STATO DINAMICA
-    info_stato = f" STATO: {stato_sistema} | MODELLO: {modello} | ANIMA: {anima} | MIC: {mic} | VOCE: {spk} "
-    print(f"{Back.BLUE}{Fore.WHITE}{info_stato.center(L)}{Style.RESET_ALL}")
+    mic_str = "ON" if stato_ascolto else f"{Fore.RED}OFF{Fore.WHITE}"
+    mic_len = 2 if stato_ascolto else 3
+    spk_str = "ON" if stato_voce else f"{Fore.RED}OFF{Fore.WHITE}"
+    spk_len = 2 if stato_voce else 3
+    
+    visible_len = len(f" STATO: {stato_sistema} | MODELLO: {modello} | ANIMA: {anima} | MIC:  | VOCE:  ") + mic_len + spk_len
+    pad_left = max(0, L - visible_len) // 2
+    pad_right = max(0, L - visible_len) - pad_left
+    
+    info_stato_colored = f" STATO: {stato_sistema} | MODELLO: {modello} | ANIMA: {anima} | MIC: {mic_str} | VOCE: {spk_str} "
+    print(f"{Back.BLUE}{Fore.WHITE}{' '*pad_left}{info_stato_colored}{' '*pad_right}{Style.RESET_ALL}")
     
     # 3. BARRA HARDWARE (Telemetria: CPU, RAM, VRAM + stato backend)
     try:
@@ -109,10 +118,36 @@ def mostra_ui_completa(config, stato_voce, stato_ascolto, stato_sistema="PRONTA"
 
     # 4. FOOTER COMANDI RAPIDI
     print(f"{Fore.CYAN}{'━' * L}{Style.RESET_ALL}")
-    comandi = " F1: Guida | F2: Modelli | F3: Anima | F4: Voce | F5: Mic | F6: Reboot | F7: Config | ESC: Esci "
+    comandi = " F1: Guida | F2: Modelli | F3: Anima | F4: Mic | F5: Voce | F6: Reboot | F7: Config | ESC: Esci "
     print(f"{Style.DIM}{comandi.center(L)}{Style.RESET_ALL}")
     print(f"{Fore.CYAN}{'━' * L}{Style.RESET_ALL}\n")
     
+
+def aggiorna_barra_stato_in_place(config, stato_voce, stato_ascolto, stato_sistema="PRONTA"):
+    """Aggiorna solo la riga 2 (Barra di Stato) senza pulire lo schermo."""
+    from ui.ui_updater import _aggiorna_dashboard_os, stdout_lock
+    from colorama import Back, Fore, Style
+    
+    backend_type = config.get('backend', {}).get('tipo', 'ollama')
+    modello = config.get('backend', {}).get(backend_type, {}).get('modello', 'N/D')
+    anima = config.get('ia', {}).get('personalita_attiva', 'N/D').replace('.txt', '')
+    
+    mic_str = "ON" if stato_ascolto else f"{Fore.RED}OFF{Fore.WHITE}"
+    mic_len = 2 if stato_ascolto else 3
+    spk_str = "ON" if stato_voce else f"{Fore.RED}OFF{Fore.WHITE}"
+    spk_len = 2 if stato_voce else 3
+    
+    L = 90
+    visible_len = len(f" STATO: {stato_sistema} | MODELLO: {modello} | ANIMA: {anima} | MIC:  | VOCE:  ") + mic_len + spk_len
+    pad_left = max(0, L - visible_len) // 2
+    pad_right = max(0, L - visible_len) - pad_left
+    
+    info_stato_colored = f" STATO: {stato_sistema} | MODELLO: {modello} | ANIMA: {anima} | MIC: {mic_str} | VOCE: {spk_str} "
+    riga_formattata = f"{Back.BLUE}{Fore.WHITE}{' '*pad_left}{info_stato_colored}{' '*pad_right}{Style.RESET_ALL}"
+    
+    with stdout_lock:
+        _aggiorna_dashboard_os(riga_formattata, 2)
+
     
 def mostra_menu_modelli(modelli, attuale):
     """ "Stampa la selezione per i LLM" """
