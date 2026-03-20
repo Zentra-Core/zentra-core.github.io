@@ -35,6 +35,13 @@ class AuraApplication:
         brain_interface.inizializza_caveau()
         plugin_loader.aggiorna_registro_capacita()
         
+        # Sincronizza lista personalità disponibili nel config
+        anime_files = interfaccia.elenca_personalita()
+        if anime_files:
+            anime_dict = {str(i+1): name for i, name in enumerate(anime_files)}
+            self.config_manager.set(anime_dict, 'ia', 'personalita_disponibili')
+            self.config_manager.save()
+        
         config = self.config_manager.config
         diagnostica.esegui_check_iniziale(config)
         dashboard.avvia_monitoraggio_backend()
@@ -164,6 +171,13 @@ class AuraApplication:
     def _handle_f3(self, config):
         """Gestione F3 - Selezione personalità."""
         anime_files = interfaccia.elenca_personalita()
+        
+        # Sincronizza config
+        if anime_files:
+            anime_dict = {str(i+1): name for i, name in enumerate(anime_files)}
+            self.config_manager.set(anime_dict, 'ia', 'personalita_disponibili')
+            self.config_manager.save()
+            
         if not anime_files:
             print(f"\n\033[91m[!] Nessun file .txt in /personalita!\033[0m")
             time.sleep(1)

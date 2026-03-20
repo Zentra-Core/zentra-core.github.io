@@ -35,9 +35,11 @@
     "ia": {
         "personalita_attiva": "sebastian_pro.txt",
         "personalita_disponibili": {
-            "1": "aura_dark.txt",
-            "2": "nova_tech.txt",
-            "3": "aura.txt"
+            "1": "aura.txt",
+            "2": "aura_dark.txt",
+            "3": "aura_dark_Adult.txt",
+            "4": "nova_tech.txt",
+            "5": "sebastian_pro.txt"
         }
     },
     "voce": {
