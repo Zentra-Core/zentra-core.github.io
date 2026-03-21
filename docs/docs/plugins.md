@@ -6,12 +6,12 @@ Zentra Core features a dynamic and modular plugin architecture. Every capability
 
 | Plugin | Description |
 |--------|-------------|
-| **System** | Execute shell commands and control OS. |
-| **Web** | Search the web and open URLs. |
-| **File Manager** | Explore and manage local files. |
-| **Media** | Control system volume and playback. |
-| **Dashboard** | Real-time hardware monitoring (CPU/RAM/GPU). |
-| **Memory** | Persistent storage of conversations and preferences. |
+| **System** | Execute shell commands, manage processes, and control OS tasks. |
+| **Web** | Search the web, open URLs, and automate browser interactions. |
+| **File Manager** | Explore and manage local files and directories. |
+| **Media** | Control system volume, playback, and audio settings. |
+| **Dashboard** | Real-time hardware monitoring (CPU, RAM, GPU usage). |
+| **Memory** | Persistent storage of conversations, user preferences, and context. |
 
 ## Creating Plugins
-Developers can create custom plugins by adding new folders to the `plugins/` directory. Each plugin should follow the standard structure with a `main.py` entry point.
+Developers can extend Zentra by adding new folders to the `plugins/` directory. Each plugin must follow the standard structure with a `main.py` entry point and register its capabilities with the core.
