@@ -1,5 +1,5 @@
 ===================================================
- GUIDA ALL'INSTALLAZIONE DI AURA CORE v0.7
+ GUIDA ALL'INSTALLAZIONE DI ZENTRA CORE v0.7
           (Per PC "vergine" - da zero)
 ===================================================
 
@@ -23,8 +23,8 @@
    - Crea una sottocartella C:\KoboldCPP\models\
    - Scarica un modello GGUF (es. da Hugging Face) e mettilo in models\
 
-4. SCARICARE IL PROGETTO AURA
-   - Estrai il progetto in una cartella, es. C:\AuraCore
+4. SCARICARE IL PROGETTO ZENTRA
+   - Estrai il progetto in una cartella, es. C:\ZentraCore
 
 5. INSTALLARE LE DIPENDENZE PYTHON
    - Apri il terminale nella cartella del progetto
@@ -40,9 +40,9 @@
 7. PRIMO AVVIO
    - Apri il terminale nella cartella del progetto
    - Esegui: python main.py
-   - Se tutto funziona, vedrai l'interfaccia di Aura
+   - Se tutto funziona, vedrai l'interfaccia di Zentra
 
 8. RISOLUZIONE PROBLEMI COMUNI
    - "Errore telemetria hardware": installa gputil: pip install gputil
    - "Nessun modulo trovato": controlla di aver installato tutte le dipendenze
-   - "Backend non pronto": avvia Ollama o KoboldCPP prima di Aura
+   - "Backend non pronto": avvia Ollama o KoboldCPP prima di Zentra

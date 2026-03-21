@@ -1,5 +1,5 @@
 """
-MODULO: UI Updater - Aura Core
+MODULO: UI Updater - Zentra Core
 DESCRIZIONE: Aggiorna la riga della dashboard hardware in-place ogni 2 secondi,
              senza flickering e senza interferire con l'input utente.
 
@@ -161,7 +161,7 @@ def avvia(config_manager, state_manager, dashboard_module, intervallo: float = 2
         target=_ciclo_aggiornamento,
         args=(intervallo,),
         daemon=True,
-        name="AuraUIUpdater"
+        name="ZentraUIUpdater"
     )
     _updater_thread.start()
 

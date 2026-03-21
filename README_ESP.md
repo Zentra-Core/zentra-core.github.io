@@ -1,4 +1,4 @@
-# 🤖 Aura Core
+# 🤖 Zentra Core
 
 **Tu asistente de IA local (privado, modular y potente)**
 
@@ -12,9 +12,9 @@
 
 ---
 
-## 🚀 ¿Qué es Aura Core?
+## 🚀 ¿Qué es Zentra Core?
 
-**Aura Core** es una plataforma de asistente de inteligencia artificial que funciona completamente en local en tu ordenador.
+**Zentra Core** es una plataforma de asistente de inteligencia artificial que funciona completamente en local en tu ordenador.
 
 Combina modelos de lenguaje (LLM), automatización del sistema, interacción por voz y un sistema de plugins para crear un asistente totalmente personalizable.
 
@@ -42,7 +42,7 @@ A diferencia de las IA en la nube:
 
 ## 🧠 ¿Cómo funciona?
 
-Aura está construida con una arquitectura modular:
+Zentra está construida con una arquitectura modular:
 
 * **Core** → lógica principal, gestión de IA y ejecución
 * **Plugins** → acciones y capacidades
@@ -59,8 +59,8 @@ La IA genera comandos estructurados que los plugins interpretan y ejecutan.
 ### 1. Clonar el repositorio
 
 ```bash id="sp1"
-git clone https://github.com/your-username/aura-core.git
-cd aura-core
+git clone https://github.com/your-username/zentra-core.git
+cd zentra-core
 ```
 
 ### 2. Instalar dependencias
@@ -69,7 +69,7 @@ cd aura-core
 pip install -r requirements.txt
 ```
 
-### 3. Ejecutar Aura
+### 3. Ejecutar Zentra
 
 ```bash id="sp3"
 python main.py
@@ -97,7 +97,7 @@ python main.py
 
 ## 🔌 Sistema de Plugins
 
-Aura utiliza una arquitectura basada en plugins.
+Zentra utiliza una arquitectura basada en plugins.
 
 Cada plugin puede:
 
@@ -119,7 +119,7 @@ Cada plugin puede:
 
 ## 💾 Sistema de memoria
 
-Aura incluye un sistema de memoria persistente:
+Zentra incluye un sistema de memoria persistente:
 
 * guarda conversaciones
 * mantiene identidad
@@ -139,7 +139,7 @@ Basado en SQLite para ser ligero y eficiente.
 
 ## 🔗 Integraciones
 
-Aura puede integrarse con:
+Zentra puede integrarse con:
 
 * Open WebUI
 * Home Assistant
@@ -148,7 +148,7 @@ Aura puede integrarse con:
 
 ## 🔐 Privacidad
 
-Aura está diseñada con enfoque en la privacidad:
+Zentra está diseñada con enfoque en la privacidad:
 
 * funciona 100% en local
 * sin servicios en la nube obligatorios
@@ -168,7 +168,7 @@ Aura está diseñada con enfoque en la privacidad:
 
 ## ⚠️ Aviso
 
-Aura puede ejecutar comandos a nivel de sistema.
+Zentra puede ejecutar comandos a nivel de sistema.
 
 Úsala con responsabilidad. El autor no se hace responsable de daños o usos indebidos.
 
@@ -188,7 +188,7 @@ Antonio Meloni (Tony)
 
 ## 💡 Visión
 
-Aura Core quiere convertirse en una plataforma completa de asistentes de IA locales:
+Zentra Core quiere convertirse en una plataforma completa de asistentes de IA locales:
 
 una alternativa privada, modular y potente frente a las soluciones en la nube.
 

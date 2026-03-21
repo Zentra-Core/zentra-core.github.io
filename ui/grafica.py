@@ -1,5 +1,5 @@
 """
-MODULO: Motore Grafico Aura - core/grafica.py
+MODULO: Motore Grafico Zentra - core/grafica.py
 DESCRIZIONE: Gestisce la generazione di elementi visuali dinamici, 
 barre di progresso, slider e indicatori di stato reattivi.
 """

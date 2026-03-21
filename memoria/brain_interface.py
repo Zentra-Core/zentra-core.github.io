@@ -1,5 +1,5 @@
 """
-MODULO: Brain Interface - Aura Caveau (FIXED)
+MODULO: Brain Interface - Zentra Caveau (FIXED)
 DESCRIZIONE: Gestore centralizzato per la memoria semantica ed episodica.
 """
 
@@ -35,7 +35,7 @@ def inizializza_caveau():
 def ottieni_contesto_memoria():
     """Recupera l'identità dell'IA e dell'Admin per il System Prompt."""
     try:
-        # Carichiamo Identità Core (Chi è Aura)
+        # Carichiamo Identità Core (Chi è Zentra)
         with open(PATH_IDENTITA, "r", encoding="utf-8") as f:
             id_data = json.load(f)
         

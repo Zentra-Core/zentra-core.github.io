@@ -87,7 +87,7 @@ class InputHandler:
         else:
             risposta_video, testo_voce_pulito = risultato
             # Mostra la risposta
-            interfaccia.scrivi_aura(risposta_video)
+            interfaccia.scrivi_zentra(risposta_video)
             if self.state.stato_voce and testo_voce_pulito:
                 voce.parla(testo_voce_pulito)
 

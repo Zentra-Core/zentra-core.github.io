@@ -1,5 +1,5 @@
 """
-MODULO: Cervello - Dispatcher - Aura Core v0.6
+MODULO: Cervello - Dispatcher - Zentra Core v0.6
 DESCRIZIONE: Coordina la costruzione del prompt e invoca il backend scelto (Ollama/Kobold).
 """
 
@@ -81,11 +81,11 @@ def genera_risposta(testo_utente, config_esterno=None):
     logger.debug("CERVELLO", f"Config caricata. Tipo backend: {config.get('backend', {}).get('tipo', 'non specificato')}")
 
     # 1. Recupera personalità
-    nome_personalita = config.get('ia', {}).get('personalita_attiva', 'aura.txt')
+    nome_personalita = config.get('ia', {}).get('personalita_attiva', 'zentra.txt')
     logger.debug("CERVELLO", f"Personalità attiva: {nome_personalita}")
     
     percorso_personalita = os.path.join("personalita", nome_personalita)
-    prompt_personalita = "Sei Aura, un'IA avanzata."
+    prompt_personalita = "Sei Zentra, un'IA avanzata."
     if os.path.exists(percorso_personalita):
         try:
             with open(percorso_personalita, "r", encoding="utf-8") as f:

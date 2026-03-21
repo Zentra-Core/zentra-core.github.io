@@ -1,5 +1,5 @@
 """
-Informazioni centralizzate sulla versione di Aura Core.
+Informazioni centralizzate sulla versione di Zentra Core.
 Tutte le componenti del sistema devono referenziare questo file.
 """
 
@@ -10,7 +10,7 @@ VERSION_PATCH = 4
 VERSION = f"{VERSION_MAJOR}.{VERSION_MINOR}.{VERSION_PATCH}"
 
 # Nome del progetto
-PROJECT_NAME = "Aura Core"
+PROJECT_NAME = "Zentra Core"
 PROJECT_CODENAME = "Runtime Alpha"
 
 # Data di rilascio (aggiorna quando fai una release)
@@ -21,11 +21,11 @@ AUTHOR = "Antonio Meloni"
 COPYRIGHT = f"Copyright (c) 2026 {AUTHOR}. Tutti i diritti riservati."
 
 # Repository e link
-REPOSITORY = "https://github.com/yourusername/aura-core"
-DOCUMENTATION = "https://github.com/yourusername/aura-core/wiki"
+REPOSITORY = "https://github.com/yourusername/zentra-core"
+DOCUMENTATION = "https://github.com/yourusername/zentra-core/wiki"
 
 # Descrizione breve
-DESCRIPTION = "Aura - Entità Digitale Evoluta, assistente personale con accesso root al sistema"
+DESCRIPTION = "Zentra - Entità Digitale Evoluta, assistente personale con accesso root al sistema"
 
 # Informazioni aggiuntive
 BUILD_INFO = {

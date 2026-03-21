@@ -162,7 +162,7 @@ class ConfigEditor:
                 # Salva le modifiche e segnala il reboot
                 if self.modified:
                     self._save_config()
-                print("\n\033[91mRIavvio di Aura in corso...\033[0m")
+                print("\n\033[91mRIavvio di Zentra in corso...\033[0m")
                 import sys
                 sys.exit(42)  # Codice speciale per il reboot
         finally:

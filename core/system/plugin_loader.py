@@ -1,5 +1,5 @@
 """
-MODULO: Plugin Loader & Capability Registry - Aura Core
+MODULO: Plugin Loader & Capability Registry - Zentra Core
 DESCRIZIONE: Gestisce la scansione dinamica dei plugin (ora in sottocartelle) 
 e la creazione del registro centrale JSON.
 """

@@ -118,7 +118,7 @@ class UIManager:
             "🎤 ASCOLTO": [9, 10],  # Soglia energia, Timeout silenzio
             "📝 FILTRI": [11, 12, 13],  # Filtri vari
             "📊 LOGGING": [14, 15], # Destinazione, Tipo
-            "⚡ SISTEMA": [16]  # RIAVVIA AURA
+            "⚡ SISTEMA": [16]  # RIAVVIA ZENTRA
         }
 
         idx = 0

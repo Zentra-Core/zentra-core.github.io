@@ -1,24 +1,24 @@
-📁 AuraCore_V0.9.3/
+📁 ZentraCore_V0.9.3/
 │
 ├── 📄 main.py                          # Punto di ingresso principale (semplificato)
 ├── 📄 monitor.py                        # Watchdog per riavvio automatico
 ├── 📄 config.json                        # Configurazione centrale
 ├── 📄 config_tool.py                     # Editor standalone configurazione
 ├── 📄 version_tool.py                     # Utility per visualizzare versione
-├── 📄 aura_webui_bridge.py                # Bridge per Open WebUI (streaming)
-├── 📄 avvia_aura.bat                      # Script di avvio (tuo)
+├── 📄 zentra_webui_bridge.py                # Bridge per Open WebUI (streaming)
+├── 📄 avvia_zentra.bat                      # Script di avvio (tuo)
 ├── 📄 requirements.txt                    # Dipendenze Python complete
 ├── 📄 guida_installazione.txt              # Istruzioni installazione (spostato in docs/)
 │
 ├── 📁 app/                                # Logica applicativa
 │   ├── 📄 __init__.py
-│   ├── 📄 application.py                   # Classe principale AuraApplication
+│   ├── 📄 application.py                   # Classe principale ZentraApplication
 │   ├── 📄 config.py                         # Gestione configurazione (ConfigManager)
 │   ├── 📄 state_manager.py                   # Gestione stati globali (thread-safe)
 │   ├── 📄 input_handler.py                    # Gestione input tastiera/vocale
 │   └── 📄 threads.py                          # Thread dedicati (ascolto)
 │
-├── 📁 aura_bridge/                         # Bridge e integrazioni esterne
+├── 📁 zentra_bridge/                         # Bridge e integrazioni esterne
 │   ├── 📄 documentazione_tecnica_bridge.txt   # Documentazione tecnica del bridge
 │   └── 📄 integrazione webui.py               # Pipe per Open WebUI (da copiare nella funzione)
 │
@@ -110,15 +110,15 @@
 │   ├── 📄 __init__.py
 │   ├── 📄 brain_interface.py                 # Gestione identità e DB
 │   ├── 📄 archivio_chat.db                    # Database SQLite (generato)
-│   ├── 📄 identita_core.json                   # Chi è Aura
+│   ├── 📄 identita_core.json                   # Chi è Zentra
 │   └── 📄 profilo_utente.json                   # Chi è l'Admin
 │
 ├── 📁 personalita/                          # Anime (file .txt)
-│   ├── 📄 aura.txt
-│   ├── 📄 aura_dark.txt
-│   ├── 📄 aura_dark_Adult.txt
+│   ├── 📄 zentra.txt
+│   ├── 📄 zentra_dark.txt
+│   ├── 📄 zentra_dark_Adult.txt
 │   └── 📄 nova_tech.txt
 │
 └── 📁 logs/                                 # Log giornalieri (generati)
-    ├── 📄 aura_YYYY-MM-DD.log
+    ├── 📄 zentra_YYYY-MM-DD.log
     └── 📄 bridge_debug.log                    # Log specifico del bridge

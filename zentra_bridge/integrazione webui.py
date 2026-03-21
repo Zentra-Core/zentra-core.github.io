@@ -6,15 +6,15 @@ from typing import Generator, Union
 
 class Pipe:
     def __init__(self):
-        self.aura_path = r"C:\AuraCoAuraCore_V0.9.3"
-        if self.aura_path not in sys.path:
-            sys.path.insert(0, self.aura_path)
+        self.zentra_path = r"C:\ZentraCoZentraCore_V0.9.3"
+        if self.zentra_path not in sys.path:
+            sys.path.insert(0, self.zentra_path)
         self.bridge = None
         self.debug_mode = True  # Metti a False in produzione
 
     def _log(self, msg):
         if self.debug_mode:
-            print(f"[AURA PIPE] {msg}")
+            print(f"[ZENTRA PIPE] {msg}")
 
     def pipe(self, body: dict) -> Union[str, Generator]:
         messages = body.get("messages", [])
@@ -29,13 +29,13 @@ class Pipe:
 
         if self.bridge is None:
             try:
-                os.chdir(self.aura_path)
-                from aura_webui_bridge import AuraWebUIBridge
-                self.bridge = AuraWebUIBridge()
+                os.chdir(self.zentra_path)
+                from zentra_webui_bridge import ZentraWebUIBridge
+                self.bridge = ZentraWebUIBridge()
                 self._log("Bridge inizializzato correttamente.")
             except Exception as e:
                 self._log(f"FALLIMENTO INIZIALIZZAZIONE: {str(e)}")
-                return f"Errore caricamento Aura: {str(e)}"
+                return f"Errore caricamento Zentra: {str(e)}"
 
         # Determina se la richiesta è in streaming
         is_stream = body.get("stream", False)
@@ -50,7 +50,7 @@ class Pipe:
                 "id": f"chatcmpl-{int(time.time())}",
                 "object": "chat.completion",
                 "created": int(time.time()),
-                "model": "aura-local",
+                "model": "zentra-local",
                 "choices": [{
                     "index": 0,
                     "message": {

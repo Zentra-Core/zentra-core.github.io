@@ -1,4 +1,4 @@
-# 🤖 Aura Core
+# 🤖 Zentra Core
 
 **Il tuo assistente AI locale (privato, modulare, potente)**
 
@@ -11,9 +11,9 @@
 
 ---
 
-## 🚀 Cos'è Aura Core
+## 🚀 Cos'è Zentra Core
 
-**Aura Core** è una piattaforma di assistente AI che gira completamente in locale sul tuo computer.
+**Zentra Core** è una piattaforma di assistente AI che gira completamente in locale sul tuo computer.
 
 Unisce modelli linguistici (LLM), automazione di sistema, voce e un sistema a plugin per creare un assistente completamente personalizzabile.
 
@@ -41,7 +41,7 @@ A differenza delle AI cloud:
 
 ## 🧠 Come funziona
 
-Aura è strutturata in moduli:
+Zentra è strutturata in moduli:
 
 * **Core** → gestione AI, logica e orchestrazione
 * **Plugins** → azioni e funzionalità
@@ -58,8 +58,8 @@ L’AI genera comandi strutturati che vengono interpretati ed eseguiti dai plugi
 ### 1. Clona il progetto
 
 ```bash id="cl1"
-git clone https://github.com/your-username/aura-core.git
-cd aura-core
+git clone https://github.com/your-username/zentra-core.git
+cd zentra-core
 ```
 
 ### 2. Installa le dipendenze
@@ -68,7 +68,7 @@ cd aura-core
 pip install -r requirements.txt
 ```
 
-### 3. Avvia Aura
+### 3. Avvia Zentra
 
 ```bash id="cl3"
 python main.py
@@ -96,7 +96,7 @@ python main.py
 
 ## 🔌 Sistema Plugin
 
-Aura utilizza un’architettura modulare basata su plugin.
+Zentra utilizza un’architettura modulare basata su plugin.
 
 Ogni plugin può:
 
@@ -118,7 +118,7 @@ Ogni plugin può:
 
 ## 💾 Sistema di memoria
 
-Aura include una memoria persistente:
+Zentra include una memoria persistente:
 
 * salva conversazioni
 * mantiene identità
@@ -138,7 +138,7 @@ Basata su SQLite per leggerezza e semplicità.
 
 ## 🔗 Integrazioni
 
-Aura può essere collegata a:
+Zentra può essere collegata a:
 
 * Open WebUI
 * Home Assistant
@@ -147,7 +147,7 @@ Aura può essere collegata a:
 
 ## 🔐 Privacy
 
-Aura è progettata per essere **privacy-first**:
+Zentra è progettata per essere **privacy-first**:
 
 * nessun invio dati obbligatorio
 * nessun cloud necessario
@@ -167,7 +167,7 @@ Aura è progettata per essere **privacy-first**:
 
 ## ⚠️ Avvertenze
 
-Aura può eseguire comandi a livello di sistema.
+Zentra può eseguire comandi a livello di sistema.
 
 Usala con responsabilità. L’autore non è responsabile per eventuali danni o utilizzi impropri.
 
@@ -187,7 +187,7 @@ Antonio Meloni (Tony)
 
 ## 💡 Visione
 
-Aura Core punta a diventare una piattaforma completa per assistenti AI locali:
+Zentra Core punta a diventare una piattaforma completa per assistenti AI locali:
 
 un’alternativa privata, modulare e potente alle AI cloud.
 

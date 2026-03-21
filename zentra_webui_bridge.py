@@ -1,7 +1,7 @@
 """
-FILE: aura_webui_bridge.py
+FILE: zentra_webui_bridge.py
 VERSIONE: 2.1 (Valvole & Debug Edition - FIXED)
-AUTORE: Progetto AURA
+AUTORE: Progetto ZENTRA
 """
 
 import sys
@@ -17,13 +17,13 @@ os.chdir(BRIDGE_DIR)
 if BRIDGE_DIR not in sys.path:
     sys.path.insert(0, BRIDGE_DIR)
 
-# Import dei moduli core di Aura (necessari per system prompt e memoria)
+# Import dei moduli core di Zentra (necessari per system prompt e memoria)
 try:
     from core import cervello, processore, logger as core_logger
     from memoria import brain_interface
     from app.config import ConfigManager
 except ImportError as e:
-    print(f"[ERRORE CRITICO] Impossibile importare i moduli core di Aura: {e}")
+    print(f"[ERRORE CRITICO] Impossibile importare i moduli core di Zentra: {e}")
     sys.exit(1)
 
 # --- SETUP LOGGER DEL BRIDGE (su file separato) ---
@@ -35,7 +35,7 @@ fh = logging.FileHandler(os.path.join(BRIDGE_DIR, "logs", "bridge_debug.log"), e
 fh.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
 bridge_logger.addHandler(fh)
 
-class AuraWebUIBridge:
+class ZentraWebUIBridge:
     def __init__(self):
         self.config_manager = ConfigManager()
         self.config = self.config_manager.config
@@ -62,7 +62,7 @@ class AuraWebUIBridge:
 
     def _get_system_prompt(self):
         """Costruisce il system prompt come nel cervello originale."""
-        personalita_file = self.config.get('ia', {}).get('personalita_attiva', 'aura.txt')
+        personalita_file = self.config.get('ia', {}).get('personalita_attiva', 'zentra.txt')
         path_p = os.path.join(BRIDGE_DIR, "personalita", personalita_file)
         testo_personalita = ""
         if os.path.exists(path_p):
@@ -131,7 +131,7 @@ class AuraWebUIBridge:
                 "id": f"chatcmpl-{int(time.time())}",
                 "object": "chat.completion.chunk",
                 "created": int(time.time()),
-                "model": "aura-local",
+                "model": "zentra-local",
                 "choices": [{
                     "index": 0,
                     "delta": {"content": ""},
@@ -163,7 +163,7 @@ class AuraWebUIBridge:
                                 "id": f"chatcmpl-{int(time.time())}",
                                 "object": "chat.completion.chunk",
                                 "created": int(time.time()),
-                                "model": "aura-local",
+                                "model": "zentra-local",
                                 "choices": [{
                                     "index": 0,
                                     "delta": {"content": content},
@@ -179,7 +179,7 @@ class AuraWebUIBridge:
                 "id": f"chatcmpl-{int(time.time())}",
                 "object": "chat.completion.chunk",
                 "created": int(time.time()),
-                "model": "aura-local",
+                "model": "zentra-local",
                 "choices": [{
                     "index": 0,
                     "delta": {},
@@ -226,7 +226,7 @@ class AuraWebUIBridge:
 
 # --- TEST STANDALONE ---
 if __name__ == "__main__":
-    bridge = AuraWebUIBridge()
+    bridge = ZentraWebUIBridge()
     print("\n--- TEST STREAMING ---")
     for token in bridge.chat_stream("Ciao, chi sei?"):
         print(token, end='', flush=True)

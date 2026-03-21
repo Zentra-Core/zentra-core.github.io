@@ -1,5 +1,5 @@
 """
-Classe principale dell'applicazione Aura.
+Classe principale dell'applicazione Zentra.
 """
 
 import sys
@@ -19,7 +19,7 @@ from .state_manager import StateManager
 from .input_handler import InputHandler
 from .threads import AscoltoThread
 
-class AuraApplication:
+class ZentraApplication:
     def __init__(self):
         self.config_manager = ConfigManager()
         
@@ -33,7 +33,7 @@ class AuraApplication:
     def _initialize(self):
         """Inizializzazione di tutti i componenti."""
         logger.init_logger(self.config_manager.config)
-        logger.info("[APP] Avvio sequenza di boot Aura Core.")
+        logger.info("[APP] Avvio sequenza di boot Zentra Core.")
         
         interfaccia.setup_console()
         brain_interface.inizializza_caveau()
@@ -63,7 +63,7 @@ class AuraApplication:
     def _show_welcome(self):
         """Mostra messaggio di benvenuto."""
         self.state_manager.sistema_in_elaborazione = True
-        interfaccia.scrivi_aura("Sistemi pronti. Connessione neurale stabilita, Admin.")
+        interfaccia.scrivi_zentra("Sistemi pronti. Connessione neurale stabilita, Admin.")
         if self.state_manager.stato_voce:
             voce.parla("Sistemi pronti.")
         self.state_manager.sistema_in_elaborazione = False
@@ -401,7 +401,7 @@ class AuraApplication:
             risposta_video, testo_voce_pulito = risultato
             brain_interface.salva_messaggio("user", testo_v)
             brain_interface.salva_messaggio("assistant", risposta_video)
-            interfaccia.scrivi_aura(risposta_video)
+            interfaccia.scrivi_zentra(risposta_video)
             if self.state_manager.stato_voce and testo_voce_pulito:
                 voce.parla(testo_voce_pulito)
 

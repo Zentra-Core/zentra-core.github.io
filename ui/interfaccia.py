@@ -1,5 +1,5 @@
 """
-MODULO: Interfaccia e Grafica - Aura Core v0.6
+MODULO: Interfaccia e Grafica - Zentra Core v0.6
 DESCRIZIONE: Gestisce la UI del terminale, le dashboard hardware e i tasti funzione.
 
 "Nello specifico: Disegna la barra blu di stato (modello, voce, anima) e la barra 
@@ -175,7 +175,7 @@ def mostra_help():
     setup_console()
     
     # Header centrato
-    intestazione = f"{CIANO}╔════════════════ MANUALE AZIONALE DI AURA ════════════════╗{RESET}"
+    intestazione = f"{CIANO}╔════════════════ MANUALE AZIONALE DI ZENTRA ════════════════╗{RESET}"
     print(f"\n{intestazione.center(90)}")
     print(f"{BIANCO}Scansione dei Plugin Attivi e Disattivati...{RESET}".center(90))
     print()
@@ -226,9 +226,9 @@ def mostra_help():
     # Pulisco uscendo e lascio il compito ad interfaccia.mostra_ui_completa
     setup_console()
 
-def scrivi_aura(testo):
-    """ Stampa la risposta di Aura evidenziandola in GIALLO. """
-    print(f"{VERDE}Aura:{GIALLO} {testo}{RESET}")
+def scrivi_zentra(testo):
+    """ Stampa la risposta di Zentra evidenziandola in GIALLO. """
+    print(f"{VERDE}Zentra:{GIALLO} {testo}{RESET}")
     
 def leggi_tastiera(prefisso, input_attuale):
     if msvcrt.kbhit():

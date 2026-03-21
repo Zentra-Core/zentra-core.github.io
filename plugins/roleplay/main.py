@@ -1,5 +1,5 @@
 """
-Plugin Roleplay - Aura Core
+Plugin Roleplay - Zentra Core
 Permette di interpretare personaggi in scenari di gioco di ruolo.
 """
 

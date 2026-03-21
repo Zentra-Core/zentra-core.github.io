@@ -1,5 +1,5 @@
 """
-MODULO: Diagnostica di Sistema - Aura Core
+MODULO: Diagnostica di Sistema - Zentra Core
 DESCRIZIONE: Gestisce i check pre-volo, ora supporta anche Kobold.
 """
 
@@ -159,7 +159,7 @@ def avvia_sequenza_risveglio(config):
     print(f"{'─' * 55}\n")
     
     print(f"{CIANO}==================================================={RESET}")
-    print(f"{CIANO}  SISTEMA OPERATIVO AURA - INIZIALIZZAZIONE...{RESET}")
+    print(f"{CIANO}  SISTEMA OPERATIVO ZENTRA - INIZIALIZZAZIONE...{RESET}")
     print(f"{CIANO}      (Premi ESC in qualsiasi momento per saltare){RESET}")
     print(f"{CIANO}==================================================={RESET}\n")
     
@@ -193,7 +193,7 @@ def avvia_sequenza_risveglio(config):
         print(esito)
 
     print(f"\n{CIANO}==================================================={RESET}")
-    stampa_e_parla(f"{VERDE}[SISTEMA] {RESET}", "Ciao, sono Aura")
+    stampa_e_parla(f"{VERDE}[SISTEMA] {RESET}", "Ciao, sono Zentra")
     
     while msvcrt.kbhit():
         msvcrt.getch()

@@ -12,10 +12,10 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 if not os.path.exists("logs"):
     os.makedirs("logs")
 
-info_filename = f"logs/aura_info_{datetime.now().strftime('%Y-%m-%d')}.log"
-debug_filename = f"logs/aura_debug_{datetime.now().strftime('%Y-%m-%d')}.log"
+info_filename = f"logs/zentra_info_{datetime.now().strftime('%Y-%m-%d')}.log"
+debug_filename = f"logs/zentra_debug_{datetime.now().strftime('%Y-%m-%d')}.log"
 
-logger = logging.getLogger("AuraLogger")
+logger = logging.getLogger("ZentraLogger")
 logger.setLevel(logging.DEBUG)  # Il logger accetta tutto
 
 # Svuota gli handler esistenti se modulo ricaricato
@@ -107,7 +107,7 @@ def init_logger(config):
         
         # Riavviamo la console se ha parametri differenti o è nuova
         if _console_window_started:
-            subprocess.run('taskkill /f /fi "windowtitle eq Aura Logs*" >nul 2>&1', shell=True)
+            subprocess.run('taskkill /f /fi "windowtitle eq Zentra Logs*" >nul 2>&1', shell=True)
             
         if tipo_messaggi == 'info':
             target_files = f"'{info_filename}'"
@@ -117,7 +117,7 @@ def init_logger(config):
             target_files = f"'{info_filename}', '{debug_filename}'"
 
         ps_script = (
-            "$host.ui.RawUI.WindowTitle = 'Aura Logs'; "
+            "$host.ui.RawUI.WindowTitle = 'Zentra Logs'; "
             f"Get-Content -Path {target_files} -Wait -Tail 20 | ForEach-Object {{ "
             "if ($_ -match '\\[ERROR\\]') { Write-Host $_ -ForegroundColor Red } "
             "elseif ($_ -match '\\[WARNING\\]') { Write-Host $_ -ForegroundColor Yellow } "
@@ -130,7 +130,7 @@ def init_logger(config):
     else:
         # Se si passa a chat, chiudi la console se aperta
         if _console_window_started:
-            subprocess.run('taskkill /f /fi "windowtitle eq Aura Logs*" >nul 2>&1', shell=True)
+            subprocess.run('taskkill /f /fi "windowtitle eq Zentra Logs*" >nul 2>&1', shell=True)
             _console_window_started = False
             
         # Assicurati che l'output standard sia attivo

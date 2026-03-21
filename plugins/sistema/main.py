@@ -34,7 +34,7 @@ def status():
     return "ONLINE (Shell & BlackBox Access Active)"
 
 def esegui(comando):
-    """Esegue comandi shell o gestisce il ciclo vitale di Aura."""
+    """Esegue comandi shell o gestisce il ciclo vitale di Zentra."""
     logger.debug("PLUGIN_SISTEMA", f"esegui() chiamato con comando: '{comando}'")
     
     cmd_originale = comando.strip()

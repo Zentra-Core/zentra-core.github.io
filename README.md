@@ -1,10 +1,10 @@
-# Aura Core Project
-![Aura Logo](assets/Aura_Core_Project_001.jpg)
+# Zentra Core Project
+![Zentra Logo](assets/Zentra_Core_Project_001.jpg)
 
-# Aura Core - Version 0.9.4 (In Development)
+# Zentra Core - Version 0.9.4 (In Development)
 Language: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP.md)
 
-# 🤖 Aura Core
+# 🤖 Zentra Core
 
 **Your Personal Offline AI Assistant (Private, Modular, Powerful)**
 
@@ -12,11 +12,11 @@ Language: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_E
 
 ## 🚀 Overview
 
-**Aura Core** is a local-first AI assistant platform that runs entirely on your machine.
+**Zentra Core** is a local-first AI assistant platform that runs entirely on your machine.
 
 It combines local LLMs, voice interaction, system automation, and a modular plugin architecture to create a fully customizable AI companion.
 
-Unlike cloud-based assistants, Aura gives you full control:
+Unlike cloud-based assistants, Zentra gives you full control:
 
 * No data collection
 * No external dependencies (optional)
@@ -40,7 +40,7 @@ Unlike cloud-based assistants, Aura gives you full control:
 
 ## 🧠 How It Works
 
-Aura Core is built around a modular architecture:
+Zentra Core is built around a modular architecture:
 
 * **Core** → AI routing, processing, execution
 * **Plugins** → Actions and capabilities (system, web, media, etc.)
@@ -57,8 +57,8 @@ The AI generates structured commands that are interpreted and executed through t
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/aura-core.git
-cd aura-core
+git clone https://github.com/your-username/zentra-core.git
+cd zentra-core
 ```
 
 ### 2. Install dependencies
@@ -67,7 +67,7 @@ cd aura-core
 pip install -r requirements.txt
 ```
 
-### 3. Run Aura
+### 3. Run Zentra
 
 ```bash
 python main.py
@@ -95,7 +95,7 @@ python main.py
 
 ## 🔌 Plugin System
 
-Aura uses a dynamic plugin architecture.
+Zentra uses a dynamic plugin architecture.
 
 Each plugin can:
 
@@ -117,7 +117,7 @@ Each plugin can:
 
 ## 💾 Memory System
 
-Aura includes a persistent memory layer:
+Zentra includes a persistent memory layer:
 
 * Stores conversations
 * Maintains identity
@@ -137,7 +137,7 @@ Powered by SQLite for lightweight local storage.
 
 ## 🔗 Integrations
 
-Aura can integrate with:
+Zentra can integrate with:
 
 * Open WebUI (chat + streaming)
 * Home Assistant (via bridge)
@@ -146,7 +146,7 @@ Aura can integrate with:
 
 ## 🔐 Privacy First
 
-Aura is designed with privacy in mind:
+Zentra is designed with privacy in mind:
 
 * Runs 100% locally
 * No mandatory cloud services
@@ -166,7 +166,7 @@ Aura is designed with privacy in mind:
 
 ## ⚠️ Disclaimer
 
-Aura can execute system-level commands and control your environment.
+Zentra can execute system-level commands and control your environment.
 
 Use responsibly. The author is not responsible for misuse or damage.
 
@@ -186,7 +186,7 @@ Antonio Meloni (Tony)
 
 ## 💡 Vision
 
-Aura Core aims to become a fully autonomous, local AI assistant platform —
+Zentra Core aims to become a fully autonomous, local AI assistant platform —
 a private, extensible alternative to cloud-based AI systems.
 
 ---

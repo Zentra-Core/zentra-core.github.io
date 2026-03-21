@@ -1,5 +1,5 @@
 """
-MODULO: Monitor di Rianimazione Semplificato - Aura Core
+MODULO: Monitor di Rianimazione Semplificato - Zentra Core
 DESCRIZIONE: Monitora solo config.json per il riavvio.
 """
 
@@ -23,7 +23,7 @@ def avvia_e_monitora():
         return False
 
     last_config_time = ottieni_timestamp_file(FILE_CONFIG)
-    print(f"[MONITOR] Avvio di Aura...")
+    print(f"[MONITOR] Avvio di Zentra...")
     
     # Avvio del processo
     processo = subprocess.Popen([sys.executable, SCRIPT_PRINCIPALE])
