@@ -66,13 +66,17 @@ class AuraApplication:
         self.state_manager.sistema_in_elaborazione = False
 
     def _input_digitale_sicuro(self, messaggio):
-        """Legge un input numerico senza bloccare."""
+        """Legge un input numerico o ESC senza bloccare."""
         sys.stdout.write(f"\033[93m{messaggio}\033[0m")
         sys.stdout.flush()
         scelta = ""
         while True:
             if msvcrt.kbhit():
-                char = msvcrt.getch().decode('utf-8', errors='ignore')
+                char_raw = msvcrt.getch()
+                if char_raw == b'\x1b':  # Tasto ESC
+                    print()
+                    return "ESC"
+                char = char_raw.decode('utf-8', errors='ignore')
                 if char == '\r':
                     print()
                     break
@@ -80,6 +84,7 @@ class AuraApplication:
                     scelta += char
                     sys.stdout.write(char)
                     sys.stdout.flush()
+            time.sleep(0.05)
         return scelta
 
     def _handle_f2(self, config):
@@ -187,7 +192,11 @@ class AuraApplication:
             for i, nome_file in enumerate(anime_files, 1):
                 print(f" [{i}] {nome_file}")
             
-            scelta = self._input_digitale_sicuro("Seleziona numero: ")
+            scelta = self._input_digitale_sicuro("Seleziona numero (o ESC per annullare): ")
+            if scelta == "ESC":
+                print(f"\033[93m[SISTEMA] Operazione annullata.\033[0m")
+                return
+                
             if scelta.isdigit():
                 idx = int(scelta) - 1
                 if 0 <= idx < len(anime_files):
