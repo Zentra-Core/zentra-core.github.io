@@ -76,6 +76,11 @@ def build_parameter_list(config):
     params.append(Parameter('filtri', 'rimuovi_parentesi_tonde', 'Rimuovi parentesi tonde', 'bool'))
     params.append(Parameter('filtri', 'rimuovi_parentesi_quadre', 'Rimuovi parentesi quadre', 'bool'))
 
+    # Logging
+    logging_cfg = config.get('logging', {})
+    params.append(Parameter('logging', 'destinazione', 'Destinazione Log', 'str', options=['chat', 'console']))
+    params.append(Parameter('logging', 'livello', 'Livello Log', 'str', options=['DEBUG', 'INFO', 'WARNING', 'ERROR']))
+
     # --- COMANDI SPECIALI ---
     params.append(Parameter('system', 'reboot', 'RIAVVIA AURA', 'command', 
                            command='reboot', options=None))

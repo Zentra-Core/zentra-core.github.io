@@ -158,6 +158,23 @@ class ConfigEditor:
             'type': 'bool'
         })
 
+        # Sezione Logging
+        logging_cfg = self.config.get('logging', {})
+        params.append({
+            'section': 'logging',
+            'key': 'destinazione',
+            'label': 'Destinazione Log',
+            'type': 'str',
+            'options': ['chat', 'console']
+        })
+        params.append({
+            'section': 'logging',
+            'key': 'livello',
+            'label': 'Livello Log',
+            'type': 'str',
+            'options': ['DEBUG', 'INFO', 'WARNING', 'ERROR']
+        })
+
         return params
 
     def _get_value(self, param):

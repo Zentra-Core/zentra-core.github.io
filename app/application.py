@@ -29,6 +29,7 @@ class AuraApplication:
 
     def _initialize(self):
         """Inizializzazione di tutti i componenti."""
+        logger.init_logger(self.config_manager.config)
         logger.info("[APP] Avvio sequenza di boot Aura Core.")
         
         interfaccia.setup_console()
@@ -239,6 +240,7 @@ class AuraApplication:
             editor.run()
             # Ricarica la configurazione dopo l'editor
             self.config_manager.reload()
+            logger.init_logger(self.config_manager.config)
 
     def run(self):
         """Avvia il loop principale dell'applicazione."""

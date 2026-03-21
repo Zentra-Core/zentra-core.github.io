@@ -80,5 +80,9 @@
         "ritardo_chunk_ms": 0,
         "debug_log": true,
         "rimuovi_think_tags": true
+    },
+    "logging": {
+        "livello": "INFO",
+        "destinazione": "console"
     }
 }

@@ -59,6 +59,8 @@ class ConfigEditor:
                 'Rimuovi asterischi': 'rimuovi_asterischi',
                 'Rimuovi parentesi tonde': 'rimuovi_parentesi_tonde',
                 'Rimuovi parentesi quadre': 'rimuovi_parentesi_quadre',
+                'Destinazione Log': 'destinazione',
+                'Livello Log': 'livello',
             }
             
             # Trova la chiave corrispondente
@@ -73,6 +75,8 @@ class ConfigEditor:
                 return self.config.get('ascolto', {}).get(key)
             elif param.section == 'filtri':
                 return self.config.get('filtri', {}).get(key)
+            elif param.section == 'logging':
+                return self.config.get('logging', {}).get(key)
             else:
                 return None
         except Exception as e:
@@ -99,6 +103,8 @@ class ConfigEditor:
                 'Rimuovi asterischi': 'rimuovi_asterischi',
                 'Rimuovi parentesi tonde': 'rimuovi_parentesi_tonde',
                 'Rimuovi parentesi quadre': 'rimuovi_parentesi_quadre',
+                'Destinazione Log': 'destinazione',
+                'Livello Log': 'livello',
             }
             
             # Trova la chiave corrispondente
@@ -132,6 +138,13 @@ class ConfigEditor:
                 old = self.config['filtri'].get(key)
                 if old != value:
                     self.config['filtri'][key] = value
+                    self.modified = True
+            elif param.section == 'logging':
+                if 'logging' not in self.config:
+                    self.config['logging'] = {}
+                old = self.config['logging'].get(key)
+                if old != value:
+                    self.config['logging'][key] = value
                     self.modified = True
         except Exception as e:
             print(f"Errore in _set_value per {param.label}: {e}")
