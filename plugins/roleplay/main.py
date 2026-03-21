@@ -5,7 +5,7 @@ Permette di interpretare personaggi in scenari di gioco di ruolo.
 
 import json
 import os
-from core import logger
+from core.logging import logger
 
 # Stato interno
 _active_character = None

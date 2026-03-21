@@ -7,7 +7,9 @@ import time
 import threading
 import msvcrt
 from ui import interfaccia
-from core import processore, voce, logger
+from core.processing import processore
+from core.audio import voce
+from core.logging import logger
 from plugins import dashboard
 
 class InputHandler:

@@ -9,7 +9,9 @@ import re
 import os
 
 import importlib.util
-from core import cervello, filtri, logger
+from core.llm import cervello
+from core.processing import filtri
+from core.logging import logger
 
 # Colori per i log a video
 GIALLO = '\033[93m'

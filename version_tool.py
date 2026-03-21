@@ -4,7 +4,7 @@ Utility per visualizzare le informazioni di versione.
 Esegui: python version_tool.py
 """
 
-from core.version import get_full_info, get_version_string
+from core.system.version import get_full_info, get_version_string
 
 if __name__ == "__main__":
     info = get_full_info()

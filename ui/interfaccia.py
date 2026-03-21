@@ -23,7 +23,7 @@ except ImportError:
 from ui import grafica
 from colorama import init, Fore, Back, Style
 import plugins.dashboard.main as dashboard
-from core.version import get_version_string
+from core.system.version import get_version_string
 
 # "Inizializzazione Colorama per colori ANSI e sfondi su Windows"
 init(convert=True, autoreset=True)
@@ -169,7 +169,7 @@ def mostra_menu_personalita(file_lista, attuale):
 
 def mostra_help():
     """ "Stampa a video la vera guida dinamica generata dallo scanner plugin" """
-    from core.plugin_loader import genera_guida_dinamica
+    from core.system.plugin_loader import genera_guida_dinamica
     
     # Puliamo lo schermo per dare spazio alla guida estesa
     setup_console()

@@ -8,7 +8,7 @@ import time
 import re
 import datetime
 import json
-from core import logger
+from core.logging import logger
 
 def info():
     """Manifest del plugin."""

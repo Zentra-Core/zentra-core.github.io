@@ -4,7 +4,7 @@ Gestione centralizzata della configurazione.
 
 import json
 import time
-from core import logger
+from core.logging import logger
 
 class ConfigManager:
     def __init__(self, config_path="config.json"):

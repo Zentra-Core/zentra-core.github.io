@@ -5,9 +5,9 @@ DESCRIZIONE: Coordina la costruzione del prompt e invoca il backend scelto (Olla
 
 import json
 import os
-from core import logger
+from core.logging import logger
 from memoria import brain_interface
-from core import ollama_backend, kobold_backend
+from core.llm import ollama_backend, kobold_backend
 
 CONFIG_PATH = "config.json"
 REGISTRY_PATH = "core/registry.json"

@@ -6,7 +6,7 @@ Avvia l'applicazione e gestisce le eccezioni non catturate.
 
 import sys
 from app import AuraApplication
-from core import logger
+from core.logging import logger
 
 def main():
     """Avvia l'applicazione Aura."""

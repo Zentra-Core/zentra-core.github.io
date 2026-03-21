@@ -10,7 +10,7 @@ import time
 import requests
 import json
 
-from core import logger
+from core.logging import logger
 
 try:
     import GPUtil

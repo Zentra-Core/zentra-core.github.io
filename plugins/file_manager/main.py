@@ -1,6 +1,6 @@
 import os
 import re
-from core import logger
+from core.logging import logger
 
 def info():
     return {

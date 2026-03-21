@@ -11,9 +11,10 @@ import glob
 import psutil
 import msvcrt
 import json
-from core import logger, voce
+from core.logging import logger
+from core.audio import voce
 from ui import interfaccia
-from core.version import VERSION, COPYRIGHT, get_version_string
+from core.system.version import VERSION, COPYRIGHT, get_version_string
 
 VERDE = '\033[92m'
 ROSSO = '\033[91m'
@@ -93,7 +94,7 @@ def scansiona_plugins():
     Mostra anche il conteggio dei plugin disabilitati.
     """
     risultati = []
-    from core import plugin_loader
+    from core.system import plugin_loader
     plugin_loader.aggiorna_registro_capacita()
     
     # ---- Controllo plugin disabilitati ----

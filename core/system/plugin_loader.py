@@ -8,7 +8,7 @@ import importlib.util
 import os
 import glob
 import json
-from core import logger
+from core.logging import logger
 
 REGISTRY_PATH = "core/registry.json"
 

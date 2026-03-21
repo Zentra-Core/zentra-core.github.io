@@ -1,6 +1,6 @@
 import json
 import os
-from core import logger
+from core.logging import logger
 
 def info():
     return {

@@ -104,7 +104,7 @@ class UIManager:
         self.first_draw = False
         
         # Importa le informazioni di versione centralizzate
-        from core.version import get_version_string
+        from core.system.version import get_version_string
         
         # Intestazione compatta fusa (1 sola riga) per risparmiare spazio verticale!
         intestazione = f" {get_version_string()} - CONFIGURAZIONE SISTEMA "

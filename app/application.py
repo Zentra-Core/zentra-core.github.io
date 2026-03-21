@@ -6,7 +6,10 @@ import sys
 import time
 import threading
 import msvcrt
-from core import logger, plugin_loader, diagnostica, processore, ascolto, voce
+from core.logging import logger
+from core.system import plugin_loader, diagnostica
+from core.processing import processore
+from core.audio import ascolto, voce
 import plugins.dashboard.main as dashboard
 from ui import interfaccia, grafica, ui_updater
 from ui.config_editor.core import ConfigEditor
