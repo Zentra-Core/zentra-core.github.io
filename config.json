@@ -35,8 +35,8 @@
     "ia": {
         "personalita_attiva": "zentra_dark_Adult.txt",
         "personalita_disponibili": {
-            "1": "nova_tech.txt",
-            "2": "sebastian_pro.txt",
+            "1": "Nova_tech.txt",
+            "2": "Sebastian_pro.txt",
             "3": "Zentra.txt",
             "4": "Zentra_dark.txt",
             "5": "Zentra_dark_Adult.txt"
