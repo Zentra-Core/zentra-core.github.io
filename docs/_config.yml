@@ -1,0 +1,6 @@
+title: Zentra Core
+description: Your Cybernetic Companion. Locale. Modulare. Sovrano.
+theme: jekyll-theme-minimal
+baseurl: ""
+github:
+  is_project_page: true
