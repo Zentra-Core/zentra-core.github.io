@@ -118,3 +118,83 @@ def ottieni_capacita_formattate():
         for cmd, spiegazione in info['comandi'].items():
             res += f"  • {tag}:{cmd} --> {spiegazione}\n"
     return res
+
+def genera_guida_dinamica():
+    """
+    Scansiona tutte le cartelle dei plugin (attivi e disattivati) per ricavare 
+    i metadati necessari a costruire la guida utente (F1).
+    Ritorna una lista di dizionari con i dettagli dei moduli.
+    """
+    guida = []
+    
+    def scansiona_cartella(base_path, stato_forzato=None):
+        if not os.path.exists(base_path): 
+            return
+            
+        plugin_dirs = [d for d in os.listdir(base_path) 
+                       if os.path.isdir(os.path.join(base_path, d)) 
+                       and not d.startswith("__")
+                       and d != "plugins_disabled"]
+        
+        for plugin_dir in plugin_dirs:
+            main_file = os.path.join(base_path, plugin_dir, "main.py")
+            if not os.path.exists(main_file):
+                continue
+            try:
+                spec = importlib.util.spec_from_file_location(
+                    f"guida_{os.path.basename(base_path)}_{plugin_dir}", 
+                    main_file
+                )
+                if spec is None: 
+                    continue
+                modulo = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(modulo)
+                
+                if hasattr(modulo, "info"):
+                    dati = modulo.info()
+                    stato_effettivo = stato_forzato if stato_forzato else (modulo.status() if hasattr(modulo, "status") else "ATTIVO")
+                    
+                    guida.append({
+                        "tag": dati['tag'],
+                        "descrizione": dati.get('desc', 'Nessuna descrizione.'),
+                        "comandi": dati.get('comandi', {}),
+                        "stato": stato_effettivo,
+                        "esempio": dati.get("esempio", "")
+                    })
+            except Exception as e:
+                logger.errore(f"LOADER GUIDA: Fallimento {plugin_dir}: {e}")
+                
+    # 1. Scansiona plugin attivi
+    scansiona_cartella("plugins")
+    
+    # 2. Scansiona plugin disabilitati (forza stato DISATTIVATO)
+    scansiona_cartella(os.path.join("plugins", "plugins_disabled"), stato_forzato="DISATTIVATO")
+    
+    # 3. Scansiona vecchi plugin nella root "plugins" per compatibilità
+    vecchi = glob.glob(os.path.join("plugins", "*.py"))
+    for file in vecchi:
+        nome_mod = os.path.basename(file)[:-3]
+        if nome_mod.startswith("__") or nome_mod.startswith("_"): 
+            continue
+        try:
+            spec = importlib.util.spec_from_file_location(f"guida_{nome_mod}", file)
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            if hasattr(mod, "info"):
+                dati = mod.info()
+                stato_effettivo = mod.status() if hasattr(mod, "status") else "ATTIVO"
+                # Evita duplicati se presente in cartella
+                if not any(g['tag'] == dati['tag'] for g in guida):
+                    guida.append({
+                        "tag": dati['tag'],
+                        "descrizione": dati.get('desc', 'Nessuna descrizione.'),
+                        "comandi": dati.get('comandi', {}),
+                        "stato": stato_effettivo,
+                        "esempio": dati.get("esempio", "")
+                    })
+        except: 
+            pass
+
+    # Ordina per tag alfabetico
+    guida.sort(key=lambda x: x['tag'])
+    return guida

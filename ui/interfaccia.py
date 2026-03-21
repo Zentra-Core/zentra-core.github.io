@@ -168,18 +168,63 @@ def mostra_menu_personalita(file_lista, attuale):
     print(f"{GIALLO}Seleziona un'anima o premi ESC per uscire.{RESET}")
 
 def mostra_help():
-    """ "Stampa a video le skills leggendole dal registro o dalla cartella" """
-    print(f"\n{GIALLO}╔════════════════ SKILLS & PROTOCOLLI ════════════════╗{RESET}")
+    """ "Stampa a video la vera guida dinamica generata dallo scanner plugin" """
+    from core.plugin_loader import genera_guida_dinamica
+    
+    # Puliamo lo schermo per dare spazio alla guida estesa
+    setup_console()
+    
+    # Header centrato
+    intestazione = f"{CIANO}╔════════════════ MANUALE AZIONALE DI AURA ════════════════╗{RESET}"
+    print(f"\n{intestazione.center(90)}")
+    print(f"{BIANCO}Scansione dei Plugin Attivi e Disattivati...{RESET}".center(90))
+    print()
+    
     try:
-        with open("core/registry.json", "r", encoding="utf-8") as f:
-            db = json.load(f)
-            for tag, info in db.items():
-                print(f"{VERDE}[{tag.upper()}]{RESET}: {info['descrizione']}")
-    except:
-        print(f"{ROSSO}Nessun file registry.json trovato. Moduli base attivi.{RESET}")
-    print(f"{GIALLO}╚═════════════════════════════════════════════════════╝{RESET}")
-    print(f"Premi un tasto per continuare...")
+        guida = genera_guida_dinamica()
+        if not guida:
+            print(f"{ROSSO}Nessun modulo rilevato in /plugins o /plugins_disabled.{RESET}".center(90))
+        else:
+            for item in guida:
+                tag = item['tag']
+                stato = item['stato']
+                desc = item['descrizione']
+                comandi = item.get('comandi', {})
+                esempio = item.get('esempio', '')
+                
+                # Variazioni cromatiche per i disattivati
+                if stato == "ATTIVO":
+                    col_stato = VERDE
+                    bordo = CIANO
+                else:
+                    col_stato = ROSSO
+                    bordo = Fore.LIGHTBLACK_EX
+                    
+                print(f"{bordo}├─ {col_stato}[{tag.upper()}] {RESET}- Stato: {col_stato}{stato}{RESET}")
+                print(f"{bordo}│{RESET}  {BIANCO}Ruolo:{RESET} {desc}")
+                
+                if comandi:
+                    print(f"{bordo}│{RESET}  {GIALLO}Comandi Registrati:{RESET}")
+                    for cmd, spiegazione in comandi.items():
+                        print(f"{bordo}│{RESET}    • {cmd} -> {spiegazione}")
+                        
+                if esempio:
+                    print(f"{bordo}│{RESET}  {MAGENTA}Sintassi d'esempio:{RESET} {esempio}")
+                    
+                print(f"{bordo}│{RESET}")
+                
+    except Exception as e:
+        print(f"{ROSSO}Errore fatale nella generazione guida dinamica: {e}{RESET}")
+        
+    chiusura = f"{CIANO}╚════════════════════════════════════════════════════════════╝{RESET}"
+    print(f"{chiusura.center(90)}")
+    print(f"\n{GIALLO}Premi un tasto qualsiasi per tornare a terminale...{RESET}".center(90))
+    
+    # Svuoto vecchie digitazioni prima di bloccare
+    while msvcrt.kbhit(): msvcrt.getch()
     msvcrt.getch()
+    # Pulisco uscendo e lascio il compito ad interfaccia.mostra_ui_completa
+    setup_console()
 
 def scrivi_aura(testo):
     """ Stampa la risposta di Aura evidenziandola in GIALLO. """
