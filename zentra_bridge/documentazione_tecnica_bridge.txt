@@ -1,15 +1,15 @@
 ================================================================================
-                    AURA CORE - DOCUMENTAZIONE MODULO BRIDGE
+                    ZENTRA CORE - DOCUMENTAZIONE MODULO BRIDGE
 ================================================================================
 VERSIONE: 1.0
 TIPO: Interfaccia di Integrazione Esterna (API Wrapper)
-FILE: aura_bridge.py
+FILE: zentra_bridge.py
 
 --------------------------------------------------------------------------------
 1. SCOPO DEL MODULO
 --------------------------------------------------------------------------------
-Il Bridge nasce per separare la logica di Aura (il suo "Cervello") dalla sua 
-interfaccia utente (il Terminale). Permette di istanziare Aura come un oggetto 
+Il Bridge nasce per separare la logica di Zentra (il suo "Cervello") dalla sua 
+interfaccia utente (il Terminale). Permette di istanziare Zentra come un oggetto 
 Python all'interno di altri software come:
 - Open WebUI (Interfaccia stile ChatGPT)
 - Bot Telegram / Discord
@@ -21,7 +21,7 @@ Python all'interno di altri software come:
 Quando viene chiamato il metodo .chat(user_input), il Bridge esegue questi step:
 
 1. [DINAMIC PROMPT]: Interroga 'brain_interface' per sapere chi è l'Admin e chi è 
-   Aura, legge il file della personalità attiva e scansiona i plugin disponibili. 
+   Zentra, legge il file della personalità attiva e scansiona i plugin disponibili. 
    Assembla tutto in un unico System Prompt aggiornato.
    
 2. [GENERAZIONE]: Invia il prompt e il messaggio dell'utente al backend impostato 
@@ -38,20 +38,20 @@ Quando viene chiamato il metodo .chat(user_input), il Bridge esegue questi step:
 3. FUNZIONI CHIAVE PER GLI SVILUPPATORI
 --------------------------------------------------------------------------------
 
-> AuraBridge.__init__()
+> ZentraBridge.__init__()
 Inizializza il ConfigManager e prepara il database. Se questo fallisce, 
 il sistema non ha i permessi di scrittura o mancano file core.
 
-> AuraBridge.trace_imports()
-STRUMENTO DI DEBUG CRITICO: Stampa nel log tutti i moduli 'aura' caricati in RAM 
+> ZentraBridge.trace_imports()
+STRUMENTO DI DEBUG CRITICO: Stampa nel log tutti i moduli 'zentra' caricati in RAM 
 e il loro percorso su disco. Serve a capire se stai usando la versione corretta 
 dei file in ambienti di produzione.
 
-> AuraBridge.get_full_system_prompt()
-Il "cuore" della potenza di Aura. Se vuoi cambiare radicalmente come Aura si 
+> ZentraBridge.get_full_system_prompt()
+Il "cuore" della potenza di Zentra. Se vuoi cambiare radicalmente come Zentra si 
 presenta all'esterno, è qui che devi intervenire.
 
-> AuraBridge.chat(user_input)
+> ZentraBridge.chat(user_input)
 L'unico metodo che l'interfaccia esterna deve chiamare. 
 Input: Stringa (testo utente)
 Output: Stringa (risposta elaborata, pulita e con plugin eseguiti)
@@ -60,10 +60,10 @@ Output: Stringa (risposta elaborata, pulita e con plugin eseguiti)
 4. NOTE DI MANUTENZIONE
 --------------------------------------------------------------------------------
 - PATH: Il bridge aggiunge la cartella del file al sys.path. Assicurarsi che 
-  aura_bridge.py sia sempre nella cartella radice di AuraCore.
+  zentra_bridge.py sia sempre nella cartella radice di ZentraCore.
   
 - LOGGING: I log non appaiono solo a schermo ma vengono scritti nei file 
   giornalieri dentro /logs. In caso di errori "silenziosi", controllare lì.
 
-- DIPENDENZE: Richiede le stesse dipendenze di Aura Core (requests, sqlite3, ecc.)
+- DIPENDENZE: Richiede le stesse dipendenze di Zentra Core (requests, sqlite3, ecc.)
 --------------------------------------------------------------------------------

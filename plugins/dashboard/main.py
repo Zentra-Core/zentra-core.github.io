@@ -1,5 +1,5 @@
 """
-MODULO: Dashboard - Aura Core v0.7
+MODULO: Dashboard - Zentra Core v0.7
 DESCRIZIONE: Monitoraggio hardware (CPU, RAM, GPU/VRAM) e stato backend AI (Ollama/Kobold).
 Fornisce anche comandi vocali/testuali per interrogare le risorse di sistema.
 """
@@ -10,7 +10,7 @@ import time
 import requests
 import json
 
-from core import logger
+from core.logging import logger
 
 try:
     import GPUtil

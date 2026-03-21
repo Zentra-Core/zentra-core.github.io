@@ -39,7 +39,7 @@ def esegui(comando):
             ret, frame = cap.read()
             if ret:
                 timestamp = int(time.time())
-                nome_file = f"scatti/aura_snap_{timestamp}.jpg"
+                nome_file = f"scatti/zentra_snap_{timestamp}.jpg"
                 cv2.imwrite(nome_file, frame)
                 cap.release()
                 return f"Istantanea acquisita. File archiviato in: {nome_file}. Sembri interessante oggi, Admin."

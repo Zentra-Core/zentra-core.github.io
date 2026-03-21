@@ -7,7 +7,9 @@ import time
 import threading
 import msvcrt
 from ui import interfaccia
-from core import processore, voce, logger
+from core.processing import processore
+from core.audio import voce
+from core.logging import logger
 from plugins import dashboard
 
 class InputHandler:
@@ -85,7 +87,7 @@ class InputHandler:
         else:
             risposta_video, testo_voce_pulito = risultato
             # Mostra la risposta
-            interfaccia.scrivi_aura(risposta_video)
+            interfaccia.scrivi_zentra(risposta_video)
             if self.state.stato_voce and testo_voce_pulito:
                 voce.parla(testo_voce_pulito)
 

@@ -1,4 +1,4 @@
-from core import plugin_loader
+from core.system import plugin_loader
 
 def info():
     return {

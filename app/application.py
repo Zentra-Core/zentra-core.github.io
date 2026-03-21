@@ -1,14 +1,17 @@
 """
-Classe principale dell'applicazione Aura.
+Classe principale dell'applicazione Zentra.
 """
 
 import sys
 import time
 import threading
 import msvcrt
-from core import logger, plugin_loader, diagnostica, processore, ascolto, voce
+from core.logging import logger
+from core.system import plugin_loader, diagnostica
+from core.processing import processore
+from core.audio import ascolto, voce
 import plugins.dashboard.main as dashboard
-from ui import interfaccia, grafica
+from ui import interfaccia, grafica, ui_updater
 from ui.config_editor.core import ConfigEditor
 from memoria import brain_interface
 from .config import ConfigManager
@@ -16,20 +19,32 @@ from .state_manager import StateManager
 from .input_handler import InputHandler
 from .threads import AscoltoThread
 
-class AuraApplication:
+class ZentraApplication:
     def __init__(self):
         self.config_manager = ConfigManager()
-        self.state_manager = StateManager()
+        
+        cv = self.config_manager.get('voce', 'stato_voce', default=True)
+        ca = self.config_manager.get('ascolto', 'stato_ascolto', default=True)
+        self.state_manager = StateManager(stato_voce_iniziale=cv, stato_ascolto_iniziale=ca)
+        
         self.input_handler = InputHandler(self.state_manager, self.config_manager)
         self.running = True
 
     def _initialize(self):
         """Inizializzazione di tutti i componenti."""
-        logger.info("[APP] Avvio sequenza di boot Aura Core.")
+        logger.init_logger(self.config_manager.config)
+        logger.info("[APP] Avvio sequenza di boot Zentra Core.")
         
         interfaccia.setup_console()
         brain_interface.inizializza_caveau()
         plugin_loader.aggiorna_registro_capacita()
+        
+        # Sincronizza lista personalità disponibili nel config
+        anime_files = interfaccia.elenca_personalita()
+        if anime_files:
+            anime_dict = {str(i+1): name for i, name in enumerate(anime_files)}
+            self.config_manager.set(anime_dict, 'ia', 'personalita_disponibili')
+            self.config_manager.save()
         
         config = self.config_manager.config
         diagnostica.esegui_check_iniziale(config)
@@ -48,19 +63,23 @@ class AuraApplication:
     def _show_welcome(self):
         """Mostra messaggio di benvenuto."""
         self.state_manager.sistema_in_elaborazione = True
-        interfaccia.scrivi_aura("Sistemi pronti. Connessione neurale stabilita, Admin.")
+        interfaccia.scrivi_zentra("Sistemi pronti. Connessione neurale stabilita, Admin.")
         if self.state_manager.stato_voce:
             voce.parla("Sistemi pronti.")
         self.state_manager.sistema_in_elaborazione = False
 
     def _input_digitale_sicuro(self, messaggio):
-        """Legge un input numerico senza bloccare."""
+        """Legge un input numerico o ESC senza bloccare."""
         sys.stdout.write(f"\033[93m{messaggio}\033[0m")
         sys.stdout.flush()
         scelta = ""
         while True:
             if msvcrt.kbhit():
-                char = msvcrt.getch().decode('utf-8', errors='ignore')
+                char_raw = msvcrt.getch()
+                if char_raw == b'\x1b':  # Tasto ESC
+                    print()
+                    return "ESC"
+                char = char_raw.decode('utf-8', errors='ignore')
                 if char == '\r':
                     print()
                     break
@@ -68,6 +87,7 @@ class AuraApplication:
                     scelta += char
                     sys.stdout.write(char)
                     sys.stdout.flush()
+            time.sleep(0.05)
         return scelta
 
     def _handle_f2(self, config):
@@ -160,6 +180,13 @@ class AuraApplication:
     def _handle_f3(self, config):
         """Gestione F3 - Selezione personalità."""
         anime_files = interfaccia.elenca_personalita()
+        
+        # Sincronizza config
+        if anime_files:
+            anime_dict = {str(i+1): name for i, name in enumerate(anime_files)}
+            self.config_manager.set(anime_dict, 'ia', 'personalita_disponibili')
+            self.config_manager.save()
+            
         if not anime_files:
             print(f"\n\033[91m[!] Nessun file .txt in /personalita!\033[0m")
             time.sleep(1)
@@ -168,7 +195,11 @@ class AuraApplication:
             for i, nome_file in enumerate(anime_files, 1):
                 print(f" [{i}] {nome_file}")
             
-            scelta = self._input_digitale_sicuro("Seleziona numero: ")
+            scelta = self._input_digitale_sicuro("Seleziona numero (o ESC per annullare): ")
+            if scelta == "ESC":
+                print(f"\033[93m[SISTEMA] Operazione annullata.\033[0m")
+                return
+                
             if scelta.isdigit():
                 idx = int(scelta) - 1
                 if 0 <= idx < len(anime_files):
@@ -194,13 +225,21 @@ class AuraApplication:
             self._handle_f3(config)
             
         elif key == "F4":
-            self.state_manager.stato_voce = not self.state_manager.stato_voce
-            print(f"\n\033[96m[SISTEMA] Voce: {'ON' if self.state_manager.stato_voce else 'OFF'}\033[0m")
+            self.state_manager.stato_ascolto = not self.state_manager.stato_ascolto
+            self.config_manager.set(self.state_manager.stato_ascolto, 'ascolto', 'stato_ascolto')
+            self.config_manager.save()
+            verb = "ON" if self.state_manager.stato_ascolto else "OFF"
+            color = "\033[96m" if self.state_manager.stato_ascolto else "\033[91m"
+            print(f"\n{color}[SISTEMA] Ascolto: {verb}\033[0m")
             time.sleep(0.5)
             
         elif key == "F5":
-            self.state_manager.stato_ascolto = not self.state_manager.stato_ascolto
-            print(f"\n\033[96m[SISTEMA] Ascolto: {'ON' if self.state_manager.stato_ascolto else 'OFF'}\033[0m")
+            self.state_manager.stato_voce = not self.state_manager.stato_voce
+            self.config_manager.set(self.state_manager.stato_voce, 'voce', 'stato_voce')
+            self.config_manager.save()
+            verb = "ON" if self.state_manager.stato_voce else "OFF"
+            color = "\033[96m" if self.state_manager.stato_voce else "\033[91m"
+            print(f"\n{color}[SISTEMA] Voce: {verb}\033[0m")
             time.sleep(0.5)
             
         elif key == "F6":
@@ -213,6 +252,7 @@ class AuraApplication:
             editor.run()
             # Ricarica la configurazione dopo l'editor
             self.config_manager.reload()
+            logger.init_logger(self.config_manager.config)
 
     def run(self):
         """Avvia il loop principale dell'applicazione."""
@@ -239,6 +279,9 @@ class AuraApplication:
             dashboard.get_backend_status()
         )
 
+        # Avvia aggiornamento in-place della riga hardware (no flickering)
+        ui_updater.avvia(self.config_manager, self.state_manager, dashboard)
+
         self._show_welcome()
 
         # Avvia thread ascolto
@@ -264,15 +307,34 @@ class AuraApplication:
             elif evento == "ESC_AGAIN":
                 print(f"\n\033[93m[SISTEMA] ESC di nuovo per uscire.\033[0m")
             elif evento in ["F1", "F2", "F3", "F4", "F5", "F6", "F7"]:
+                # Sospendi UI updater per evitare corruzione grafica a schermo intero
+                menu_schermo_intero = ["F1", "F2", "F3", "F7"]
+                if evento in menu_schermo_intero:
+                    ui_updater.ferma()
+                    time.sleep(0.1) # Assicura che si fermi il vecchio thread
+                    
                 self._handle_function_key(evento, config)
+                
                 # Ricarica config nel caso sia stato modificato
                 config = self.config_manager.config
-                interfaccia.mostra_ui_completa(
-                    config,
-                    self.state_manager.stato_voce,
-                    self.state_manager.stato_ascolto,
-                    dashboard.get_backend_status()
-                )
+                if evento in ["F4", "F5"]:
+                    interfaccia.aggiorna_barra_stato_in_place(
+                        config,
+                        self.state_manager.stato_voce,
+                        self.state_manager.stato_ascolto,
+                        dashboard.get_backend_status()
+                    )
+                else:
+                    interfaccia.mostra_ui_completa(
+                        config,
+                        self.state_manager.stato_voce,
+                        self.state_manager.stato_ascolto,
+                        dashboard.get_backend_status()
+                    )
+                
+                if evento in menu_schermo_intero:
+                    ui_updater.avvia(self.config_manager, self.state_manager, dashboard)
+                    
                 sys.stdout.write(prefisso + input_utente)
                 sys.stdout.flush()
             elif evento == "PROCESSED":
@@ -339,7 +401,7 @@ class AuraApplication:
             risposta_video, testo_voce_pulito = risultato
             brain_interface.salva_messaggio("user", testo_v)
             brain_interface.salva_messaggio("assistant", risposta_video)
-            interfaccia.scrivi_aura(risposta_video)
+            interfaccia.scrivi_zentra(risposta_video)
             if self.state_manager.stato_voce and testo_voce_pulito:
                 voce.parla(testo_voce_pulito)
 

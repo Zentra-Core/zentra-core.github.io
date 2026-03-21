@@ -59,6 +59,8 @@ class ConfigEditor:
                 'Rimuovi asterischi': 'rimuovi_asterischi',
                 'Rimuovi parentesi tonde': 'rimuovi_parentesi_tonde',
                 'Rimuovi parentesi quadre': 'rimuovi_parentesi_quadre',
+                'Destinazione Log': 'destinazione',
+                'Tipo Messaggi': 'tipo_messaggi',
             }
             
             # Trova la chiave corrispondente
@@ -73,6 +75,8 @@ class ConfigEditor:
                 return self.config.get('ascolto', {}).get(key)
             elif param.section == 'filtri':
                 return self.config.get('filtri', {}).get(key)
+            elif param.section == 'logging':
+                return self.config.get('logging', {}).get(key)
             else:
                 return None
         except Exception as e:
@@ -99,6 +103,8 @@ class ConfigEditor:
                 'Rimuovi asterischi': 'rimuovi_asterischi',
                 'Rimuovi parentesi tonde': 'rimuovi_parentesi_tonde',
                 'Rimuovi parentesi quadre': 'rimuovi_parentesi_quadre',
+                'Destinazione Log': 'destinazione',
+                'Tipo Messaggi': 'tipo_messaggi',
             }
             
             # Trova la chiave corrispondente
@@ -133,6 +139,13 @@ class ConfigEditor:
                 if old != value:
                     self.config['filtri'][key] = value
                     self.modified = True
+            elif param.section == 'logging':
+                if 'logging' not in self.config:
+                    self.config['logging'] = {}
+                old = self.config['logging'].get(key)
+                if old != value:
+                    self.config['logging'][key] = value
+                    self.modified = True
         except Exception as e:
             print(f"Errore in _set_value per {param.label}: {e}")
 
@@ -149,7 +162,7 @@ class ConfigEditor:
                 # Salva le modifiche e segnala il reboot
                 if self.modified:
                     self._save_config()
-                print("\n\033[91mRIavvio di Aura in corso...\033[0m")
+                print("\n\033[91mRIavvio di Zentra in corso...\033[0m")
                 import sys
                 sys.exit(42)  # Codice speciale per il reboot
         finally:

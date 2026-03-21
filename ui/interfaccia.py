@@ -1,5 +1,5 @@
 """
-MODULO: Interfaccia e Grafica - Aura Core v0.6
+MODULO: Interfaccia e Grafica - Zentra Core v0.6
 DESCRIZIONE: Gestisce la UI del terminale, le dashboard hardware e i tasti funzione.
 
 "Nello specifico: Disegna la barra blu di stato (modello, voce, anima) e la barra 
@@ -23,7 +23,7 @@ except ImportError:
 from ui import grafica
 from colorama import init, Fore, Back, Style
 import plugins.dashboard.main as dashboard
-from core.version import get_version_string
+from core.system.version import get_version_string
 
 # "Inizializzazione Colorama per colori ANSI e sfondi su Windows"
 init(convert=True, autoreset=True)
@@ -74,8 +74,17 @@ def mostra_ui_completa(config, stato_voce, stato_ascolto, stato_sistema="PRONTA"
     print(f"\033[46m\033[30m{titolo}\033[0m")
     
     # 2. BARRA DI STATO DINAMICA
-    info_stato = f" STATO: {stato_sistema} | MODELLO: {modello} | ANIMA: {anima} | MIC: {mic} | VOCE: {spk} "
-    print(f"{Back.BLUE}{Fore.WHITE}{info_stato.center(L)}{Style.RESET_ALL}")
+    mic_str = "ON" if stato_ascolto else f"{Fore.RED}OFF{Fore.WHITE}"
+    mic_len = 2 if stato_ascolto else 3
+    spk_str = "ON" if stato_voce else f"{Fore.RED}OFF{Fore.WHITE}"
+    spk_len = 2 if stato_voce else 3
+    
+    visible_len = len(f" STATO: {stato_sistema} | MODELLO: {modello} | ANIMA: {anima} | MIC:  | VOCE:  ") + mic_len + spk_len
+    pad_left = max(0, L - visible_len) // 2
+    pad_right = max(0, L - visible_len) - pad_left
+    
+    info_stato_colored = f" STATO: {stato_sistema} | MODELLO: {modello} | ANIMA: {anima} | MIC: {mic_str} | VOCE: {spk_str} "
+    print(f"{Back.BLUE}{Fore.WHITE}{' '*pad_left}{info_stato_colored}{' '*pad_right}{Style.RESET_ALL}")
     
     # 3. BARRA HARDWARE (Telemetria: CPU, RAM, VRAM + stato backend)
     try:
@@ -109,10 +118,36 @@ def mostra_ui_completa(config, stato_voce, stato_ascolto, stato_sistema="PRONTA"
 
     # 4. FOOTER COMANDI RAPIDI
     print(f"{Fore.CYAN}{'━' * L}{Style.RESET_ALL}")
-    comandi = " F1: Guida | F2: Modelli | F3: Anima | F4: Voce | F5: Mic | F6: Reboot | F7: Config | ESC: Esci "
+    comandi = " F1: Guida | F2: Modelli | F3: Anima | F4: Mic | F5: Voce | F6: Reboot | F7: Config | ESC: Esci "
     print(f"{Style.DIM}{comandi.center(L)}{Style.RESET_ALL}")
     print(f"{Fore.CYAN}{'━' * L}{Style.RESET_ALL}\n")
     
+
+def aggiorna_barra_stato_in_place(config, stato_voce, stato_ascolto, stato_sistema="PRONTA"):
+    """Aggiorna solo la riga 2 (Barra di Stato) senza pulire lo schermo."""
+    from ui.ui_updater import _aggiorna_dashboard_os, stdout_lock
+    from colorama import Back, Fore, Style
+    
+    backend_type = config.get('backend', {}).get('tipo', 'ollama')
+    modello = config.get('backend', {}).get(backend_type, {}).get('modello', 'N/D')
+    anima = config.get('ia', {}).get('personalita_attiva', 'N/D').replace('.txt', '')
+    
+    mic_str = "ON" if stato_ascolto else f"{Fore.RED}OFF{Fore.WHITE}"
+    mic_len = 2 if stato_ascolto else 3
+    spk_str = "ON" if stato_voce else f"{Fore.RED}OFF{Fore.WHITE}"
+    spk_len = 2 if stato_voce else 3
+    
+    L = 90
+    visible_len = len(f" STATO: {stato_sistema} | MODELLO: {modello} | ANIMA: {anima} | MIC:  | VOCE:  ") + mic_len + spk_len
+    pad_left = max(0, L - visible_len) // 2
+    pad_right = max(0, L - visible_len) - pad_left
+    
+    info_stato_colored = f" STATO: {stato_sistema} | MODELLO: {modello} | ANIMA: {anima} | MIC: {mic_str} | VOCE: {spk_str} "
+    riga_formattata = f"{Back.BLUE}{Fore.WHITE}{' '*pad_left}{info_stato_colored}{' '*pad_right}{Style.RESET_ALL}"
+    
+    with stdout_lock:
+        _aggiorna_dashboard_os(riga_formattata, 2)
+
     
 def mostra_menu_modelli(modelli, attuale):
     """ "Stampa la selezione per i LLM" """
@@ -133,22 +168,67 @@ def mostra_menu_personalita(file_lista, attuale):
     print(f"{GIALLO}Seleziona un'anima o premi ESC per uscire.{RESET}")
 
 def mostra_help():
-    """ "Stampa a video le skills leggendole dal registro o dalla cartella" """
-    print(f"\n{GIALLO}╔════════════════ SKILLS & PROTOCOLLI ════════════════╗{RESET}")
+    """ "Stampa a video la vera guida dinamica generata dallo scanner plugin" """
+    from core.system.plugin_loader import genera_guida_dinamica
+    
+    # Puliamo lo schermo per dare spazio alla guida estesa
+    setup_console()
+    
+    # Header centrato
+    intestazione = f"{CIANO}╔════════════════ MANUALE AZIONALE DI ZENTRA ════════════════╗{RESET}"
+    print(f"\n{intestazione.center(90)}")
+    print(f"{BIANCO}Scansione dei Plugin Attivi e Disattivati...{RESET}".center(90))
+    print()
+    
     try:
-        with open("core/registry.json", "r", encoding="utf-8") as f:
-            db = json.load(f)
-            for tag, info in db.items():
-                print(f"{VERDE}[{tag.upper()}]{RESET}: {info['descrizione']}")
-    except:
-        print(f"{ROSSO}Nessun file registry.json trovato. Moduli base attivi.{RESET}")
-    print(f"{GIALLO}╚═════════════════════════════════════════════════════╝{RESET}")
-    print(f"Premi un tasto per continuare...")
+        guida = genera_guida_dinamica()
+        if not guida:
+            print(f"{ROSSO}Nessun modulo rilevato in /plugins o /plugins_disabled.{RESET}".center(90))
+        else:
+            for item in guida:
+                tag = item['tag']
+                stato = item['stato']
+                desc = item['descrizione']
+                comandi = item.get('comandi', {})
+                esempio = item.get('esempio', '')
+                
+                # Variazioni cromatiche per i disattivati
+                if stato == "ATTIVO":
+                    col_stato = VERDE
+                    bordo = CIANO
+                else:
+                    col_stato = ROSSO
+                    bordo = Fore.LIGHTBLACK_EX
+                    
+                print(f"{bordo}├─ {col_stato}[{tag.upper()}] {RESET}- Stato: {col_stato}{stato}{RESET}")
+                print(f"{bordo}│{RESET}  {BIANCO}Ruolo:{RESET} {desc}")
+                
+                if comandi:
+                    print(f"{bordo}│{RESET}  {GIALLO}Comandi Registrati:{RESET}")
+                    for cmd, spiegazione in comandi.items():
+                        print(f"{bordo}│{RESET}    • {cmd} -> {spiegazione}")
+                        
+                if esempio:
+                    print(f"{bordo}│{RESET}  {MAGENTA}Sintassi d'esempio:{RESET} {esempio}")
+                    
+                print(f"{bordo}│{RESET}")
+                
+    except Exception as e:
+        print(f"{ROSSO}Errore fatale nella generazione guida dinamica: {e}{RESET}")
+        
+    chiusura = f"{CIANO}╚════════════════════════════════════════════════════════════╝{RESET}"
+    print(f"{chiusura.center(90)}")
+    print(f"\n{GIALLO}Premi un tasto qualsiasi per tornare a terminale...{RESET}".center(90))
+    
+    # Svuoto vecchie digitazioni prima di bloccare
+    while msvcrt.kbhit(): msvcrt.getch()
     msvcrt.getch()
+    # Pulisco uscendo e lascio il compito ad interfaccia.mostra_ui_completa
+    setup_console()
 
-def scrivi_aura(testo):
-    """ Stampa la risposta di Aura evidenziandola in GIALLO. """
-    print(f"{VERDE}Aura:{GIALLO} {testo}{RESET}")
+def scrivi_zentra(testo):
+    """ Stampa la risposta di Zentra evidenziandola in GIALLO. """
+    print(f"{VERDE}Zentra:{GIALLO} {testo}{RESET}")
     
 def leggi_tastiera(prefisso, input_attuale):
     if msvcrt.kbhit():

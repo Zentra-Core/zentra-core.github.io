@@ -1,5 +1,5 @@
 """
-MODULO: Ollama Backend - Aura Core
+MODULO: Ollama Backend - Zentra Core
 DESCRIZIONE: Gestisce la comunicazione con il server Ollama.
 TUTTI i parametri vengono ESCLUSIVAMENTE dal config.json - nessun valore hardcodato.
 """

@@ -1,8 +1,8 @@
 """
-Pacchetto principale dell'applicazione Aura.
-Espone la classe AuraApplication.
+Pacchetto principale dell'applicazione Zentra.
+Espone la classe ZentraApplication.
 """
 
-from .application import AuraApplication
+from .application import ZentraApplication
 
-__all__ = ["AuraApplication"]
+__all__ = ["ZentraApplication"]

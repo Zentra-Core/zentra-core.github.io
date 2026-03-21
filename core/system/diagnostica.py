@@ -1,5 +1,5 @@
 """
-MODULO: Diagnostica di Sistema - Aura Core
+MODULO: Diagnostica di Sistema - Zentra Core
 DESCRIZIONE: Gestisce i check pre-volo, ora supporta anche Kobold.
 """
 
@@ -11,9 +11,10 @@ import glob
 import psutil
 import msvcrt
 import json
-from core import logger, voce
+from core.logging import logger
+from core.audio import voce
 from ui import interfaccia
-from core.version import VERSION, COPYRIGHT, get_version_string
+from core.system.version import VERSION, COPYRIGHT, get_version_string
 
 VERDE = '\033[92m'
 ROSSO = '\033[91m'
@@ -23,12 +24,12 @@ RESET = '\033[0m'
 
 def check_bypass():
     try:
-        if msvcrt.kbhit():
+        bypassed = False
+        while msvcrt.kbhit():
             tasto = msvcrt.getch()
             if tasto == b'\x1b':
-                while msvcrt.kbhit():
-                    msvcrt.getch()
-                return True
+                bypassed = True
+        return bypassed
     except Exception:
         pass
     return False
@@ -93,7 +94,7 @@ def scansiona_plugins():
     Mostra anche il conteggio dei plugin disabilitati.
     """
     risultati = []
-    from core import plugin_loader
+    from core.system import plugin_loader
     plugin_loader.aggiorna_registro_capacita()
     
     # ---- Controllo plugin disabilitati ----
@@ -158,7 +159,7 @@ def avvia_sequenza_risveglio(config):
     print(f"{'─' * 55}\n")
     
     print(f"{CIANO}==================================================={RESET}")
-    print(f"{CIANO}  SISTEMA OPERATIVO AURA - INIZIALIZZAZIONE...{RESET}")
+    print(f"{CIANO}  SISTEMA OPERATIVO ZENTRA - INIZIALIZZAZIONE...{RESET}")
     print(f"{CIANO}      (Premi ESC in qualsiasi momento per saltare){RESET}")
     print(f"{CIANO}==================================================={RESET}\n")
     
@@ -192,7 +193,7 @@ def avvia_sequenza_risveglio(config):
         print(esito)
 
     print(f"\n{CIANO}==================================================={RESET}")
-    stampa_e_parla(f"{VERDE}[SISTEMA] {RESET}", "Ciao, sono Aura")
+    stampa_e_parla(f"{VERDE}[SISTEMA] {RESET}", "Ciao, sono Zentra")
     
     while msvcrt.kbhit():
         msvcrt.getch()

@@ -1,5 +1,5 @@
 """
-MODULO: Kobold Backend - Aura Core
+MODULO: Kobold Backend - Zentra Core
 DESCRIZIONE: Gestisce la comunicazione con KoboldCPP.
 """
 
@@ -21,7 +21,7 @@ def genera(system_prompt, user_message, config):
     rep_pen = config.get('rep_pen', 1.1)
 
     # Costruisci il prompt completo
-    full_prompt = f"{system_prompt}\n\nUtente: {user_message}\nAura:"
+    full_prompt = f"{system_prompt}\n\nUtente: {user_message}\nZentra:"
 
     payload = {
         "prompt": full_prompt,
@@ -29,7 +29,7 @@ def genera(system_prompt, user_message, config):
         "temperature": temperature,
         "top_p": top_p,
         "rep_pen": rep_pen,
-        "stop_sequence": ["Utente:", "Aura:"]
+        "stop_sequence": ["Utente:", "Zentra:"]
     }
 
     try:

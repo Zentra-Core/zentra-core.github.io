@@ -1,5 +1,5 @@
 """
-MODULO: Processore Logico - Aura Core v2.5
+MODULO: Processore Logico - Zentra Core v2.5
 DESCRIZIONE: Il 'motore di esecuzione'. Trasforma il pensiero dell'IA in azioni 
 reali tramite plugin e filtra il testo per la sintesi vocale.
 Supporta la nuova struttura a cartelle dei plugin (plugins/nome_modulo/main.py)
@@ -9,7 +9,9 @@ import re
 import os
 
 import importlib.util
-from core import cervello, filtri, logger
+from core.llm import cervello
+from core.processing import filtri
+from core.logging import logger
 
 # Colori per i log a video
 GIALLO = '\033[93m'

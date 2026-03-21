@@ -4,7 +4,7 @@ Gestione centralizzata della configurazione.
 
 import json
 import time
-from core import logger
+from core.logging import logger
 
 class ConfigManager:
     def __init__(self, config_path="config.json"):
@@ -23,6 +23,13 @@ class ConfigManager:
     def save(self):
         """Salva la configurazione corrente."""
         try:
+            import os
+            try:
+                with open(".config_saved_by_app", "w") as flag_file:
+                    flag_file.write("1")
+            except Exception:
+                pass
+                
             with open(self.config_path, 'w', encoding='utf-8') as f:
                 json.dump(self.config, f, indent=4, ensure_ascii=False)
             logger.info("[CONFIG] Configurazione salvata correttamente.")

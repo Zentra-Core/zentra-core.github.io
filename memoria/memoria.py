@@ -13,7 +13,7 @@ def info():
         "desc": "Accesso al Caveau dei ricordi e profilo Admin (Identità e Cronologia).",
         "comandi": {
             "ricorda:testo": "Salva un'informazione importante sull'utente nel profilo biografico.",
-            "chi_sono": "Chiede ad Aura di recuperare i dati d'identità dell'Admin e dell'IA.",
+            "chi_sono": "Chiede ad Zentra di recuperare i dati d'identità dell'Admin e dell'IA.",
             "leggi:n": "Estrae gli ultimi N messaggi salvati nella cronologia del database.",
             "reset": "Esegue il protocollo Tabula Rasa: cancella l'intera cronologia chat."
         }
@@ -24,7 +24,7 @@ def status():
     return "ONLINE (Caveau Access Granted)"
 
 def esegui(azione):
-    """Esegue le operazioni di lettura/scrittura sulla memoria di Aura."""
+    """Esegue le operazioni di lettura/scrittura sulla memoria di Zentra."""
     
     # --- SALVATAGGIO INFORMAZIONI BIOGRAFICHE ---
     if azione.startswith("ricorda:"):

@@ -4,7 +4,8 @@ Gestione thread separati.
 
 import threading
 import time
-from core import ascolto, voce, logger
+from core.audio import ascolto, voce
+from core.logging import logger
 
 class AscoltoThread(threading.Thread):
     def __init__(self, state_manager):
