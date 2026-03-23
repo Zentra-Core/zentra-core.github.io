@@ -201,7 +201,23 @@ def avvia_sequenza_risveglio(config):
         print(esito)
 
     print(f"\n{CIANO}==================================================={RESET}")
-    stampa_e_parla(f"{VERDE}[SYSTEM] {RESET}", translator.t("intro_greeting"))
+    
+    # Estrae lingua voce (es. "en_US-lessac..." -> "en", "it_IT-paola..." -> "it")
+    modello_onnx = os.path.basename(config.get("voce", {}).get("modello_onnx", "it_IT-paola-medium.onnx"))
+    lingua_voce = modello_onnx.split("_")[0] if "_" in modello_onnx else "en"
+    
+    # Chiediamo al Translator il dizionario delle traduzioni e forziamo la lingua
+    from core.i18n.translator import get_translator
+    t_obj = get_translator()
+    saluto_vocale = "Hello, I am Zentra" # Fallback sicuro
+    try:
+        # translator.translations contiene dicts della forma {'it': {...}, 'en': {...}}
+        saluto_vocale = t_obj.translations.get(lingua_voce, {}).get("intro_greeting", "Hello, I am Zentra")
+    except Exception:
+        pass
+
+    # Stampa in UI locale, parla in lingua VOCE
+    stampa_e_parla(f"{VERDE}[SYSTEM] {RESET}" + translator.t("intro_greeting"), saluto_vocale)
     
     while msvcrt.kbhit():
         msvcrt.getch()
