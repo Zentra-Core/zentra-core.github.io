@@ -123,8 +123,6 @@ MIT License (initial release)
 👥 Credits & Contact
 Lead Developer: Antonio Meloni (Tony)
 
-Core Team: @Valeria
-
 Official Email: zentra.core.systems@gmail.com
 
 💡 Vision
