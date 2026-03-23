@@ -1,31 +1,28 @@
-# Zentra Core Project
-![Zentra Logo](assets/Zentra_Core_Project_001.jpg)
+# 🌌 Zentra Core Project
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Zentra-Core/zentra-core.github.io/main/assets/Zentra_Core_Logo.jpg" width="400" alt="Zentra Logo">
+</p>
 
 # Zentra Core - Version 0.9.4 (In Development)
 Language: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP.md)
 
 # 🤖 Zentra Core
-
 **Your Personal Offline AI Assistant (Private, Modular, Powerful)**
 
 ---
 
 ## 🚀 Overview
-
 **Zentra Core** is a local-first AI assistant platform that runs entirely on your machine.
-
 It combines local LLMs, voice interaction, system automation, and a modular plugin architecture to create a fully customizable AI companion.
 
 Unlike cloud-based assistants, Zentra gives you full control:
-
-* No data collection
-* No external dependencies (optional)
-* No restrictions on behavior (depending on models used)
+* **No data collection**
+* **No external dependencies** (optional)
+* **No restrictions on behavior** (depending on models used)
 
 ---
 
 ## ✨ Key Features
-
 * 🧠 **Local AI Processing** — Runs entirely on your hardware
 * 🔄 **Dual Backend Support** — Compatible with Ollama and KoboldCpp
 * 🎙️ **Voice Interaction** — Speech input and output (TTS/STT)
@@ -39,9 +36,7 @@ Unlike cloud-based assistants, Zentra gives you full control:
 ---
 
 ## 🧠 How It Works
-
 Zentra Core is built around a modular architecture:
-
 * **Core** → AI routing, processing, execution
 * **Plugins** → Actions and capabilities (system, web, media, etc.)
 * **Memory** → Identity and persistent storage
@@ -55,138 +50,80 @@ The AI generates structured commands that are interpreted and executed through t
 ## ⚡ Quick Start
 
 ### 1. Clone the repository
-
 ```bash
-git clone https://github.com/your-username/zentra-core.git
-cd zentra-core
-```
-
-### 2. Install dependencies
-
-```bash
+git clone [https://github.com/Zentra-Core/zentra-core.github.io.git](https://github.com/Zentra-Core/zentra-core.github.io.git)
+cd zentra-core.github.io
+2. Install dependencies
+Bash
 pip install -r requirements.txt
-```
-
-### 3. Run Zentra
-
-```bash
+3. Run Zentra
+Bash
 python main.py
-```
-
----
-
-## 🧠 Supported AI Backends
-
-### 🔹 Ollama
-
-* Easy to use
-* Fast and optimized
-* Recommended for most users
+🧠 Supported AI Backends
+🔹 Ollama
+Easy to use, fast and optimized. Recommended for most users.
 
 👉 https://ollama.com
 
-### 🔹 KoboldCpp
+🔹 KoboldCpp
+Supports GGUF models, can run uncensored models, more flexible.
 
-* Supports GGUF models
-* Can run uncensored models
-* More flexible
+🔌 Plugin System
+Zentra uses a dynamic plugin architecture. Each plugin can register commands, execute system actions, and extend AI capabilities.
 
----
+Included plugins:
 
-## 🔌 Plugin System
+System control & File manager
 
-Zentra uses a dynamic plugin architecture.
+Web automation & Hardware dashboard
 
-Each plugin can:
+Media control & Model switching
 
-* Register commands
-* Execute system actions
-* Extend AI capabilities
+Memory management
 
-### Included plugins:
+💾 Memory & Voice Systems
+🗄️ Memory System
+Zentra includes a persistent memory layer powered by SQLite for lightweight local storage. It stores conversations, maintains identity, and saves user preferences.
 
-* System control
-* File manager
-* Web automation
-* Hardware dashboard
-* Media control
-* Model switching
-* Memory management
+🎙️ Voice System
+Speech-to-text input
 
----
+Text-to-speech output
 
-## 💾 Memory System
+Real-time interaction
 
-Zentra includes a persistent memory layer:
-
-* Stores conversations
-* Maintains identity
-* Saves user preferences
-
-Powered by SQLite for lightweight local storage.
-
----
-
-## 🎙️ Voice System
-
-* Speech-to-text input
-* Text-to-speech output
-* Real-time interaction
-
----
-
-## 🔗 Integrations
-
+🔗 Integrations & Privacy
+🤝 Integrations
 Zentra can integrate with:
 
-* Open WebUI (chat + streaming)
-* Home Assistant (via bridge)
+Open WebUI (chat + streaming)
 
----
+Home Assistant (via bridge)
 
-## 🔐 Privacy First
+🔐 Privacy First
+Zentra is designed with privacy in mind: Runs 100% locally, no mandatory cloud services, and full control over data.
 
-Zentra is designed with privacy in mind:
+🛣️ Roadmap
+[ ] 📱 Telegram integration (remote control)
 
-* Runs 100% locally
-* No mandatory cloud services
-* Full control over data
+[ ] 🧠 Advanced memory system
 
----
+[ ] 🤖 Multi-agent architecture
 
-## 🛣️ Roadmap
+[ ] 🛒 Plugin marketplace
 
-* 📱 Telegram integration (remote control)
-* 🧠 Advanced memory system
-* 🤖 Multi-agent architecture
-* 🛒 Plugin marketplace
-* 🎨 Improved UI/UX
+[ ] 🎨 Improved UI/UX
 
----
+⚠️ Disclaimer
+Zentra can execute system-level commands and control your environment. Use responsibly. The author is not responsible for misuse or damage.
 
-## ⚠️ Disclaimer
-
-Zentra can execute system-level commands and control your environment.
-
-Use responsibly. The author is not responsible for misuse or damage.
-
----
-
-## 📜 License
-
+📜 License
 MIT License (initial release)
 
----
+👥 Credits & Contact
+Lead Developer: Antonio Meloni (Tony)
 
-## 👤 Author
+Official Email: zentra.core.systems@gmail.com
 
-Antonio Meloni (Tony)
-
----
-
-## 💡 Vision
-
-Zentra Core aims to become a fully autonomous, local AI assistant platform —
-a private, extensible alternative to cloud-based AI systems.
-
----
+💡 Vision
+Zentra Core aims to become a fully autonomous, local AI assistant platform — a private, extensible alternative to cloud-based AI systems.
