@@ -1,5 +1,5 @@
 {
-    "lingua": "it",
+    "lingua": "en",
     "llm": {
         "allow_cloud": true,
         "debug_llm": true,
@@ -20,14 +20,14 @@
                 ]
             },
             "groq": {
-                "api_key": "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",
+                "api_key": "",
                 "modelli": [
                     "groq/llama-3.1-70b-versatile",
                     "groq/mixtral-8x7b-32768"
                 ]
             },
             "gemini": {
-                "api_key": "AIzaSyC4VgHJ-qz8BY5g3LEfmWfSuOMDB9KGvBw",
+                "api_key": "",
                 "modelli": [
                     "gemini/gemini-3.1-flash-lite-preview",
                     "gemini/gemini-3-flash-preview",
