@@ -3,8 +3,8 @@
   <img src="https://raw.githubusercontent.com/Zentra-Core/zentra-core.github.io/main/assets/Zentra_Core_Logo.jpg" width="400" alt="Logo de Zentra">
 </p>
 
-# Zentra Core - Versión 0.9.4 (En Desarrollo)
-Idioma: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP.md)
+# Zentra Core - Versión 0.9.5 (Desarrollo Activo)
+Idiomas: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP.md)
 
 # 🤖 Zentra Core
 **Tu Asistente de IA Personal Offline (Privado, Modular, Potente)**
@@ -15,22 +15,18 @@ Idioma: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP
 **Zentra Core** es una plataforma de asistencia de IA "local-first" que se ejecuta íntegramente en tu propia máquina.
 Combina LLMs locales, interacción por voz, automatización del sistema y una arquitectura de plugins modulares para crear un compañero digital totalmente personalizable.
 
-A diferencia de los asistentes basados en la nube, Zentra te ofrece el control total:
-* **Sin recolección de datos**
-* **Sin dependencias externas** (opcional)
-* **Sin restricciones de comportamiento** (según los modelos utilizados)
+Con la integración de **LiteLLM**, Zentra ahora soporta no solo Ollama y KoboldCpp, sino también los principales proveedores de la nube (OpenAI, Anthropic, Gemini, Groq) para la máxima flexibilidad.
 
 ---
 
 ## ✨ Características Principales
-* 🧠 **Procesamiento de IA Local** — Se ejecuta totalmente en tu hardware.
-* 🔄 **Soporte de Backend Dual** — Compatible con Ollama y KoboldCpp.
-* 🎙️ **Interacción por Voz** — Entrada y salida de voz (TTS/STT).
-* ⚙️ **Control del Sistema** — Ejecuta comandos, abre apps, gestiona archivos.
+* 🧠 **Procesamiento de IA Local y Cloud** — Soporta Ollama, KoboldCpp y LiteLLM (OpenAI, Groq, etc.).
+* 🔄 **Soporte de Multi-Backend** — Cambia sin problemas entre modelos locales y en la nube.
+* 🎙️ **Interacción por Voz Multilingüe** — Entrada y salida de voz con selección automática de idioma (ES/EN/IT).
+* ⚙️ **Control del Sistema** — Ejecuta comandos, abre aplicaciones, gestiona archivos.
 * 🔌 **Sistema de Plugins** — Funcionalidades fácilmente extensibles.
 * 💾 **Memoria Persistente** — Memoria a largo plazo basada en SQLite.
-* 🌐 **Interacción Web** — Abre sitios web y realiza búsquedas.
-* 🖥️ **Monitoreo de Hardware** — Estadísticas de CPU, RAM y GPU.
+* 🖥️ **Telemetría Avanzada** — Estadísticas de hardware (CPU, RAM, GPU) y registro mejorado.
 * 🔗 **Listo para Integración** — Funciona con Open WebUI y Home Assistant.
 
 ---

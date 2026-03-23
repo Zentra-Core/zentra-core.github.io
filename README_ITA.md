@@ -3,7 +3,7 @@
   <img src="https://raw.githubusercontent.com/Zentra-Core/zentra-core.github.io/main/assets/Zentra_Core_Logo.jpg" width="400" alt="Logo Zentra">
 </p>
 
-# Zentra Core - Versione 0.9.4 (In Sviluppo)
+# Zentra Core - Versione 0.9.5 (In Sviluppo Attivo)
 Lingua: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP.md)
 
 # 🤖 Zentra Core
@@ -15,22 +15,18 @@ Lingua: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP
 **Zentra Core** è una piattaforma di assistenza AI local-first che gira interamente sulla tua macchina.
 Combina LLM locali, interazione vocale, automazione di sistema e un'architettura a plugin modulari per creare un compagno digitale completamente personalizzabile.
 
-A differenza degli assistenti basati su cloud, Zentra ti offre il pieno controllo:
-* **Nessuna raccolta dati**
-* **Nessuna dipendenza esterna** (opzionale)
-* **Nessuna restrizione sul comportamento** (a seconda dei modelli utilizzati)
+Grazie all'integrazione con **LiteLLM**, Zentra ora supporta non solo Ollama e KoboldCpp, ma anche i maggiori provider cloud (OpenAI, Anthropic, Gemini, Groq) per la massima flessibilità.
 
 ---
 
 ## ✨ Caratteristiche Principali
-* 🧠 **Elaborazione AI Locale** — Gira interamente sul tuo hardware.
-* 🔄 **Supporto Doppio Backend** — Compatibile con Ollama e KoboldCpp.
-* 🎙️ **Interazione Vocale** — Input e output vocale (TTS/STT).
+* 🧠 **Elaborazione AI Locale & Cloud** — Supporta Ollama, KoboldCpp e LiteLLM (OpenAI, Groq, ecc.).
+* 🔄 **Supporto Multi-Backend** — Passa facilmente tra modelli locali e cloud.
+* 🎙️ **Interazione Vocale Multilingua** — Input/Output vocale con selezione automatica della lingua (IT/EN).
 * ⚙️ **Controllo di Sistema** — Esegue comandi, apre app, gestisce file.
 * 🔌 **Sistema a Plugin** — Funzionalità facilmente estensibili.
 * 💾 **Memoria Persistente** — Memoria a lungo termine basata su SQLite.
-* 🌐 **Interazione Web** — Apre siti web ed effettua ricerche.
-* 🖥️ **Monitoraggio Hardware** — Statistiche CPU, RAM, GPU.
+* 🖥️ **Telemetria Avanzata** — Statistiche hardware (CPU, RAM, GPU) e logging migliorato.
 * 🔗 **Pronto per l'Integrazione** — Funziona con Open WebUI e Home Assistant.
 
 ---

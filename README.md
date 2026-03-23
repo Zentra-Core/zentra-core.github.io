@@ -3,7 +3,7 @@
   <img src="https://raw.githubusercontent.com/Zentra-Core/zentra-core.github.io/main/assets/Zentra_Core_Logo.jpg" width="400" alt="Zentra Logo">
 </p>
 
-# Zentra Core - Version 0.9.4 (In Development)
+# Zentra Core - Version 0.9.5 (Active Development)
 Language: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP.md)
 
 # 🤖 Zentra Core
@@ -15,23 +15,19 @@ Language: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_E
 **Zentra Core** is a local-first AI assistant platform that runs entirely on your machine.
 It combines local LLMs, voice interaction, system automation, and a modular plugin architecture to create a fully customizable AI companion.
 
-Unlike cloud-based assistants, Zentra gives you full control:
-* **No data collection**
-* **No external dependencies** (optional)
-* **No restrictions on behavior** (depending on models used)
+Now powered by **LiteLLM**, Zentra supports not only Ollama and KoboldCpp but also major cloud providers (OpenAI, Anthropic, Gemini, Groq) for maximum flexibility.
 
 ---
 
 ## ✨ Key Features
-* 🧠 **Local AI Processing** — Runs entirely on your hardware
-* 🔄 **Dual Backend Support** — Compatible with Ollama and KoboldCpp
-* 🎙️ **Voice Interaction** — Speech input and output (TTS/STT)
-* ⚙️ **System Control** — Execute commands, open apps, manage files
-* 🔌 **Plugin System** — Easily extend functionality
-* 💾 **Persistent Memory** — SQLite-based long-term memory
-* 🌐 **Web Interaction** — Open websites and perform searches
-* 🖥️ **Hardware Monitoring** — CPU, RAM, GPU stats
-* 🔗 **Integration Ready** — Works with Open WebUI and Home Assistant
+* 🧠 **Local & Cloud AI Processing** — Supports Ollama, KoboldCpp, and LiteLLM (OpenAI, Groq, etc.).
+* 🔄 **Multi-Backend Support** — Seamlessly switch between local and cloud models.
+* 🎙️ **Multilingual Voice Interaction** — Dynamic TTS/STT with automatic language selection (EN/IT).
+* ⚙️ **System Control** — Execute commands, open apps, manage files.
+* 🔌 **Plugin System** — Easily extend functionality.
+* 💾 **Persistent Memory** — SQLite-based long-term memory.
+* 🖥️ **Advanced Telemetry** — Hardware monitoring (CPU, RAM, GPU) and improved logging.
+* 🔗 **Integration Ready** — Works with Open WebUI and Home Assistant.
 
 ---
 

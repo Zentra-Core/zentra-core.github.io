@@ -1,4 +1,4 @@
-📁 ZentraCore_V0.9.4/
+📁 ZentraCore_V0.9.5/
 │
 ├── 📄 main.py                          # Punto di ingresso principale (lancio monitor)
 ├── 📄 monitor.py                        # Watchdog per riavvio automatico e controllo processi
@@ -26,8 +26,13 @@
 │   │   ├── 📄 ascolto.py                  # Rilevamento vocale (STT bridge)
 │   │   └── 📄 voce.py                     # Sintesi vocale locale (Piper)
 │   │
+│   ├── 📁 i18n/                           # Internazionalizzazione (IT, EN, ES)
+│   │   ├── 📁 locales/                    # Dizionari traduzioni JSON
+│   │   └── 📄 translator.py               # Singleton gestore traduzioni
+│   │
 │   ├── 📁 llm/                            # Motori di Intelligenza Artificiale
 │   │   ├── 📄 cervello.py                 # Dispatcher e routing verso backends
+│   │   ├── 📄 client.py                   # Client unificato per diverse AI
 │   │   ├── 📄 ollama_backend.py           # Gestore connessione Ollama
 │   │   └── 📄 kobold_backend.py           # Gestore connessione KoboldCPP
 │   │
@@ -41,7 +46,8 @@
 │   ├── 📁 system/                         # Utility e gestione sistema
 │   │   ├── 📄 diagnostica.py              # Check iniziali e boot verification
 │   │   ├── 📄 plugin_loader.py            # Caricamento dinamico moduli azione
-│   │   └── 📄 version.py                  # Informazioni di versione core
+│   │   ├── 📄 version.py                  # Informazioni di versione core
+│   │   └── 📄 locks.py                    # Gestione lock per istanze multiple
 │   │
 │   ├── 📄 registry.json                    # Registro auto-generato delle capacità IA
 │   └── 📄 __init__.py
@@ -55,7 +61,7 @@
 │   ├── 📁 docs/                             # Documentazione Markdown (Inglese)
 │   ├── 📁 community/                        # Landing community
 │   ├── 📁 download/                         # Landing download
-│   └── 📄 Mappa cartelle, file e struttura V0.9.4.txt  # Questa mappa
+│   └── 📄 Mappa cartelle, file e struttura V0.9.5.txt  # Questa mappa
 │
 ├── 📁 ui/                                 # Interfaccia Utente e Grafica
 │   ├── 📄 interfaccia.py                    # TUI principale (Dashboard)
@@ -70,6 +76,19 @@
 │   ├── 📁 sistema/                          # Comandi shell
 │   ├── 📁 web/                              # Ricerca internet
 │   └── 📁 memoria/                           # Accesso al database cognitivo
+│
+├── 📁 memoria/                             # Cognizione e Persistenza
+│   ├── 📄 archivio_chat.db                    # SQLite database residenza dati
+│   ├── 📄 brain_interface.py                 # Interfaccia tra core e database
+│   ├── 📄 identita_core.json                   # Definizione carattere IA
+│   └── 📄 profilo_utente.json                   # Dati utente e preferenze
+│
+├── 📁 personalita/                          # Anime / Profili IA (.txt)
+│   ├── 📄 zentra.txt                        # Profilo standard
+│   └── 📄 nova_tech.txt                     # Profilo orientato alla tecnologia
+│
+└── 📁 logs/                                 # Log delle sessioni
+se cognitivo
 │
 ├── 📁 memoria/                             # Cognizione e Persistenza
 │   ├── 📄 archivio_chat.db                    # SQLite database residenza dati
