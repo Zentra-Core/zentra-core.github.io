@@ -22,8 +22,12 @@
             "groq": {
                 "api_key": "",
                 "modelli": [
+                    "groq/llama-3.3-70b-versatile",
                     "groq/llama-3.1-70b-versatile",
-                    "groq/mixtral-8x7b-32768"
+                    "groq/mixtral-8x7b-32768",
+                    "groq/qwen-2.5-32b",
+                    "groq/qwen-2.5-coder-32b",
+                    "groq/gemma2-9b-it"
                 ]
             },
             "gemini": {
@@ -43,30 +47,19 @@
     "backend": {
         "tipo": "cloud",
         "cloud": {
-            "modello": "groq/qwen/qwen3-32b",
+            "modello": "groq/llama-3.3-70b-versatile",
             "temperature": 0.7
         },
         "ollama": {
-            "modello": "qwen2.5:1.5b-instruct-q4_K_M",
+            "modello": "qwen2.5:1.5b",
             "temperature": 0.3,
             "num_predict": 250,
             "num_ctx": 4096,
-            "num_gpu": 20,
-            "keep_alive": "60m",
+            "num_gpu": 25,
+            "keep_alive": "120m",
             "top_p": 0.9,
             "repeat_penalty": 1.1,
-            "modelli_disponibili": {
-                "1": "gemma3:1b-it-q4_K_M",
-                "2": "huihui_ai/gemma3-abliterated:270m",
-                "3": "huihui_ai/gemma3-abliterated:1b",
-                "4": "jayeshpandit2480/gemma3-UNCENSORED:1b",
-                "5": "deepseek-r1:1.5b",
-                "6": "huihui_ai/qwen3.5-abliterated:0.8B",
-                "7": "qwen2.5:1.5b-instruct-q4_K_M",
-                "8": "qwen2.5:0.5b",
-                "9": "qwen2.5:1.5b",
-                "10": "llama3.2:1b"
-            }
+            "modelli_disponibili": {}
         },
         "kobold": {
             "url": "http://localhost:5001",
@@ -80,15 +73,15 @@
     "ia": {
         "personalita_attiva": "zentra_dark_Adult.txt",
         "personalita_disponibili": {
-            "1": "Nova_tech.txt",
-            "2": "Sebastian_pro.txt",
+            "1": "nova_tech.txt",
+            "2": "sebastian_pro.txt",
             "3": "Zentra.txt",
             "4": "Zentra_dark.txt",
             "5": "Zentra_dark_Adult.txt"
         }
     },
     "voce": {
-        "modello_onnx": "C:\\piper\\en_US-lessac-medium.onnx",
+        "modello_onnx": "C:\\piper\\it_IT-paola-medium.onnx",
         "piper_path": "C:\\piper\\piper.exe",
         "speed": 1.2,
         "noise_scale": 0.817,
@@ -100,7 +93,7 @@
         "soglia_energia": 450,
         "timeout_silenzio": 5,
         "limite_frase": 15,
-        "stato_ascolto": true
+        "stato_ascolto": false
     },
     "filtri": {
         "rimuovi_asterischi": true,
@@ -129,7 +122,7 @@
     "logging": {
         "livello": "INFO",
         "destinazione": "console",
-        "tipo_messaggi": "entrambi"
+        "tipo_messaggi": "both"
     },
     "plugins": {
         "DASHBOARD": {
@@ -155,6 +148,7 @@
             "scenes_dir": "plugins\\roleplay\\scenes",
             "default_character": "",
             "default_scene": "",
+            "modello_llm": "",
             "enabled": true
         },
         "SYSTEM": {
@@ -167,11 +161,11 @@
             "explorer_mappings": {
                 "desktop": "C:\\Users\\Asus\\Desktop",
                 "download": "C:\\Users\\Asus\\Downloads",
-                "documenti": "C:\\Users\\Asus\\Documents",
+                "documents": "C:\\Users\\Asus\\Documents",
                 "core": "core",
                 "plugins": "plugins",
-                "memoria": "memoria",
-                "personalita": "personalita",
+                "memory": "memory",
+                "personality": "personality",
                 "logs": "logs"
             },
             "shell_command_whitelist": [],
@@ -183,14 +177,16 @@
             "search_engine": "google",
             "use_https": true,
             "open_in_new_tab": false,
+            "modello_llm": "",
             "enabled": true
         },
         "WEBCAM": {
-            "save_directory": "scatti",
+            "save_directory": "snapshots",
             "image_format": "jpg",
             "camera_index": 0,
             "stabilization_delay": 0.5,
             "enabled": true
         }
-    }
+    },
+    "avvio_rapido": true
 }

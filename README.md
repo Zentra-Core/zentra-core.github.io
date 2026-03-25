@@ -3,7 +3,7 @@
   <img src="https://raw.githubusercontent.com/Zentra-Core/zentra-core.github.io/main/assets/Zentra_Core_Logo.jpg" width="400" alt="Zentra Logo">
 </p>
 
-# Zentra Core - Version 0.9.5 (Active Development)
+# Zentra Core - Version 0.9.6 (OOP Stabilization)
 Language: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP.md)
 
 # 🤖 Zentra Core
@@ -15,24 +15,20 @@ Language: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_E
 **Zentra Core** is a local-first AI assistant platform that runs entirely on your machine.
 It combines local LLMs, voice interaction, system automation, and a modular plugin architecture to create a fully customizable AI companion.
 
-Unlike cloud-based assistants, Zentra gives you full control:
-* **No data collection**
-* **No external dependencies** (optional)
-* **No restrictions on behavior** (depending on models used)
-
-Now powered by **LiteLLM**, Zentra supports not only Ollama and KoboldCpp but also major cloud providers (OpenAI, Anthropic, Gemini, Groq) for maximum flexibility.
+Now fully migrated to a **stable Object-Oriented (OOP) architecture**, Zentra 0.9.6 offers unprecedented reliability and performance. Powered by **LiteLLM**, it supports Ollama, KoboldCpp, and major cloud providers (OpenAI, Anthropic, Gemini, Groq) with native streaming.
 
 ---
 
-## ✨ Key Features
-* 🧠 **Local & Cloud AI Processing** — Supports Ollama, KoboldCpp, and LiteLLM (OpenAI, Groq, etc.).
-* 🔄 **Multi-Backend Support** — Seamlessly switch between local and cloud models.
+## ✨ Key Features (v0.9.6)
+* 🏗️ **Stable OOP Core** — Fully refactored for professional-grade stability and modularity.
+* 🧠 **Multi-Cloud Streaming** — Native support for Groq, OpenAI, and Gemini with real-time "typewriter" effect.
+* 🔄 **F7 Live-Sync** — Change settings in the configuration panel and see them applied instantly without restarting.
+* 🔌 **Standalone Plugins** — Every plugin is now an independent module that can run even without the core system.
 * 🎙️ **Multilingual Voice Interaction** — Dynamic TTS/STT with automatic language selection (EN/IT).
-* ⚙️ **System Control** — Execute commands, open apps, manage files.
-* 🔌 **Plugin System** — Easily extend functionality.
-* 💾 **Persistent Memory** — SQLite-based long-term memory.
-* 🖥️ **Advanced Telemetry** — Hardware monitoring (CPU, RAM, GPU) and improved logging.
-* 🔗 **Integration Ready** — Works with Open WebUI and Home Assistant.
+* ⚙️ **System Control** — Execute commands, open apps, manage files, and control hardware.
+* 💾 **Persistent Memory** — SQLite-based long-term memory with shared context across WebUI and Terminal.
+* 🖥️ **Refined Logging** — Isolated technical debug windows and clean chat history.
+* 🔗 **WebUI Bridge** — Full compatibility with Open WebUI and local streaming APIs.
 
 ---
 
@@ -137,6 +133,14 @@ MIT License (initial release)
 ## 👥 Credits & Contact
 Lead Developer: Antonio Meloni (Tony)
 Official Email: zentra.core.systems@gmail.com
+
+---
+
+## 📚 Technical Documentation
+Detailed technical guides for developers and advanced users:
+- 🏗️ **[Technical Architecture Guide](docs/TECHNICAL_GUIDE.md)**: Deep dive into the OOP structure, data flow, and core engines.
+- 🔌 **[Plugin Development Guide](docs/PLUGINS_DEV.md)**: How to create and register new tools using Native Function Calling.
+- 📁 **[Project Structure Map](docs/zentra_core_structure_v0.9.5.md)**: Complete file-by-file breakdown of the repository.
 
 ---
 

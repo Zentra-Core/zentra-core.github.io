@@ -7,6 +7,7 @@ import os
 from .locks import acquire_lock, release_lock
 from .parameters import build_parameter_list
 from .ui import UIManager
+from core.i18n import translator
 
 class ConfigEditor:
     def __init__(self, config_path="config.json"):
@@ -20,10 +21,37 @@ class ConfigEditor:
         self.modified = False
 
     def _load_config(self):
-        """Carica il file JSON."""
+        """Carica il file JSON, pulisce config plugin vecchi e sincronizza con la cartella."""
         try:
             with open(self.config_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                config = json.load(f)
+                
+            # --- Auto-sync dei plugin ---
+            plugins_config = config.get("plugins", {})
+            script_dir = os.path.dirname(os.path.abspath(__file__))  
+            ui_dir = os.path.dirname(script_dir)  
+            project_dir = os.path.dirname(ui_dir)  
+            plugins_dir = os.path.join(project_dir, "plugins")
+            
+            # Trova i plugin reali (cartelle con main.py o file .py validi)
+            plugin_reali = set()
+            if os.path.exists(plugins_dir):
+                for item in os.listdir(plugins_dir):
+                    item_path = os.path.join(plugins_dir, item)
+                    if os.path.isdir(item_path) and os.path.isfile(os.path.join(item_path, "main.py")):
+                        plugin_reali.add(item.upper())
+                    elif os.path.isfile(item_path) and item.endswith(".py") and not item.startswith("_"):
+                        plugin_reali.add(item[:-3].upper())
+            
+            # Rimuovere da config.json i plugin che non esistono più
+            da_rimuovere = [p for p in plugins_config if p not in plugin_reali]
+            for p in da_rimuovere:
+                del plugins_config[p]
+                self.modified = True  # Segna come modificato se abbiamo pulito qualcosa
+                
+            config["plugins"] = plugins_config
+            return config
+            
         except Exception as e:
             print(f"Errore caricamento {self.config_path}: {e}")
             raise
@@ -67,6 +95,10 @@ class ConfigEditor:
             # Gestisci i diversi tipi di sezioni
             if param.section == 'backend':
                 return backend_config.get(key)
+            elif param.section == 'ollama':
+                return self.config.get('backend', {}).get('ollama', {}).get(key)
+            elif param.section == 'kobold':
+                return self.config.get('backend', {}).get('kobold', {}).get(key)
             elif param.section == 'voce':
                 return self.config.get('voce', {}).get(key)
             elif param.section == 'ascolto':
@@ -109,6 +141,20 @@ class ConfigEditor:
                 old = self.config['backend'][backend_type].get(key)
                 if old != value:
                     self.config['backend'][backend_type][key] = value
+                    self.modified = True
+            elif param.section == 'ollama':
+                if 'ollama' not in self.config['backend']:
+                    self.config['backend']['ollama'] = {}
+                old = self.config['backend']['ollama'].get(key)
+                if old != value:
+                    self.config['backend']['ollama'][key] = value
+                    self.modified = True
+            elif param.section == 'kobold':
+                if 'kobold' not in self.config['backend']:
+                    self.config['backend']['kobold'] = {}
+                old = self.config['backend']['kobold'].get(key)
+                if old != value:
+                    self.config['backend']['kobold'][key] = value
                     self.modified = True
             elif param.section == 'voce':
                 if 'voce' not in self.config:
@@ -180,16 +226,37 @@ class ConfigEditor:
             return
         
         try:
+            result = None
             ui = UIManager(self.param_list, self._get_value, self._set_value)
             result = ui.run()
+            
+            import sys
+            import time
+            from core.i18n import translator
+            
             if result == "REBOOT":
-                # Salva le modifiche e segnala il reboot
                 if self.modified:
                     self._save_config()
                 print(f"\n\033[91m{translator.t('rebooting_msg')}\033[0m")
-                import sys
-                sys.exit(42)  # Codice speciale per il reboot
+                time.sleep(1)
+                sys.exit(42)
+                
+            elif result == "SAVE":
+                if self.modified:
+                    self._save_config()
+                # Auto-riavvio garantito se ci sono state modifiche salvate dall'utente
+                print(f"\n\033[91m{translator.t('rebooting_msg')}\033[0m")
+                time.sleep(1)
+                sys.exit(42)
+                
+            elif result == "DISCARD":
+                print(f"\n\033[93mUscita senza salvare. Le modifiche sono state scartate.\033[0m")
+                # Nessun salvataggio, nessun riavvio
+                
+            else: # NO_CHANGES
+                # Possiamo salvare solo se core.py ha pulito vecchi plugin, ma non serve riavviare
+                if self.modified:
+                    self._save_config()
+                    
         finally:
             release_lock()
-            if self.modified and result != "REBOOT":
-                self._save_config()

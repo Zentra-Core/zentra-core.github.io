@@ -48,7 +48,7 @@ def aggiorna_registro_capacita(config=None, debug_log=True):
     for plugin_dir in plugin_dirs:
         main_file = os.path.join("plugins", plugin_dir, "main.py")
         if not os.path.exists(main_file):
-            logger.debug("LOADER", f"Plugin {plugin_dir} senza main.py, ignorato")
+            logger.debug("LOADER", f"Plugin {plugin_dir} without main.py, ignored")
             continue
         
         try:
@@ -64,13 +64,46 @@ def aggiorna_registro_capacita(config=None, debug_log=True):
             spec.loader.exec_module(modulo)
             
             # Estrazione manifest
-            if hasattr(modulo, "info"):
+            if hasattr(modulo, "tools"):
+                # --- NUOVO SISTEMA CLASS-BASED (FUNCTION CALLING) ---
+                t = modulo.tools
+                tag = t.tag
+                plugin_enabled = config.get('plugins', {}).get(tag, {}).get('enabled', True)
+                if not plugin_enabled:
+                    if debug_log: logger.debug("LOADER", f"Plugin {plugin_dir} disabled by config.")
+                    continue
+                    
+                _loaded_plugins[tag] = modulo
+                stato = getattr(t, "status", "ONLINE")
+                
+                # Estrae i comandi tramite l'ispezione dei metodi pubblici
+                import inspect
+                comandi = {}
+                for name, method in inspect.getmembers(t, predicate=inspect.ismethod):
+                    if not name.startswith('_'):
+                        doc = method.__doc__
+                        comandi[name] = doc.strip().split('\n')[0] if doc else "Method"
+                
+                skills_map[tag] = {
+                    "descrizione": t.desc,
+                    "comandi": comandi,
+                    "stato": stato,
+                    "esempio": "",
+                    "is_class_based": True
+                }
+                logger.debug("LOADER", f"Class-based Plugin {plugin_dir} loaded with tag {tag}")
+                
+                if hasattr(t, "config_schema"):
+                    _plugin_config_schemas[tag] = t.config_schema
+                    
+            elif hasattr(modulo, "info"):
+                # --- VECCHIO SISTEMA LEGACY ---
                 dati = modulo.info()
                 tag = dati['tag']
                 # Controlla flag enabled
                 plugin_enabled = config.get('plugins', {}).get(tag, {}).get('enabled', True)
                 if not plugin_enabled:
-                    if debug_log: logger.debug("LOADER", f"Plugin {plugin_dir} disabilitato da config.")
+                    if debug_log: logger.debug("LOADER", f"Plugin {plugin_dir} disabled by config.")
                     continue
                     
                 # Salva modulo e carica
@@ -84,15 +117,15 @@ def aggiorna_registro_capacita(config=None, debug_log=True):
                     "stato": stato,
                     "esempio": dati.get("esempio", "")
                 }
-                logger.debug("LOADER", f"Plugin {plugin_dir} caricato con tag {tag}")
+                logger.debug("LOADER", f"Plugin {plugin_dir} loaded with tag {tag}")
                 
                 # Raccogli lo schema di configurazione se presente
                 if hasattr(modulo, "config_schema"):
                     _plugin_config_schemas[tag] = modulo.config_schema()
-                    logger.debug("LOADER", f"Plugin {plugin_dir} ha config_schema")
+                    logger.debug("LOADER", f"Plugin {plugin_dir} has config_schema")
                     
         except Exception as e:
-            logger.errore(f"LOADER: Fallimento caricamento {plugin_dir}: {e}")
+            logger.errore(f"LOADER: Failed to load {plugin_dir}: {e}")
             continue
     
     # 2. (Opzionale) Cerca anche nella vecchia struttura per compatibilità
@@ -119,7 +152,7 @@ def aggiorna_registro_capacita(config=None, debug_log=True):
                 # Controlla il flag enabled
                 plugin_enabled = config.get('plugins', {}).get(tag, {}).get('enabled', True)
                 if not plugin_enabled:
-                    logger.debug("LOADER", f"Plugin legacy {nome_modulo} disabilitato, ignorato.")
+                    logger.debug("LOADER", f"Legacy plugin {nome_modulo} disabled, ignored.")
                     continue
                 
                 stato = modulo.status() if hasattr(modulo, "status") else "ONLINE"
@@ -130,14 +163,14 @@ def aggiorna_registro_capacita(config=None, debug_log=True):
                     "stato": stato,
                     "esempio": dati.get("esempio", "")
                 }
-                logger.debug("LOADER", f"Plugin legacy {nome_modulo} caricato con tag {tag}")
+                logger.debug("LOADER", f"Legacy plugin {nome_modulo} loaded with tag {tag}")
                 
                 if hasattr(modulo, "config_schema"):
                     _plugin_config_schemas[tag] = modulo.config_schema()
-                    logger.debug("LOADER", f"Plugin legacy {nome_modulo} ha config_schema")
+                    logger.debug("LOADER", f"Legacy plugin {nome_modulo} has config_schema")
                     
         except Exception as e:
-            logger.errore(f"LOADER: Fallimento caricamento legacy {nome_modulo}: {e}")
+            logger.errore(f"LOADER: Failed to load legacy {nome_modulo}: {e}")
             continue
 
     # Scrittura del registro centralizzato
@@ -145,9 +178,9 @@ def aggiorna_registro_capacita(config=None, debug_log=True):
         with open(REGISTRY_PATH, "w", encoding="utf-8") as f:
             json.dump(skills_map, f, indent=4, ensure_ascii=False)
         if debug_log:
-            logger.info(f"REGISTRY: Registro capacità aggiornato ({len(skills_map)} moduli).")
+            logger.info(f"REGISTRY: Capabilities registry updated ({len(skills_map)} modules).")
     except Exception as e:
-        logger.errore(f"REGISTRY: Errore scrittura file: {e}")
+        logger.errore(f"REGISTRY: File write error: {e}")
     
     return skills_map
 
@@ -183,7 +216,7 @@ def sincronizza_config_plugin(config_manager=None):
     
     if updated:
         config_manager.save()
-        logger.info("REGISTRY: Configurazioni plugin sincronizzate.")
+        logger.info("REGISTRY: Plugin configurations synchronized.")
     
     return config
 
@@ -246,7 +279,7 @@ def genera_guida_dinamica():
                         "esempio": dati.get("esempio", "")
                     })
             except Exception as e:
-                logger.errore(f"LOADER GUIDA: Fallimento {plugin_dir}: {e}")
+                logger.errore(f"GUIDE LOADER: Failed for {plugin_dir}: {e}")
                 
     # 1. Scansiona plugin attivi
     scansiona_cartella("plugins")
@@ -264,7 +297,24 @@ def genera_guida_dinamica():
             spec = importlib.util.spec_from_file_location(f"guida_{nome_mod}", file)
             mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)
-            if hasattr(mod, "info"):
+            if hasattr(mod, "tools"):
+                t = mod.tools
+                stato_effettivo = getattr(t, "status", translator.t("online"))
+                import inspect
+                comandi = {}
+                for name, method in inspect.getmembers(t, predicate=inspect.ismethod):
+                    if not name.startswith('_'):
+                        doc = method.__doc__
+                        comandi[name] = doc.strip().split('\n')[0] if doc else "Method"
+                if not any(g['tag'] == t.tag for g in guida):
+                    guida.append({
+                        "tag": t.tag,
+                        "descrizione": getattr(t, "desc", "Nessuna descrizione."),
+                        "comandi": comandi,
+                        "stato": stato_effettivo,
+                        "esempio": ""
+                    })
+            elif hasattr(mod, "info"):
                 dati = mod.info()
                 stato_effettivo = mod.status() if hasattr(mod, "status") else translator.t("online")
                 # Evita duplicati se presente in cartella
@@ -282,3 +332,65 @@ def genera_guida_dinamica():
     # Ordina per tag alfabetico
     guida.sort(key=lambda x: x['tag'])
     return guida
+
+def ottieni_tools_schema():
+    """
+    Scansiona i plugin class-based caricati e genera una lista di tools
+    nel formato JSON Schema atteso da LiteLLM / OpenAI per il Function Calling.
+    """
+    import inspect
+    import re
+    
+    tools_list = []
+    
+    def _parse_docstring(doc):
+        if not doc: return "Tool function", {}
+        lines = doc.strip().split('\n')
+        desc = lines[0].strip()
+        params_desc = {}
+        for line in lines[1:]:
+            match = re.search(r':param\s+(\w+):\s+(.+)', line)
+            if match:
+                params_desc[match.group(1)] = match.group(2).strip()
+        return desc, params_desc
+
+    for tag, modulo in _loaded_plugins.items():
+        if hasattr(modulo, "tools"):
+            t = modulo.tools
+            for name, method in inspect.getmembers(t, predicate=inspect.ismethod):
+                if name.startswith('_'):
+                    continue
+                
+                desc, params_desc = _parse_docstring(method.__doc__)
+                sig = inspect.signature(method)
+                
+                properties = {}
+                required = []
+                
+                for param_name, param in sig.parameters.items():
+                    if param_name == 'self':
+                        continue
+                        
+                    # Impostiamo tutto a string per semplicitá, basato sul docstring
+                    p_desc = params_desc.get(param_name, f"Parameter {param_name}")
+                    properties[param_name] = {
+                        "type": "string",
+                        "description": p_desc
+                    }
+                    if param.default == inspect.Parameter.empty:
+                        required.append(param_name)
+                        
+                tools_list.append({
+                    "type": "function",
+                    "function": {
+                        "name": f"{tag}__{name}",
+                        "description": desc,
+                        "parameters": {
+                            "type": "object",
+                            "properties": properties,
+                            "required": required
+                        }
+                    }
+                })
+                
+    return tools_list if tools_list else None

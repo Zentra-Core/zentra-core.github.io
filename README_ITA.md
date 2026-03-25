@@ -3,7 +3,7 @@
   <img src="https://raw.githubusercontent.com/Zentra-Core/zentra-core.github.io/main/assets/Zentra_Core_Logo.jpg" width="400" alt="Logo Zentra">
 </p>
 
-# Zentra Core - Versione 0.9.5 (In Sviluppo Attivo)
+# Zentra Core - Versione 0.9.6 (Stabilizzazione OOP)
 Lingua: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP.md)
 
 # 🤖 Zentra Core
@@ -15,24 +15,20 @@ Lingua: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP
 **Zentra Core** è una piattaforma di assistenza AI local-first che gira interamente sulla tua macchina.
 Combina LLM locali, interazione vocale, automazione di sistema e un'architettura a plugin modulari per creare un compagno digitale completamente personalizzabile.
 
-A differenza delle AI cloud:
-* 🔒 **I tuoi dati restano sul tuo PC**
-* ⚙️ **Hai il pieno controllo**
-* 🧠 **Puoi scegliere modelli anche senza filtri**
-
-Grazie all'integrazione con **LiteLLM**, Zentra ora supporta non solo Ollama e KoboldCpp, ma anche i maggiori provider cloud (OpenAI, Anthropic, Gemini, Groq) per la massima flessibilità.
+Ora completamente migrato a una **architettura stabile a Oggetti (OOP)**, Zentra 0.9.6 offre affidabilità e prestazioni senza precedenti. Grazie a **LiteLLM**, supporta Ollama, KoboldCpp e i principali provider cloud (OpenAI, Anthropic, Gemini, Groq) con streaming nativo.
 
 ---
 
-## ✨ Caratteristiche Principali
-* 🧠 **Elaborazione AI Locale & Cloud** — Supporta Ollama, KoboldCpp e LiteLLM (OpenAI, Groq, ecc.).
-* 🔄 **Supporto Multi-Backend** — Passa facilmente tra modelli locali e cloud.
+## ✨ Caratteristiche Principali (v0.9.6)
+* 🏗️ **Core OOP Stabile** — Completamente rifattorizzato per una stabilità di livello professionale.
+* 🧠 **Streaming Multi-Cloud** — Supporto nativo per Groq, OpenAI e Gemini con effetto "macchina da scrivere".
+* 🔄 **F7 Live-Sync** — Modifica le impostazioni nel pannello di configurazione e applicale istantaneamente senza riavviare.
+* 🔌 **Plugin Standalone** — Ogni plugin è ora un modulo indipendente che può girare anche separatamente dal core.
 * 🎙️ **Interazione Vocale Multilingua** — Input/Output vocale con selezione automatica della lingua (IT/EN).
-* ⚙️ **Controllo di Sistema** — Esegue comandi, apre app, gestisce file.
-* 🔌 **Sistema a Plugin** — Funzionalità facilmente estensibili.
-* 💾 **Memoria Persistente** — Memoria a lungo termine basata su SQLite.
-* 🖥️ **Telemetria Avanzata** — Statistiche hardware (CPU, RAM, GPU) e logging migliorato.
-* 🔗 **Pronto per l'Integrazione** — Funziona con Open WebUI e Home Assistant.
+* ⚙️ **Controllo di Sistema** — Esegue comandi, apre app, gestisce file e monitora l'hardware.
+* 💾 **Memoria Persistente** — Memoria SQLite con contesto condiviso tra WebUI e Terminale.
+* 🖥️ **Logging Raffinato** — Finestre di debug tecnico isolate e cronologia chat pulita.
+* 🔗 **WebUI Bridge** — Piena compatibilità con Open WebUI e API di streaming locale.
 
 ---
 

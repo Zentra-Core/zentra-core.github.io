@@ -4,10 +4,10 @@ import winsound
 import json
 import time
 import keyboard 
-
+import msvcrt
 sta_parlando = False
 
-def parla(testo):
+def parla(testo, state=None):
     global sta_parlando
     if not testo: return
     
@@ -28,10 +28,12 @@ def parla(testo):
             sentence_silence = c.get('sentence_silence', 0.2)
             
     except Exception as e:
-        print(f"[VOCE] Errore configurazione: {e}")
+        print(f"[VOICE] Configuration error: {e}")
         length_scale, noise_scale, noise_w, sentence_silence = 1.0, 0.667, 0.8, 0.2
 
     sta_parlando = True
+    if state:
+        state.sistema_parla = True
     
     try:
         # Recupera di nuovo o usa la config precedente
@@ -61,20 +63,29 @@ def parla(testo):
         if os.path.exists("risposta.wav"):
             winsound.PlaySound("risposta.wav", winsound.SND_FILENAME | winsound.SND_ASYNC)
             
-            # Calcolo durata dinamica basato sulla velocità reale
-            durata_stimata = (len(testo_pulito) / 15) * length_scale + sentence_silence
+            # Calcolo durata dinamica basato sulla velocità reale (conservativo: 12 char/sec)
+            durata_stimata = (len(testo_pulito) / 12) * length_scale + sentence_silence
             inizio = time.time()
 
             while (time.time() - inizio) < durata_stimata:
                 if keyboard.is_pressed('esc'):
+                    # Svuota buffer msvcrt per evitare doppie attivazioni ESC
+                    while msvcrt.kbhit():
+                        msvcrt.getch()
+                    if state:
+                        state.ultimo_stop_voce = time.time()
                     ferma_voce()
                     break
                 time.sleep(0.05)
                 
     except Exception as e:
-        print(f"[VOCE] Errore esecuzione Piper: {e}")
+        print(f"[VOICE] Piper execution error: {e}")
     finally:
+        # Buffer extra generoso per silenzi ambientali e rimbombi
+        time.sleep(1.2)
         sta_parlando = False
+        if state:
+            state.sistema_parla = False
 
 def ferma_voce():
     global sta_parlando
