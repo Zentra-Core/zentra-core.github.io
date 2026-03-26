@@ -203,6 +203,7 @@
         "plugin_models_backend_desc": "Displays the currently used backend.",
         "plugin_models_status_online": "ONLINE (Model management)",
         "help_registry_title": "ACTIVE ACTION PROTOCOLS (ROOT ACCESS)",
+        "help_footer": "Press ESC to return to chat.",
         "boot_sync_msg": "Synchronizing Neural Network and Memory...",
         "esc_to_exit": "ESC again to exit.",
         "confirm_exit": "Are you sure you want to exit Zentra?",

@@ -1,13 +1,19 @@
 {
-    "listening": {
-        "phrase_limit": 15,
-        "energy_threshold": 450,
-        "listening_status": true,
-        "silence_timeout": 5
+    "ai": {
+        "active_personality": "Zentra_dark_Adult.txt",
+        "available_personalities": {
+            "1": "nova_tech.txt",
+            "2": "sebastian_pro.txt",
+            "3": "Zentra.txt",
+            "4": "Zentra_dark.txt",
+            "5": "Zentra_dark_Adult.txt"
+        },
+        "save_special_instructions": true,
+        "special_instructions": "Alla fine di ogni frase devi dire: sono la tua serva, Tony, + emoji del bacio"
     },
     "backend": {
         "cloud": {
-            "model": "gemini/gemini-3-flash-preview",
+            "model": "gemini/gemini-2.5-flash",
             "temperature": 0.7
         },
         "kobold": {
@@ -19,7 +25,6 @@
             "url": "http://localhost:5001"
         },
         "ollama": {
-            "keep_alive": "120m",
             "available_models": {
                 "1": "gemma3:1b-it-q4_K_M",
                 "2": "huihui_ai/gemma3-abliterated:270m",
@@ -32,6 +37,7 @@
                 "9": "qwen2.5:1.5b",
                 "10": "llama3.2:1b"
             },
+            "keep_alive": "120m",
             "model": "qwen2.5:1.5b",
             "num_ctx": 4096,
             "num_gpu": 25,
@@ -43,32 +49,29 @@
         "type": "cloud"
     },
     "bridge": {
-        "use_processor": true,
         "chunk_delay_ms": 0,
         "debug_log": true,
-        "remove_think_tags": true,
+        "enable_tools": true,
         "local_voice_enabled": false,
-        "enable_tools": true
+        "remove_think_tags": true,
+        "use_processor": true,
+        "webui_voice_enabled": true,
+        "webui_voice_stt": true
     },
+    "fast_boot": true,
     "filters": {
+        "custom_replacements": {},
         "remove_asterisks": true,
         "remove_round_brackets": true,
-        "remove_square_brackets": false,
-        "custom_replacements": {}
-    },
-    "ai": {
-        "active_personality": "Zentra_dark_Adult.txt",
-        "available_personalities": {
-            "1": "nova_tech.txt",
-            "2": "sebastian_pro.txt",
-            "3": "Zentra.txt",
-            "4": "Zentra_dark.txt",
-            "5": "Zentra_dark_Adult.txt"
-        },
-        "special_instructions": "",
-        "save_special_instructions": false
+        "remove_square_brackets": false
     },
     "language": "en",
+    "listening": {
+        "energy_threshold": 450,
+        "listening_status": false,
+        "phrase_limit": 15,
+        "silence_timeout": 5
+    },
     "llm": {
         "allow_cloud": true,
         "debug_llm": true,
@@ -121,10 +124,6 @@
     "monitor": {
         "check_interval": 1,
         "restart_delay": 2
-    },
-    "routing_engine": {
-        "mode": "auto",
-        "legacy_models": ""
     },
     "plugins": {
         "DASHBOARD": {
@@ -199,16 +198,20 @@
         "debug_mode": false,
         "log_level": "INFO"
     },
+    "routing_engine": {
+        "legacy_models": "",
+        "mode": "auto"
+    },
     "system": {
         "fast_boot": false
     },
     "voice": {
-        "onnx_model": "C:\\piper\\it_IT-paola-medium.onnx",
         "noise_scale": 0.817,
         "noise_w": 0.9,
+        "onnx_model": "C:\\piper\\it_IT-paola-medium.onnx",
         "piper_path": "C:\\piper\\piper.exe",
         "sentence_silence": 0.1,
         "speed": 1.2,
-        "voice_status": true
+        "voice_status": false
     }
 }

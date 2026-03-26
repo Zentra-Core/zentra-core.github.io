@@ -39,7 +39,7 @@ def _run_inference(session_id: str, user_message: str, history: list):
         cfg = ConfigManager()
         cfg.reload()
 
-        risposta = brain.generate_response(user_message, config_esterno=cfg.config)
+        risposta = brain.generate_response(user_message, external_config=cfg.config)
 
         if isinstance(risposta, str):
             full_text = risposta

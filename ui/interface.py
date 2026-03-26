@@ -178,8 +178,8 @@ def get_hardware_row(config=None, dashboard_mod=None):
             if len(str(vram)) > 25: vram = str(vram)[:22] + ".."
             backend_status = stats['backend_status']
             
-            cpu_bar = graphics.create_bar(cpu, width=8)
-            ram_bar = graphics.create_bar(ram, width=8)
+            cpu_bar = graphics.create_bar(cpu, width=5)
+            ram_bar = graphics.create_bar(ram, width=5)
             
             # Translate backend status
             if backend_status in ("READY", "CLOUD", "ONLINE"):
@@ -250,17 +250,58 @@ def update_status_bar_in_place(config, voice_status, listening_status, system_st
         _update_dashboard_os(formatted_row, 2)
 
     
-def show_models_menu(models, current):
-    """Prints the selection for LLM models."""
+def show_models_menu(categorized_models, current):
+    """Prints the selection for LLM models with categorized blue sections."""
+    from app.model_manager import ModelManager
+    
     t_title = translator.t('model_mgmt_title')
-    print(f"\n{CYAN}╔{'═' * (len(t_title)+2)}╗{RESET}")
-    print(f"{CYAN}║ {t_title} ║{RESET}")
-    print(f"{CYAN}╚{'═' * (len(t_title)+2)}╝{RESET}")
-    for i, m in enumerate(models, 1):
-        pref = f"{GREEN} >> " if m == current else "    "
-        print(f"{pref}{i}. {m}{RESET}")
-    print(f"{CYAN}╚═════════════════════════════════════════════════════╝{RESET}")
-    print(f"{YELLOW}{translator.t('select_model_index')}{RESET}")
+    L = 58
+    
+    print(f"\n{CYAN}╔{'═' * (L)}╗{RESET}")
+    print(f"{CYAN}║{WHITE} {t_title.center(L-2)} {CYAN}║{RESET}")
+    print(f"{CYAN}╠{'═' * (L)}╣{RESET}")
+    
+    # Try to get model sizes for Ollama
+    model_sizes = {}
+    try:
+        import requests
+        resp = requests.get("http://localhost:11434/api/tags", timeout=1)
+        if resp.status_code == 200:
+            for m in resp.json().get('models', []):
+                name = m.get('name', '')
+                size = m.get('size', 0)
+                if size > 1024**3:
+                    model_sizes[name] = f"{size/(1024**3):.1f}GB"
+                elif size > 1024**2:
+                    model_sizes[name] = f"{size/(1024**2):.0f}MB"
+    except:
+        pass
+    
+    global_idx = 1
+    for category, models in categorized_models.items():
+        # Blue category header bar
+        cat_title = f" ── {category.upper()} ── "
+        print(f"{CYAN}║{Back.BLUE}{Fore.WHITE}{cat_title.center(L)}{Style.RESET_ALL}{CYAN}║{RESET}")
+        print(f"{CYAN}║{'─' * (L)}║{RESET}")
+        
+        for m in models:
+            is_active = m == current
+            pref = f"{GREEN} ► " if is_active else "   "
+            size_str = ""
+            if category == "Ollama (Local)" and m in model_sizes:
+                size_str = f"  {YELLOW}[{model_sizes[m]}]{RESET}"
+            
+            model_str = f"{CYAN}║{RESET} {pref}{global_idx:2}. {m}{size_str}"
+            print(model_str)
+            global_idx += 1
+        
+        print(f"{CYAN}║{RESET}")  # Blank separator line between categories
+            
+    print(f"{CYAN}╚{'═' * (L)}╝{RESET}")
+    print(f"{YELLOW}  {translator.t('select_model_index')}{RESET}")
+
+
+
 
 def show_personality_menu(file_list, current):
     """Prints the selection for personality TXT files."""

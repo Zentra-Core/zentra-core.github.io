@@ -11,9 +11,13 @@ class ModelManager:
         self.config_manager = config_manager
 
     def get_available_models(self):
-        """Fetches and returns a list of all available model names (Local + Cloud)."""
+        """Fetches and returns a dictionary of categorized model names (Local + Cloud)."""
         config = self.config_manager.config
-        all_models = []
+        categorized_models = {
+            "Ollama (Local)": [],
+            "Kobold (Local)": [],
+            "Cloud": []
+        }
         
         # 1. OLLAMA Models (Local)
         try:
@@ -23,11 +27,11 @@ class ModelManager:
                 self.config_manager.set({str(i+1): name for i, name in enumerate(models_ollama)}, 'backend', 'ollama', 'available_models')
                 self.config_manager.save()
                 for m_name in models_ollama:
-                    all_models.append(m_name)
+                    categorized_models["Ollama (Local)"].append(m_name)
         except:
             # Fallback on cache
             cache = config.get('backend', {}).get('ollama', {}).get('available_models', {})
-            all_models.extend(list(cache.values()))
+            categorized_models["Ollama (Local)"].extend(list(cache.values()))
 
         # 2. KOBOLD Models (Local)
         try:
@@ -35,46 +39,74 @@ class ModelManager:
             r = requests.get(url, timeout=1)
             if r.status_code == 200:
                 model_name = r.json().get('result', 'kobold_model')
-                all_models.append(model_name)
+                categorized_models["Kobold (Local)"].append(model_name)
         except:
             cache = config.get('backend', {}).get('kobold', {}).get('available_models', {})
-            all_models.extend(list(cache.values()))
+            categorized_models["Kobold (Local)"].extend(list(cache.values()))
 
         # 3. CLOUD Models
         if config.get('llm', {}).get('allow_cloud', False):
             import os
+            try:
+                from dotenv import load_dotenv
+                load_dotenv(override=True)  # Load fresh in case user edited .env while app was open
+            except ImportError:
+                pass
+                
             providers = config.get('llm', {}).get('providers', {})
             for provider_name, p_data in providers.items():
                 api_key = p_data.get('api_key') or os.environ.get(f"{provider_name.upper()}_API_KEY", "").strip().strip("'").strip('"')
+                
+                cloud_models = []
                 if api_key:
                     cloud_models = self._fetch_cloud_models(provider_name, api_key)
-                    if not cloud_models:
-                        cloud_models = p_data.get('models', [])
-                    for m_name in cloud_models:
-                        full_name = f"{provider_name}/{m_name}" if not m_name.startswith(f"{provider_name}/") else m_name
-                        all_models.append(full_name)
+                
+                # Fallback to static models in config if fetching failed or no API key exists
+                if not cloud_models:
+                    cloud_models = p_data.get('models', [])
+                
+                prov_key = f"Cloud ({provider_name.capitalize()})"
+                if prov_key not in categorized_models:
+                    categorized_models[prov_key] = []
+                    
+                for m_name in cloud_models:
+                    full_name = f"{provider_name}/{m_name}" if not m_name.startswith(f"{provider_name}/") else m_name
+                    categorized_models[prov_key].append(full_name)
+
         
-        return list(dict.fromkeys(all_models)) # Remove duplicates
+        # Clean empty categories
+        return {k: list(dict.fromkeys(v)) for k, v in categorized_models.items() if v}
 
     def get_effective_model(self, config_dict):
         """Returns the currently active model name."""
         backend_type, model = self.get_effective_model_info(config_dict)
         return model
 
-    def handle_models(self, input_callback):
-        """Management F2 - User selection session."""
-        models = self.get_available_models()
-        if not models:
+    def handle_models(self, input_callback, prefetched=None):
+        """Management F2 - User selection session.
+        
+        Args:
+            input_callback: function to get user input.
+            prefetched: optional pre-fetched categorized dict from get_available_models().
+                        If None, will fetch fresh from servers.
+        """
+        categorized = prefetched if prefetched is not None else self.get_available_models()
+        if not categorized:
             print(f"\033[91m{translator.t('no_models_found')}\033[0m")
             import time; time.sleep(2)
             return
+
+        # Flatten for selection logic (preserving category order)
+        flat_list = []
+        for cat in categorized.values():
+            flat_list.extend(cat)
 
         choice = input_callback(">> ")
         if choice and choice != "ESC":
             try:
                 idx = int(choice) - 1
-                if 0 <= idx < len(models):
-                    new_model = models[idx]
+                if 0 <= idx < len(flat_list):
+                    new_model = flat_list[idx]
                     # Identify backend from model name
                     new_backend = "ollama"
                     if "/" in new_model:
@@ -91,6 +123,7 @@ class ModelManager:
             except:
                 print(f"\n\033[91m{translator.t('selection_error')}\033[0m")
             import time; time.sleep(2)
+
 
     def _get_model_sizes(self):
         """Fetches model sizes from Ollama."""

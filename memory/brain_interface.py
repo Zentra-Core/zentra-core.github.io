@@ -133,3 +133,8 @@ def clear_history():
     except Exception as e:
         logger.error(f"Memory Reset Error: {e}")
         return False
+
+# Alias for backward compatibility (renamed from get_context during ITA→ENG migration)
+def get_memory_context():
+    """Alias for get_context() — returns AI and Admin identity for the System Prompt."""
+    return get_context()

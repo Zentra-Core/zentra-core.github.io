@@ -188,7 +188,7 @@ class UIManager:
         """Restituisce il titolo della sezione per un parametro."""
         if param.section == 'system':
             return translator.t("section_system")
-        elif param.section == 'ia':
+        elif param.section == 'ai':
             return translator.t("section_ia")
         elif param.section == 'llm':
             return translator.t("section_llm")
@@ -202,21 +202,21 @@ class UIManager:
             return "🌐 Gemini"
         elif param.section == 'logging':
             return translator.t("section_logging")
-        elif param.section == 'filtri':
+        elif param.section == 'filters':
             return translator.t("section_filters")
-        elif param.section == 'ascolto':
+        elif param.section == 'listening':
             return translator.t("section_listening")
-        elif param.section == 'voce':
+        elif param.section == 'voice':
             return translator.t("section_voice")
         elif param.section == 'backend':
             # Distingue modello dagli altri parametri di backend
-            if param.key == 'modello':
+            if param.key == 'model' or param.key == '_f2_hint':
                 return translator.t("section_models")
             else:
                 return translator.t("section_generation")
         elif param.section in ('ollama', 'kobold'):
             return translator.t("section_generation")
-        elif param.section == 'motore_routing':
+        elif param.section == 'routing_engine':
             return translator.t("section_routing")
         elif param.section == 'legacy_ollama':
             return "🦙 OLLAMA (Local)"

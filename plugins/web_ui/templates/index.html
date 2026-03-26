@@ -742,7 +742,7 @@ function buildPayload() {
   out.voice = out.voice || {};
   out.voice.piper_path   = document.getElementById('v-piper').value;
   const pdir = sysOptions.piper_dir || 'C:\\piper';
-  const sel  = document.getElementById('v-onnx').value;
+  const sel  = document.getElementById('v-onnx-model').value;
   out.voice.onnx_model = (sel.includes('\\') || sel.includes('/')) ? sel : pdir + '\\' + sel;
   out.voice.speed            = parseFloat(document.getElementById('v-speed').value);
   out.voice.noise_scale      = parseFloat(document.getElementById('v-noise').value);

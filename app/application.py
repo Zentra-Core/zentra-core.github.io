@@ -160,7 +160,7 @@ class ZentraApplication:
         models = self.model_manager.get_available_models()
         current = self.model_manager.get_effective_model(self.config_manager.config)
         interface.show_models_menu(models, current)
-        self.model_manager.handle_models(self._input_digitale_sicuro)
+        self.model_manager.handle_models(self._input_digitale_sicuro, prefetched=models)
 
     def _handle_f3(self):
         """Personality selection (F3)."""
