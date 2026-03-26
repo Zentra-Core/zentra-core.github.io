@@ -21,6 +21,7 @@ class ConfigManager:
             return {
                 "backend": {"tipo": "ollama", "ollama": {}}, 
                 "ia": {},
+                "lingua": "en",
                 "motore_routing": {"modalita": "auto", "modelli_legacy": ""}
             }
 

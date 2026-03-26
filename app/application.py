@@ -56,7 +56,7 @@ class ZentraApplication:
         """Inizializzazione di tutti i componenti."""
         logger.init_logger(self.config_manager.config)
         # Inizializza traduttore
-        lingua = self.config_manager.config.get("lingua", "it")
+        lingua = self.config_manager.config.get("lingua", "en")
         translator.init_translator(lingua)
         logger.info("[APP] Zentra Core boot sequence initiated.")
         

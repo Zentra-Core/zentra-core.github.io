@@ -10,8 +10,11 @@ class Translator:
             cls._instance = super(Translator, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self, lingua='it'):
+    def __init__(self, lingua='en'):
         if hasattr(self, '_initialized') and self._initialized:
+            # Allow updating language if explicitly passed during init
+            if lingua != self.lingua:
+                self.set_language(lingua)
             return
         self.lingua = lingua
         self.translations = {}
@@ -63,7 +66,7 @@ class Translator:
 # Istanza globale
 _global_translator = None
 
-def init_translator(lingua='it'):
+def init_translator(lingua='en'):
     global _global_translator
     _global_translator = Translator(lingua)
     return _global_translator
