@@ -30,33 +30,33 @@ def build_system_prompt(config: dict, bridge_dir: str) -> str:
         return "You are Zentra, an AI assistant."
 
     # --- Personality file ---
-    personalita_file = config.get("ia", {}).get("personalita_attiva", "zentra.txt")
-    path_p = os.path.join(bridge_dir, "personality", personalita_file)
-    testo_personalita = ""
-    if os.path.exists(path_p):
+    personality_file = config.get("ai", {}).get("active_personality", "zentra.txt")
+    path_personality = os.path.join(bridge_dir, "personality", personality_file)
+    personality_text = ""
+    if os.path.exists(path_personality):
         try:
-            with open(path_p, "r", encoding="utf-8") as fh:
-                testo_personalita = fh.read()
+            with open(path_personality, "r", encoding="utf-8") as fh:
+                personality_text = fh.read()
         except Exception as exc:
             bridge_logger.warning(f"[PROMPT] Cannot read personality file: {exc}")
 
     # --- Long-term memory context ---
     try:
-        memoria_identita = brain_interface.ottieni_contesto_memoria()
+        memory_identity = brain_interface.get_memory_context()
     except Exception as exc:
         bridge_logger.warning(f"[PROMPT] Memory context unavailable: {exc}")
-        memoria_identita = ""
+        memory_identity = ""
 
     # --- Plugin capabilities ---
     try:
-        capacita = brain.carica_capacita()
+        capabilities = brain.load_capabilities()
     except Exception as exc:
         bridge_logger.warning(f"[PROMPT] Capabilities unavailable: {exc}")
-        capacita = ""
+        capabilities = ""
 
     # --- Safety / identity rules ---
     try:
-        regole = (
+        rules = (
             f"{translator.t('identity_protocol')}\n"
             f"- {translator.t('rule_who_am_i')}\n"
             f"{translator.t('file_management_rules')}\n"
@@ -67,12 +67,20 @@ def build_system_prompt(config: dict, bridge_dir: str) -> str:
         )
     except Exception as exc:
         bridge_logger.warning(f"[PROMPT] Translator unavailable: {exc}")
-        regole = ""
+        rules = ""
+
+    try:
+        special_instructions = config.get("ai", {}).get("special_instructions", "").strip()
+        special_instructions_block = f"\n### SPECIAL INSTRUCTIONS ###\n{special_instructions}\n" if special_instructions else ""
+    except Exception as exc:
+        bridge_logger.warning(f"[PROMPT] Failed to load special instructions: {exc}")
+        special_instructions_block = ""
 
     return (
-        f"{testo_personalita}\n\n"
-        f"{memoria_identita}\n\n"
-        f"{capacita}\n\n"
-        f"{regole}\n"
+        f"{personality_text}\n\n"
+        f"{memory_identity}\n\n"
+        f"{capabilities}\n\n"
+        f"{rules}\n"
+        f"{special_instructions_block}\n"
         "--- END OF SYSTEM INSTRUCTIONS ---"
     )

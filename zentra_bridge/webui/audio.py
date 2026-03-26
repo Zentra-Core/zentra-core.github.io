@@ -28,7 +28,7 @@ def speak_local(testo: str, voce_cfg: dict, bridge_dir: str) -> None:
     def _run() -> None:
         try:
             piper_path   = voce_cfg.get("piper_path",   r"C:\piper\piper.exe")
-            model_path   = voce_cfg.get("modello_onnx", r"C:\piper\it_IT-paola-medium.onnx")
+            model_path   = voce_cfg.get("onnx_model", r"C:\piper\it_IT-paola-medium.onnx")
             speed        = voce_cfg.get("speed",               1.2)
             length_scale = round(1.0 / max(0.1, speed), 3)
             noise_scale  = voce_cfg.get("noise_scale",       0.817)

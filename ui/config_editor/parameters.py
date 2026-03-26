@@ -33,13 +33,13 @@ def build_parameter_list(config):
     backend_type, active_model_value = ModelManager.get_effective_model_info(config)
     backend_config = config.get('backend', {}).get(backend_type, {})
     
-    # Modello attivo (dal backend) - sola lettura, si modifica con F2
+    # Active model (from backend) - read-only, change with F2
     lbl_modello = translator.t("label_active_model")
-    if 'modelli_disponibili' in backend_config:
-        models = list(backend_config['modelli_disponibili'].values())
-        params.append(Parameter('backend', 'modello', lbl_modello, 'str', options=models, readonly=True))
+    if 'available_models' in backend_config:
+        models = list(backend_config['available_models'].values())
+        params.append(Parameter('backend', 'model', lbl_modello, 'str', options=models, readonly=True))
     else:
-        params.append(Parameter('backend', 'modello', lbl_modello, 'str', readonly=True))
+        params.append(Parameter('backend', 'model', lbl_modello, 'str', readonly=True))
     
     # Riga informativa: mostra il nome del modello globale per riferimento rapido nel pannello plugin
     lbl_f2_hint = translator.t("label_f2_model_hint")
@@ -49,7 +49,12 @@ def build_parameter_list(config):
         info_value=active_model_value
     ))
     
-    # --- Sezione LLM ---
+    # --- Artificial Intelligence (Special Instructions) ---
+    params.append(Parameter('ai', 'special_instructions', translator.t("label_special_instructions"), 'str'))
+    params.append(Parameter('ai', 'save_special_instructions', translator.t("label_save_special_instructions"), 'bool'))
+    params.append(Parameter('ai', 'clear_instructions', translator.t("label_clear_special_instructions"), 'command', command='clear_instructions'))
+
+    # --- LLM Section ---
     params.append(Parameter('llm', 'allow_cloud', translator.t("label_llm_allow_cloud"), 'bool'))
     params.append(Parameter('llm', 'debug_llm', translator.t("label_debug_llm"), 'bool'))
     
@@ -70,8 +75,8 @@ def build_parameter_list(config):
     params.append(Parameter('ollama', 'num_gpu', translator.t("label_num_gpu"), 'int', 
                            min=-1, max=99, step=1))
     
-    # --- SEZIONE VOCE (PIPER ENGINE) ---
-    voce_conf = config.get('voce', {})
+    # --- Voice Section (Piper Engine) ---
+    voice_conf = config.get('voice', {})
     
     try:
         piper_path_dir = r"C:\piper"
@@ -81,50 +86,54 @@ def build_parameter_list(config):
     except Exception:
         percorsi_onnx = [r"C:\piper\en_US-lessac-medium.onnx"]
         
-    params.append(Parameter('voce', 'modello_onnx', translator.t("label_modello_voce"), 'str', options=percorsi_onnx))
+    params.append(Parameter('voice', 'onnx_model', translator.t("label_modello_voce"), 'str', options=percorsi_onnx))
     
-    params.append(Parameter('voce', 'speed', translator.t("label_speed"), 'float', 
+    params.append(Parameter('voice', 'speed', translator.t("label_speed"), 'float', 
                            min=0.5, max=2.5, step=0.1))
-    params.append(Parameter('voce', 'noise_scale', translator.t("label_noise_scale"), 'float', 
+    params.append(Parameter('voice', 'noise_scale', translator.t("label_noise_scale"), 'float', 
                            min=0.0, max=1.0, step=0.05))
-    params.append(Parameter('voce', 'noise_w', translator.t("label_noise_w"), 'float', 
+    params.append(Parameter('voice', 'noise_w', translator.t("label_noise_w"), 'float', 
                            min=0.0, max=1.0, step=0.05))
-    params.append(Parameter('voce', 'sentence_silence', translator.t("label_sentence_silence"), 'float', 
+    params.append(Parameter('voice', 'sentence_silence', translator.t("label_sentence_silence"), 'float', 
                            min=0.0, max=3.0, step=0.1))
 
-    # --- Bridge WebUI ---
+    # --- WebUI Bridge ---
     bridge = config.get('bridge', {})
-    params.append(Parameter('bridge', 'voce_locale_abilitata', 'Voce su WebUI (Locale TTS)', 'bool'))
-    params.append(Parameter('bridge', 'voce_webui_stt', 'Usa Mic WebUI (Browser STT)', 'bool'))
+    params.append(Parameter('bridge', 'webui_voice_enabled', 'Voce su WebUI (Locale TTS)', 'bool'))
+    params.append(Parameter('bridge', 'webui_voice_stt', 'Usa Mic WebUI (Browser STT)', 'bool'))
 
-    # --- Ascolto ---
-    ascolto = config.get('ascolto', {})
-    params.append(Parameter('ascolto', 'soglia_energia', translator.t("label_soglia_energia"), 'int', 
+    # --- Listening ---
+    listening = config.get('listening', {})
+    params.append(Parameter('listening', 'energy_threshold', translator.t("label_energy_threshold"), 'int', 
                            min=100, max=1000, step=50))
-    params.append(Parameter('ascolto', 'timeout_silenzio', translator.t("label_timeout_silenzio"), 'int', 
+    params.append(Parameter('listening', 'silence_timeout', translator.t("label_silence_timeout"), 'int', 
                            min=1, max=10, step=1))
+    params.append(Parameter('listening', 'phrase_limit', translator.t("label_phrase_limit"), 'int', 
+                           min=5, max=60, step=5))
 
-    # --- Filtri ---
-    filtri = config.get('filtri', {})
-    params.append(Parameter('filtri', 'rimuovi_asterischi', translator.t("label_rimuovi_asterischi"), 'bool'))
-    params.append(Parameter('filtri', 'rimuovi_parentesi_tonde', translator.t("label_rimuovi_parentesi_tonde"), 'bool'))
-    params.append(Parameter('filtri', 'rimuovi_parentesi_quadre', translator.t("label_rimuovi_parentesi_quadre"), 'bool'))
+    # --- Filters ---
+    filters = config.get('filters', {})
+    params.append(Parameter('filters', 'remove_asterisks', translator.t("label_rimuovi_asterischi"), 'bool'))
+    params.append(Parameter('filters', 'remove_round_brackets', translator.t("label_rimuovi_parentesi_tonde"), 'bool'))
+    params.append(Parameter('filters', 'remove_square_brackets', translator.t("label_rimuovi_parentesi_quadre"), 'bool'))
 
     # --- Logging ---
     logging_cfg = config.get('logging', {})
-    params.append(Parameter('logging', 'destinazione', translator.t("label_destinazione_log"), 'str', options=['chat', 'console', 'file_only']))
-    params.append(Parameter('logging', 'tipo_messaggi', translator.t("label_tipo_messaggi"), 'str', options=['info', 'debug', 'both']))
+    params.append(Parameter('logging', 'destination', translator.t("label_destinazione_log"), 'str', options=['chat', 'console', 'file_only']))
+    params.append(Parameter('logging', 'message_types', translator.t("label_tipo_messaggi"), 'str', options=['info', 'debug', 'both']))
 
     # --- Comando speciale RIAVVIA e opzioni di sistema ---
-    params.append(Parameter('system', 'avvio_rapido', translator.t("label_avvio_rapido"), 'bool'))
-    params.append(Parameter('system', 'lingua', translator.t("label_lingua_system"), 'str', options=['it', 'en']))
+    params.append(Parameter('system', 'fast_boot', translator.t("label_avvio_rapido"), 'bool'))
+    params.append(Parameter('system', 'language', translator.t("label_lingua_system"), 'str', options=['it', 'en']))
     params.append(Parameter('system', 'reboot', translator.t("label_reboot"), 'command', 
                            command='reboot'))
+    params.append(Parameter('system', 'save_exit', translator.t("label_save_exit"), 'command', 
+                           command='save_exit'))
 
-    # --- Motore: Routing (Dual Engine) ---
-    params.append(Parameter('motore_routing', 'modalita', translator.t("label_routing_mode"), 'str', 
+    # --- Routing Engine (Dual Engine) ---
+    params.append(Parameter('routing_engine', 'mode', translator.t("label_routing_mode"), 'str', 
                            options=['auto', 'forza_nativo', 'forza_legacy']))
-    params.append(Parameter('motore_routing', 'modelli_legacy', translator.t("label_routing_models"), 'str'))
+    params.append(Parameter('routing_engine', 'legacy_models', translator.t("label_routing_models"), 'str'))
 
     # --- Selezione Dinamica Modelli Legacy ---
     import requests
@@ -148,10 +157,10 @@ def build_parameter_list(config):
         else:
             if name not in models_by_provider['ollama']: models_by_provider['ollama'].append(name)
 
-    # 0. Modelli persistenti nel config
+    # 0. Persistent models in config
     for b_type in ['ollama', 'kobold']:
         b_conf = config.get('backend', {}).get(b_type, {})
-        for m_name in b_conf.get('modelli_disponibili', {}).values():
+        for m_name in b_conf.get('available_models', {}).values():
             _add_model(m_name)
     
     # 1. Scansione Live OLLAMA
@@ -170,17 +179,17 @@ def build_parameter_list(config):
             if kb_model: _add_model(kb_model)
     except: pass
 
-    # 3. Cloud (da config)
+    # 3. Cloud (from config)
     allow_cloud = config.get('llm', {}).get('allow_cloud', False)
     if allow_cloud:
         providers = config.get('llm', {}).get('providers', {})
         for p_name, p_data in providers.items():
-            for m_name in p_data.get('modelli', []):
+            for m_name in p_data.get('models', []):
                 full_name = f"{p_name}/{m_name}" if not m_name.startswith(p_name+"/") else m_name
                 _add_model(full_name)
                     
-    # 4. Modelli già in stringa legacy
-    legacy_str = config.get('motore_routing', {}).get('modelli_legacy', '')
+    # 4. Models already in legacy string
+    legacy_str = config.get('routing_engine', {}).get('legacy_models', '')
     for m in [s.strip() for s in legacy_str.split(',') if s.strip()]:
         _add_model(m)
 
@@ -215,18 +224,18 @@ def build_parameter_list(config):
                 # Se manca la traduzione, usa una versione pulita della chiave
                 label = key.replace('_', ' ').capitalize()
             
-            # Gestione speciale per la selezione del modello (dropdown)
+            # Special handling for model selection (dropdown)
             kwargs = {}
-            if key == "modello_llm":
-                if 'modelli_disponibili' in backend_config:
-                    kwargs['options'] = [""] + list(backend_config['modelli_disponibili'].values())
+            if key == "llm_model":
+                if 'available_models' in backend_config:
+                    kwargs['options'] = [""] + list(backend_config['available_models'].values())
                 else:
                     if config.get('llm', {}).get('allow_cloud', False):
                         cloud_models = []
                         for provider in config.get('llm', {}).get('providers', {}).values():
-                            cloud_models.extend(provider.get('modelli', []))
+                            cloud_models.extend(provider.get('models', []))
                         kwargs['options'] = [""] + cloud_models
-                # Passa il modello globale come hint per il display
+                # Passes global model as hint for display
                 kwargs['global_default_model'] = active_model_value
 
             # Aggiungi il parametro con sezione 'plugin' e plugin_tag

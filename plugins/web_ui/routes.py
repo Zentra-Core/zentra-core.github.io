@@ -27,17 +27,17 @@ def init_routes(app, cfg_mgr, root_dir, logger):
         except:
             onnx_files = ["en_US-lessac-medium.onnx"]
             
-        ollama_models = list(cfg.get("backend", {}).get("ollama", {}).get("modelli_disponibili", {}).values())
-        personalita   = list(cfg.get("ia", {}).get("personalita_disponibili", {}).values())
+        ollama_models = list(cfg.get("backend", {}).get("ollama", {}).get("available_models", {}).values())
+        personalita   = list(cfg.get("ai", {}).get("available_personalities", {}).values())
         cloud_models  = {
-            p: cfg.get("llm", {}).get("providers", {}).get(p, {}).get("modelli", [])
+            p: cfg.get("llm", {}).get("providers", {}).get(p, {}).get("models", [])
             for p in ("openai", "anthropic", "groq", "gemini")
         }
         return jsonify({
             "piper_voices": onnx_files,
             "piper_dir":    piper_path_dir,
             "ollama_models": ollama_models,
-            "personalita":   personalita,
+            "personalities": personalita,
             "cloud_models":  cloud_models
         })
 
@@ -51,7 +51,7 @@ def init_routes(app, cfg_mgr, root_dir, logger):
             if cfg_mgr.save():
                 # Dynamically update the global translator language without reboot
                 from core.i18n.translator import get_translator
-                get_translator().set_language(incoming.get("lingua", "en"))
+                get_translator().set_language(incoming.get("language", "en"))
                 return jsonify({"ok": True})
             return jsonify({"ok": False, "error": "Save failed"}), 500
         except Exception as exc:
@@ -62,19 +62,19 @@ def init_routes(app, cfg_mgr, root_dir, logger):
     def get_status():
         try:
             cfg     = cfg_mgr.config
-            backend = cfg.get("backend", {}).get("tipo", "?")
-            if   backend == "cloud":  model = cfg.get("backend", {}).get("cloud",  {}).get("modello", "?")
-            elif backend == "ollama": model = cfg.get("backend", {}).get("ollama", {}).get("modello", "?")
-            elif backend == "kobold": model = cfg.get("backend", {}).get("kobold", {}).get("modello", "?")
+            backend = cfg.get("backend", {}).get("type", "?")
+            if   backend == "cloud":  model = cfg.get("backend", {}).get("cloud",  {}).get("model", "?")
+            elif backend == "ollama": model = cfg.get("backend", {}).get("ollama", {}).get("model", "?")
+            elif backend == "kobold": model = cfg.get("backend", {}).get("kobold", {}).get("model", "?")
             else: model = "?"
 
             br    = cfg.get("bridge", {})
             flags = [k for k, v in [
-                ("proc",        br.get("usa_processore")),
-                ("think-strip", br.get("rimuovi_think_tags")),
-                ("tools",       br.get("abilita_tools")),
+                ("proc",        br.get("use_processor")),
+                ("think-strip", br.get("remove_think_tags")),
+                ("tools",       br.get("enable_tools")),
             ] if v]
-            tts  = "ON (Piper)" if br.get("voce_locale_abilitata") else "OFF"
+            tts  = "ON (Piper)" if br.get("local_voice_enabled") else "OFF"
 
             from datetime import datetime
             config_path = os.path.join(root_dir, "config.json")

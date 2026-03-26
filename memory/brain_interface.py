@@ -1,69 +1,135 @@
 """
-MODULO: Brain Interface - Zentra Caveau (FIXED)
-DESCRIZIONE: Gestore centralizzato per la memoria semantica ed episodica.
+MODULE: Brain Interface - Zentra Memory Vault
+DESCRIPTION: Centralized manager for semantic and episodic memory.
 """
 
 import json
 import os
 import sqlite3
 from datetime import datetime
+from core.logging import logger
 
-# Percorsi file - Assicuriamoci che puntino alla cartella 'memoria'
+# File paths
 BASE_DIR = "memory"
-PATH_IDENTITA = os.path.join(BASE_DIR, "identita_core.json")
-PATH_PROFILO = os.path.join(BASE_DIR, "profilo_utente.json")
+PATH_IDENTITY = os.path.join(BASE_DIR, "identita_core.json")
+PATH_PROFILE = os.path.join(BASE_DIR, "profilo_utente.json")
 PATH_DB = os.path.join(BASE_DIR, "archivio_chat.db")
 
-def inizializza_caveau():
-    """Crea la cartella e i database se non esistono."""
+def initialize_vault():
+    """Creates the folder and databases if they don't exist."""
     if not os.path.exists(BASE_DIR):
         os.makedirs(BASE_DIR)
     
     conn = sqlite3.connect(PATH_DB)
     cursor = conn.cursor()
+    # Ensure the history table exists
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS cronologia (
+        CREATE TABLE IF NOT EXISTS history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp TEXT,
-            ruolo TEXT,
-            messaggio TEXT
+            role TEXT,
+            message TEXT
         )
     ''')
     conn.commit()
     conn.close()
 
-def ottieni_contesto_memoria():
-    """Recupera l'identità dell'IA e dell'Admin per il System Prompt."""
+def get_context():
+    """Retrieves AI and Admin identity for the System Prompt."""
     try:
-        # Carichiamo Identità Core (Chi è Zentra)
-        with open(PATH_IDENTITA, "r", encoding="utf-8") as f:
+        if not os.path.exists(PATH_IDENTITY) or not os.path.exists(PATH_PROFILE):
+            return ""
+
+        with open(PATH_IDENTITY, "r", encoding="utf-8") as f:
             id_data = json.load(f)
         
-        # Carichiamo Profilo Utente (Chi è l'Admin)
-        with open(PATH_PROFILO, "r", encoding="utf-8") as f:
+        with open(PATH_PROFILE, "r", encoding="utf-8") as f:
             prof_data = json.load(f)
             
         from core.system.version import VERSION
-        contesto = f"\n[MEMORIA IDENTITÀ ATTIVA]\n"
-        contesto += f"Tu sei {id_data['ia']['nome']}, versione {VERSION}. {id_data['ia']['natura']}.\n"
-        contesto += f"Il tuo Creatore (Admin) è {id_data['autore']['nome']}. Protocollo: {id_data['ia']['protocollo']}.\n"
+        context = f"\n[ACTIVE IDENTITY MEMORY]\n"
         
-        # Note biografiche sull'Admin
-        note = prof_data.get('note_biografiche', 'Nessuna nota specifica.')
-        contesto += f"Note su Admin: {note}\n"
+        # AI Identity
+        ai_name = id_data.get('ai', {}).get('name', 'Zentra')
+        ai_nature = id_data.get('ai', {}).get('nature', 'AI Assistant')
+        ai_protocol = id_data.get('ai', {}).get('protocol', 'Standard')
         
-        return contesto
+        context += f"You are {ai_name}, version {VERSION}. {ai_nature}.\n"
+        context += f"Your Creator (Admin) is {id_data.get('author', {}).get('name', 'Admin')}. Protocol: {ai_protocol}.\n"
+        
+        # Admin Biographical Notes
+        notes = prof_data.get('author', {}).get('notes', 'No specific notes.')
+        context += f"Admin notes: {notes}\n"
+        
+        return context
     except Exception as e:
-        return f"\n[MEMORY]: Identity loading error: {e}\n"
+        logger.error(f"Memory Context Error: {e}")
+        return ""
 
-def salva_messaggio(ruolo, messaggio):
-    """Archivia uno scambio nella memoria episodica (DB)."""
+def update_profile(key, value):
+    """Updates a specific field in the user profile JSON."""
+    try:
+        if not os.path.exists(PATH_PROFILE):
+            # Create a default profile if missing
+            data = {"author": {"name": "Admin", "role": "Root User", "notes": ""}}
+        else:
+            with open(PATH_PROFILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        
+        # Ensure 'author' section exists
+        if "author" not in data:
+            data["author"] = {}
+            
+        # Standardize: we usually update 'notes'
+        if key == "notes" or key == "note_biografiche":
+            data["author"]["notes"] = value
+        else:
+            data["author"][key] = value
+            
+        with open(PATH_PROFILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4)
+        return True
+    except Exception as e:
+        logger.error(f"Profile Update Error: {e}")
+        return False
+
+def save_message(role, message):
+    """Stores an exchange in episodic memory (DB)."""
     try:
         conn = sqlite3.connect(PATH_DB)
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO cronologia (timestamp, ruolo, messaggio) VALUES (?, ?, ?)",
-                       (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), ruolo, messaggio))
+        cursor.execute("INSERT INTO history (timestamp, role, message) VALUES (?, ?, ?)",
+                       (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), role, message))
         conn.commit()
         conn.close()
     except Exception as e:
-        print(f"Memory DB Error: {e}")
+        logger.error(f"Memory Save Error: {e}")
+
+def get_history(limit=10):
+    """Retrieves the last N messages from the history."""
+    try:
+        conn = sqlite3.connect(PATH_DB)
+        cursor = conn.cursor()
+        cursor.execute("SELECT role, message FROM history ORDER BY id DESC LIMIT ?", (limit,))
+        rows = cursor.fetchall()
+        conn.close()
+        
+        # Return in chronological order (oldest first)
+        rows.reverse()
+        return rows
+    except Exception as e:
+        logger.error(f"Memory Read Error: {e}")
+        return []
+
+def clear_history():
+    """Wipes the episodic history table."""
+    try:
+        conn = sqlite3.connect(PATH_DB)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM history")
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        logger.error(f"Memory Reset Error: {e}")
+        return False

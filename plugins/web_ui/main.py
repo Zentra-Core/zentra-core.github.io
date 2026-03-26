@@ -19,7 +19,7 @@ except ImportError:
         def info(self, *a, **k): print("[WEB_UI]", *a)
         def warning(self, *a, **k): print("[WEB_UI WARN]", *a)
         def debug(self, *a, **k): pass
-        def errore(self, *a, **k): print("[WEB_UI ERR]", *a)
+        def error(self, *a, **k): print("[WEB_UI ERR]", *a)
     logger = _L()
     class _T:
         def t(self, k, **kw): return k

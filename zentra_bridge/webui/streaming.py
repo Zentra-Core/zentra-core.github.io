@@ -55,7 +55,7 @@ def stream_response(
     backend_cfg:   dict,
     llm_config:    dict,
     tool_schemas:  list,
-    rimuovi_think: bool,
+    remove_think:  bool,
     delay_ms:      float,
 ) -> Generator[str, None, None]:
     """
@@ -142,7 +142,7 @@ def stream_response(
                 # Handle content delta
                 content = getattr(delta, "content", "") or ""
                 if content:
-                    if rimuovi_think:
+                    if remove_think:
                         content = re.sub(r"</?think>", "", content)
                     if delay_ms > 0:
                         time.sleep(delay_ms)

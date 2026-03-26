@@ -13,7 +13,7 @@ except ImportError:
 class HelpTools:
     """
     Plugin: Help & Registry
-    Strumenti per interrogare e aggiornare le capacità del sistema Zentra.
+    Tools to query and update Zentra system capabilities.
     """
 
     def __init__(self):
@@ -31,15 +31,15 @@ class HelpTools:
 
     def list_capabilities(self) -> str:
         """
-        Mostra la lista completa di tutti i tool, moduli e capacità attualmente caricati nel sistema.
-        Usa questo comando per sapere cosa sei in grado di fare o per rispondere all'utente sulle tue funzioni.
+        Displays the complete list of all tools, modules, and capabilities currently loaded in the system.
+        Use this command to know what you are capable of or to answer the user about your functions.
         """
         return plugin_loader.ottieni_capacita_formattate()
 
     def refresh_registry(self) -> str:
         """
-        Forza una rilettura e un aggiornamento del registro centrale delle capacità (ricansiona i plugin).
-        Utile se un modulo è stato bloccato o aggiornato di recente.
+        Forces a re-read and update of the central capabilities registry (rescans plugins).
+        Useful if a module has been locked or recently updated.
         """
         plugin_loader.aggiorna_registro_capacita()
         return translator.t("plugin_help_refresh_success") + "\n" + plugin_loader.ottieni_capacita_formattate()

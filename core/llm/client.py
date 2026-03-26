@@ -1,6 +1,6 @@
 """
-MODULO: LiteLLM Client - Zentra Core (MANUAL LOGGING)
-DESCRIZIONE: Client unificato per la generazione di testo via LiteLLM con log rincanalati.
+MODULE: LiteLLM Client - Zentra Core (MANUAL LOGGING)
+DESCRIPTION: Unified client for text generation via LiteLLM with re-routed logs.
 """
 
 import litellm
@@ -9,13 +9,12 @@ import json
 import logging
 # Importiamo correttamente le funzioni dal modulo logger
 from core.logging import logger as log_mod
-from core.logging.logger import debug as zlog_debug, info as zlog_info, errore as zlog_error
+from core.logging.logger import debug as zlog_debug, info as zlog_info, error as zlog_error
 
-# Configurazione globale LiteLLM
+# Pre-configure LiteLLM (no print to chat)
 litellm.telemetry = False
 
-# CRITICAL: Purge any StreamHandlers LiteLLM added during import (they write to stdout/chat)
-# LiteLLM may auto-attach a stdout handler if LITELLM_LOG env var is set at import time
+# CRITICAL: Purge any StreamHandlers LiteLLM added during import
 _litellm_logger = logging.getLogger("LiteLLM")
 for _h in _litellm_logger.handlers[:]:
     if isinstance(_h, logging.StreamHandler) and not isinstance(_h, logging.FileHandler):
@@ -28,16 +27,16 @@ def generate(system_prompt, user_message, config_or_subconfig, llm_config=None, 
     Genera una risposta usando LiteLLM, con supporto Opzionale per i Tools e Streaming.
     """
     
-    # 1. Identificazione Backend e Modello
+    # 1. Backend and Model Identification
     if 'backend' in config_or_subconfig:
         backend_info = config_or_subconfig.get('backend', {})
-        backend_type = backend_info.get('tipo', 'ollama')
+        backend_type = backend_info.get('type', 'ollama')
         specific_config = backend_info.get(backend_type, {})
     else:
         specific_config = config_or_subconfig
-        backend_type = specific_config.get('tipo_backend', 'ollama')
+        backend_type = specific_config.get('backend_type', 'ollama')
 
-    model_name = specific_config.get('modello')
+    model_name = specific_config.get('model')
     
     if not model_name:
         return f"[SYSTEM] Error: Model not found."

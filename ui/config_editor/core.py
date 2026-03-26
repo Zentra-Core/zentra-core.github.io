@@ -26,94 +26,96 @@ class ConfigEditor:
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 config = json.load(f)
                 
-            # --- Auto-sync dei plugin ---
+            # --- Auto-sync plugins ---
             plugins_config = config.get("plugins", {})
             script_dir = os.path.dirname(os.path.abspath(__file__))  
             ui_dir = os.path.dirname(script_dir)  
             project_dir = os.path.dirname(ui_dir)  
             plugins_dir = os.path.join(project_dir, "plugins")
             
-            # Trova i plugin reali (cartelle con main.py o file .py validi)
-            plugin_reali = set()
+            # Find real plugins (folders with main.py or valid .py files)
+            real_plugins = set()
             if os.path.exists(plugins_dir):
                 for item in os.listdir(plugins_dir):
                     item_path = os.path.join(plugins_dir, item)
                     if os.path.isdir(item_path) and os.path.isfile(os.path.join(item_path, "main.py")):
-                        plugin_reali.add(item.upper())
+                        real_plugins.add(item.upper())
                     elif os.path.isfile(item_path) and item.endswith(".py") and not item.startswith("_"):
-                        plugin_reali.add(item[:-3].upper())
+                        real_plugins.add(item[:-3].upper())
             
-            # Rimuovere da config.json i plugin che non esistono più
-            da_rimuovere = [p for p in plugins_config if p not in plugin_reali]
-            for p in da_rimuovere:
+            # Remove plugins from config.json that no longer exist
+            to_remove = [p for p in plugins_config if p not in real_plugins]
+            for p in to_remove:
                 del plugins_config[p]
-                self.modified = True  # Segna come modificato se abbiamo pulito qualcosa
+                self.modified = True  # Mark as modified if we cleaned something
                 
             config["plugins"] = plugins_config
             
             # --- Auto-init Routing ---
-            if "motore_routing" not in config:
-                config["motore_routing"] = {"modalita": "auto", "modelli_legacy": ""}
-            elif "modelli_legacy" not in config["motore_routing"]:
-                 config["motore_routing"]["modelli_legacy"] = ""
+            if "routing_engine" not in config:
+                config["routing_engine"] = {"mode": "auto", "legacy_models": ""}
+            elif "legacy_models" not in config["routing_engine"]:
+                 config["routing_engine"]["legacy_models"] = ""
                  
             return config
             
         except Exception as e:
-            print(f"Errore caricamento {self.config_path}: {e}")
+            print(f"Error loading {self.config_path}: {e}")
             raise
 
     def _save_config(self):
         """Salva il file JSON se ci sono modifiche e aggiorna il traduttore."""
         if self.modified:
             try:
-                # Controlla cambio lingua prima del salvataggio
-                vecchia_lingua = None
+                # Check language change before saving
+                old_language = None
                 if os.path.exists(self.config_path):
                     try:
                         with open(self.config_path, 'r', encoding='utf-8') as f:
                             old_data = json.load(f)
-                            vecchia_lingua = old_data.get("lingua")
+                            old_language = old_data.get("language")
                     except: pass
 
                 with open(self.config_path, 'w', encoding='utf-8') as f:
                     json.dump(self.config, f, indent=4, ensure_ascii=False)
                 
-                # Sincronizza il traduttore se la lingua è cambiata
-                nuova_lingua = self.config.get("lingua")
-                if nuova_lingua and nuova_lingua != vecchia_lingua:
+                # Sync translator if language changed
+                new_language = self.config.get("language")
+                if new_language and new_language != old_language:
                     from core.i18n import translator
-                    translator.get_translator().set_language(nuova_lingua)
+                    translator.get_translator().set_language(new_language)
                 
                 print(f"\n{translator.t('config_saved_success')}")
             except Exception as e:
                 print(f"\n{translator.t('config_save_error', error=str(e))}")
 
     def _get_value(self, param):
-        """Restituisce il valore di un parametro dal config corrente."""
+        """Returns a parameter value from current config."""
         try:
-            # Determina il backend attivo
-            backend_type = self.config.get('backend', {}).get('tipo', 'ollama')
+            # Determine active backend
+            backend_type = self.config.get('backend', {}).get('type', 'ollama')
             backend_config = self.config.get('backend', {}).get(backend_type, {})
             
-            # La chiave è già presente in param.key grazie alla nuova build_parameter_list
+            # Key is already present in param.key
             key = param.key
             
-            # Gestisci i diversi tipi di sezioni
+            # Handle different section types
             if param.section == 'backend':
                 return backend_config.get(key)
             elif param.section == 'ollama':
                 return self.config.get('backend', {}).get('ollama', {}).get(key)
             elif param.section == 'kobold':
                 return self.config.get('backend', {}).get('kobold', {}).get(key)
-            elif param.section == 'voce':
-                return self.config.get('voce', {}).get(key)
+            elif param.section == 'voice':
+                return self.config.get('voice', {}).get(key)
+            elif param.section == 'ai':
+                return self.config.get('ai', {}).get(key)
             elif param.section == 'bridge':
                 return self.config.get('bridge', {}).get(key)
-            elif param.section == 'ascolto':
-                return self.config.get('ascolto', {}).get(key)
-            elif param.section == 'filtri':
-                return self.config.get('filtri', {}).get(key)
+            elif param.section == 'listening':
+                return self.config.get('listening', {}).get(key)
+            elif param.section == 'filters':
+                return self.config.get('filters', {}).get(key)
             elif param.section == 'logging':
                 return self.config.get('logging', {}).get(key)
             elif param.section == 'system':
@@ -124,28 +126,28 @@ class ConfigEditor:
                 provider = param.section.split('_')[1]
                 return self.config.get('llm', {}).get('providers', {}).get(provider, {}).get(key)
             elif param.section == 'plugin':
-                # Sezione plugin: accedi a config['plugins'][param.plugin_tag][key]
+                # Plugin section: access config['plugins'][param.plugin_tag][key]
                 plugins = self.config.get('plugins', {})
                 plugin_cfg = plugins.get(param.plugin_tag, {})
                 return plugin_cfg.get(key)
-            elif param.section == 'motore_routing':
-                return self.config.get('motore_routing', {}).get(key)
+            elif param.section == 'routing_engine':
+                return self.config.get('routing_engine', {}).get(key)
             elif param.section.startswith('legacy_'):
-                # Il valore è True se la chiave (nome modello) è nella stringa CSV
-                legacy_str = self.config.get('motore_routing', {}).get('modelli_legacy', '')
+                # Value is True if key (model name) is in CSV string
+                legacy_str = self.config.get('routing_engine', {}).get('legacy_models', '')
                 legacy_list = [m.strip().lower() for m in legacy_str.split(',') if m.strip()]
                 return key.lower() in legacy_list
             else:
                 return None
         except Exception as e:
-            print(f"Errore in _get_value per {param.label}: {e}")
+            print(f"Error in _get_value for {param.label}: {e}")
             return None
 
     def _set_value(self, param, value):
         """Imposta il valore e marca come modificato."""
         try:
             # Determina il backend attivo
-            backend_type = self.config.get('backend', {}).get('tipo', 'ollama')
+            backend_type = self.config.get('backend', {}).get('type', 'ollama')
             
             # Uso diretto di param.key
             key = param.key
@@ -172,12 +174,19 @@ class ConfigEditor:
                 if old != value:
                     self.config['backend']['kobold'][key] = value
                     self.modified = True
-            elif param.section == 'voce':
-                if 'voce' not in self.config:
-                    self.config['voce'] = {}
-                old = self.config['voce'].get(key)
+            elif param.section == 'voice':
+                if 'voice' not in self.config:
+                    self.config['voice'] = {}
+                old = self.config['voice'].get(key)
                 if old != value:
-                    self.config['voce'][key] = value
+                    self.config['voice'][key] = value
+                    self.modified = True
+            elif param.section == 'ai':
+                if 'ai' not in self.config:
+                    self.config['ai'] = {}
+                old = self.config['ai'].get(key)
+                if old != value:
+                    self.config['ai'][key] = value
                     self.modified = True
             elif param.section == 'bridge':
                 if 'bridge' not in self.config:
@@ -186,19 +195,19 @@ class ConfigEditor:
                 if old != value:
                     self.config['bridge'][key] = value
                     self.modified = True
-            elif param.section == 'ascolto':
-                if 'ascolto' not in self.config:
-                    self.config['ascolto'] = {}
-                old = self.config['ascolto'].get(key)
+            elif param.section == 'listening':
+                if 'listening' not in self.config:
+                    self.config['listening'] = {}
+                old = self.config['listening'].get(key)
                 if old != value:
-                    self.config['ascolto'][key] = value
+                    self.config['listening'][key] = value
                     self.modified = True
-            elif param.section == 'filtri':
-                if 'filtri' not in self.config:
-                    self.config['filtri'] = {}
-                old = self.config['filtri'].get(key)
+            elif param.section == 'filters':
+                if 'filters' not in self.config:
+                    self.config['filters'] = {}
+                old = self.config['filters'].get(key)
                 if old != value:
-                    self.config['filtri'][key] = value
+                    self.config['filters'][key] = value
                     self.modified = True
             elif param.section == 'logging':
                 if 'logging' not in self.config:
@@ -239,31 +248,31 @@ class ConfigEditor:
                 if old != value:
                     self.config['plugins'][param.plugin_tag][key] = value
                     self.modified = True
-            elif param.section == 'motore_routing':
-                if 'motore_routing' not in self.config:
-                    self.config['motore_routing'] = {}
-                old = self.config['motore_routing'].get(key)
+            elif param.section == 'routing_engine':
+                if 'routing_engine' not in self.config:
+                    self.config['routing_engine'] = {}
+                old = self.config['routing_engine'].get(key)
                 if old != value:
-                    self.config['motore_routing'][key] = value
+                    self.config['routing_engine'][key] = value
                     self.modified = True
             elif param.section.startswith('legacy_'):
-                # Sincronizza il boolean con la stringa modelli_legacy
-                if 'motore_routing' not in self.config:
-                    self.config['motore_routing'] = {"modelli_legacy": ""}
+                # Sincronizza il boolean con la stringa legacy_models
+                if 'routing_engine' not in self.config:
+                    self.config['routing_engine'] = {"legacy_models": ""}
                 
-                legacy_str = self.config['motore_routing'].get('modelli_legacy', '')
+                legacy_str = self.config['routing_engine'].get('legacy_models', '')
                 legacy_list = [m.strip().lower() for m in legacy_str.split(',') if m.strip()]
                 
                 model_name = key.lower()
                 if value: # Aggiungi
                     if model_name not in legacy_list:
                         legacy_list.append(model_name)
-                        self.config['motore_routing']['modelli_legacy'] = ", ".join(legacy_list)
+                        self.config['routing_engine']['legacy_models'] = ", ".join(legacy_list)
                         self.modified = True
                 else: # Rimuovi
                     if model_name in legacy_list:
                         legacy_list.remove(model_name)
-                        self.config['motore_routing']['modelli_legacy'] = ", ".join(legacy_list)
+                        self.config['routing_engine']['legacy_models'] = ", ".join(legacy_list)
                         self.modified = True
         except Exception as e:
             print(f"Errore in _set_value per {param.label}: {e}")

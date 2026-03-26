@@ -17,25 +17,25 @@ except ImportError:
 
 class SystemLegacyPlugin(BaseLegacyPlugin):
     """
-    Versione Legacy a Oggetti del plugin SYSTEM.
-    Invece di esportare dizionari JSON complessi, riceve le stringhe parseate dal Processore (es: 'apri:calc')
-    ed esegue la logica Python corrispondente.
+    Legacy Object-Oriented version of the SYSTEM plugin.
+    Instead of exporting complex JSON dictionaries, it receives parsed strings from the Processor (e.g.: 'open:calc')
+    and executes the corresponding Python logic.
     """
     def __init__(self):
         desc = translator.t("plugin_system_desc") if 'translator' in globals() else "System tools"
         super().__init__("SYSTEM", desc)
         
-    def ottieni_comandi(self) -> dict:
+    def get_commands(self) -> dict:
         return {
-            "time": "Restituisce l'ora corrente",
-            "riavvia": "Riavvia Zentra",
-            "terminale": "Apre un prompt dei comandi",
-            "apri:<nome>": "Apre un programma locale",
-            "esplora:<cartella>": "Apre cartelle come desktop o download",
-            "cmd:<comando>": "Esegue comandi shell e ne legge l'output"
+            "time": "Returns the current local time",
+            "reboot": "Reboots the Zentra Core system",
+            "terminal": "Opens a new system command prompt",
+            "open:<name>": "Starts a local program by name",
+            "explore:<folder>": "Opens folders like desktop or downloads",
+            "shell:<command>": "Executes shell commands and reads output"
         }
         
-    # --- HELPER (Presi dal modulo Nativo) ---
+    # --- HELPERS ---
     def _get_programs(self):
         if 'ConfigManager' in globals():
             cfg = ConfigManager()
@@ -49,68 +49,71 @@ class SystemLegacyPlugin(BaseLegacyPlugin):
         return {}
 
     # --- CORE LOGIC ---
-    def elabora_tag(self, comando: str) -> str:
-        comando = comando.strip()
-        logger.debug("PLUGIN_SYSTEM_LEGACY", f"Ricevuto comando: {comando}")
+    def process_tag(self, command: str) -> str:
+        command = command.strip()
+        if 'logger' in globals():
+            logger.debug("PLUGIN_SYSTEM_LEGACY", f"Received command: {command}")
         
-        if comando == "time":
+        if command == "time":
             ora = datetime.datetime.now().strftime("%H:%M")
             return translator.t("plugin_system_time_is", time=ora) if 'translator' in globals() else f"Time is {ora}"
             
-        elif comando == "riavvia":
-            print(f"\n\033[91m[{self.tag}] Riavvio forzato...\033[0m")
+        elif command == "reboot" or command == "riavvia":
+            print(f"\n\033[91m[{self.tag}] Forced Reboot...\033[0m")
             sys.stdout.flush() 
             winsound.Beep(600, 150)
             winsound.Beep(400, 150)
             os._exit(0)
             return "Rebooting..."
             
-        elif comando == "terminale":
+        elif command == "terminal" or command == "terminale":
             try:
                 subprocess.Popen("start cmd.exe", shell=True)
                 return translator.t("plugin_system_terminal_opened") if 'translator' in globals() else "Terminal opened."
             except Exception as e:
                 return f"Error: {e}"
                 
-        elif comando.startswith("apri:"):
-            prog = comando[5:].strip().lower()
+        elif command.startswith("open:") or command.startswith("apri:"):
+            prefix = "open:" if command.startswith("open:") else "apri:"
+            prog = command[len(prefix):].strip().lower()
             programs = self._get_programs()
             if prog in programs:
                 try:
                     os.startfile(programs[prog])
-                    return f"Programma {prog} in avvio."
+                    return f"Program {prog} starting."
                 except Exception as e:
-                    return f"Errore: {e}"
+                    return f"Error: {e}"
             else:
                 try:
                     os.startfile(prog + ".exe")
-                    return f"Programma {prog}.exe in avvio."
+                    return f"Program {prog}.exe starting."
                 except Exception:
-                    return f"Programma sconosciuto o non trovato: {prog}"
+                    return f"Unknown or not found program: {prog}"
                     
-        elif comando.startswith("esplora:"):
-            cartella = comando[8:].strip().lower()
+        elif command.startswith("explore:") or command.startswith("esplora:"):
+            prefix = "explore:" if command.startswith("explore:") else "esplora:"
+            cartella = command[len(prefix):].strip().lower()
             mappings = self._get_explorer_mappings()
             path = mappings.get(cartella, cartella)
             if os.path.exists(path):
                 os.startfile(path)
-                return f"Cartella {cartella} aperta su Windows."
+                return f"Folder {cartella} opened on Windows."
             else:
-                return f"Percorso cartella sconosciuto: {cartella}"
+                return f"Unknown folder path: {cartella}"
                 
-        elif comando.startswith("cmd:"):
-            shell_cmd = comando[4:].strip()
-            if not shell_cmd: return "Nessun comando fornito."
+        elif command.startswith("shell:") or command.startswith("cmd:"):
+            prefix = "shell:" if command.startswith("shell:") else "cmd:"
+            shell_cmd = command[len(prefix):].strip()
+            if not shell_cmd: return "No command provided."
             try:
-                # Breve timeout fisso per prevenire blocchi eterni del modello piccolo
                 output = subprocess.check_output(shell_cmd, shell=True, text=True, stderr=subprocess.STDOUT, timeout=10)
-                return output if output.strip() else f"Comando eseguito: {shell_cmd}"
+                return output if output.strip() else f"Command executed: {shell_cmd}"
             except subprocess.CalledProcessError as e:
                 return f"Shell Error: {e.output}"
             except Exception as e:
-                return f"Errore imprevisto shell: {e}"
+                return f"Unexpected shell error: {e}"
                 
-        return f"Sintassi tag non valida per: {comando}"
+        return f"Invalid tag syntax for: {command}"
 
 def get_plugin():
     return SystemLegacyPlugin()

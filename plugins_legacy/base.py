@@ -2,39 +2,39 @@ import abc
 
 class BaseLegacyPlugin(abc.ABC):
     """
-    Classe base per i plugin Legacy (basati su Tag testuali).
-    Ogni plugin legacy deve ereditare da questa classe e implementare
-    il metodo elabora_tag().
+    Base class for Legacy plugins (text-tag based).
+    Each legacy plugin must inherit from this class and implement
+    the process_tag() and get_commands() methods.
     """
     
-    def __init__(self, tag: str, descrizione: str):
+    def __init__(self, tag: str, description: str):
         self.tag = tag.upper()
-        self.descrizione = descrizione
+        self.description = description
 
     @abc.abstractmethod
-    def elabora_tag(self, comando: str) -> str:
+    def process_tag(self, command: str) -> str:
         """
-        Esegue l'azione associata al comando testuale (es. 'apri:calc').
-        Ritorna una stringa di risposta sull'esito.
+        Executes the action associated with the text command (e.g., 'open:calc').
+        Returns a response string on the outcome.
         """
         pass
 
     @abc.abstractmethod
-    def ottieni_comandi(self) -> dict:
+    def get_commands(self) -> dict:
         """
-        Ritorna un dizionario { "comando_esempio": "spiegazione" }
-        per popolare il prompt di sistema del LLM.
+        Returns a dictionary { "example_command": "explanation" }
+        to populate the LLM system prompt.
         """
         pass
 
     def info(self) -> dict:
         """
-        Ritorna le informazioni standardizzate per il registro.
+        Returns standardized information for the registry.
         """
         return {
             "tag": self.tag,
-            "desc": self.descrizione,
-            "comandi": self.ottieni_comandi(),
+            "desc": self.description,
+            "commands": self.get_commands(),
             "is_legacy": True
         }
 

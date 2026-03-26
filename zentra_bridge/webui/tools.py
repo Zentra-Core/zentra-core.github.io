@@ -152,7 +152,7 @@ def build_tool_schemas(registry_path: str) -> List[Dict]:
         if instance is None:
             continue
 
-        for method_name in info.get("comandi", {}).keys():
+        for method_name in info.get("commands", {}).keys():
             method = getattr(instance, method_name, None)
             if method is None or not callable(method):
                 continue

@@ -74,6 +74,14 @@ class UIManager:
                         if param.command == 'reboot':
                             print(f"\n{GIALLO}{translator.t('rebooting_msg')}{RESET}")
                             return "REBOOT"
+                        elif param.command == 'clear_istruzioni':
+                            # Rimuove sia dal config temporaneo che salvato
+                            dummy_param = type('T', (), {'section': 'ia', 'key': 'istruzioni_speciali'})()
+                            self.set_value(dummy_param, "")
+                            self.modified = True
+                            print(f"\n{VERDE}{translator.t('instruction_cleared')}{RESET}")
+                            import time
+                            time.sleep(0.5)
                     else:
                         current = self.get_value(param)
                         if param.type in ('int', 'float'):
@@ -120,21 +128,53 @@ class UIManager:
         return "SAVE" if self.modified else "NO_CHANGES"
 
     def _edit_string(self, param):
-        """Modifica una stringa libera con input utente."""
+        """Modifica una stringa libera con input utente, supportando ESC per annullare."""
         current = self.get_value(param) or ""
-        # Mostra prompt
         print(f"\n{GIALLO}{translator.t('edit_string_title', label=param.label)}{RESET}")
         print(f"{translator.t('current_value', value=current)}")
         print(translator.t('enter_new_value'))
-        # Leggi input
-        new_val = input().strip()
-        if new_val:  # se l'utente ha inserito qualcosa
-            self.set_value(param, new_val)
-            self.modified = True
-            print(f"{VERDE}{translator.t('value_updated')}{RESET}")
-        else:
-            print(f"{GIALLO}{translator.t('edit_cancelled')}{RESET}")
-        # Attendi un momento per far leggere il messaggio
+        
+        # Mostra cursore per la digitazione
+        sys.stdout.write('\033[?25h')
+        sys.stdout.flush()
+        
+        flush_input()
+        chars = []
+        import msvcrt
+        while True:
+            if msvcrt.kbhit():
+                ch = msvcrt.getch()
+                if ch == b'\x1b': # ESC
+                    print(f"\n{GIALLO}{translator.t('edit_cancelled')}{RESET}")
+                    sys.stdout.write('\033[?25l')
+                    sys.stdout.flush()
+                    import time
+                    time.sleep(1)
+                    return
+                elif ch == b'\r': # ENTER
+                    break
+                elif ch == b'\x08': # BACKSPACE
+                    if chars:
+                        chars.pop()
+                        sys.stdout.write('\b \b')
+                        sys.stdout.flush()
+                else:
+                    try:
+                        c = ch.decode('utf-8')
+                        chars.append(c)
+                        sys.stdout.write(c)
+                        sys.stdout.flush()
+                    except:
+                        pass
+        
+        new_val = "".join(chars).strip()
+        self.set_value(param, new_val)
+        self.modified = True
+        print(f"\n{VERDE}{translator.t('value_updated')}{RESET}")
+        
+        # Nasconde cursore e attende
+        sys.stdout.write('\033[?25l')
+        sys.stdout.flush()
         import time
         time.sleep(1)
 
@@ -148,6 +188,8 @@ class UIManager:
         """Restituisce il titolo della sezione per un parametro."""
         if param.section == 'system':
             return translator.t("section_system")
+        elif param.section == 'ia':
+            return translator.t("section_ia")
         elif param.section == 'llm':
             return translator.t("section_llm")
         elif param.section == 'llm_openai':
@@ -233,6 +275,7 @@ class UIManager:
         
         order_standard = [
             translator.t("section_models"), 
+            translator.t("section_ia"),
             translator.t("section_llm"), 
             "🌐 OpenAI", "🌐 Anthropic", "🌐 Groq", "🌐 Gemini", 
             translator.t("section_generation"), 

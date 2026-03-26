@@ -1,5 +1,5 @@
 """
-Gestione thread separati.
+Separate thread management.
 """
 
 import threading
@@ -11,16 +11,16 @@ class AscoltoThread(threading.Thread):
     def __init__(self, state_manager):
         super().__init__(daemon=True)
         self.state = state_manager
-        self.name = "AscoltoPassivo"
+        self.name = "PassiveListening"
 
     def run(self):
         logger.info("[LISTENING THREAD] Initialized.")
         while True:
-            if (self.state.stato_ascolto and 
-                not self.state.sistema_parla and 
-                not self.state.sistema_in_elaborazione):
-                testo = ascolto.ascolta(state=self.state)
-                if testo and len(testo.strip()) > 1:
-                    logger.info(f"[LISTENING THREAD] Input detected: '{testo}'")
-                    self.state.comando_vocale_rilevato = testo
+            if (self.state.listening_status and 
+                not self.state.system_speaking and 
+                not self.state.system_processing):
+                text = ascolto.ascolta(state=self.state)
+                if text and len(text.strip()) > 1:
+                    logger.info(f"[LISTENING THREAD] Input detected: '{text}'")
+                    self.state.detected_voice_command = text
             time.sleep(0.2)

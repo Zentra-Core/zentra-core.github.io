@@ -101,7 +101,7 @@ if __name__ == "__main__":
     cfg = ConfigManager()
     
     # Initialize translator with current config language
-    init_translator(cfg.get("lingua", "en"))
+    init_translator(cfg.get("language", "en"))
 
     start_if_needed(cfg, root, port=7070)
 

@@ -65,12 +65,12 @@ class ZentraWebUIBridge:
     Orchestrates the Zentra bridge for Open WebUI.
 
     Config keys read from ``config.json → bridge``:
-      - usa_processore       (bool)  : pass response through the text processor
-      - ritardo_chunk_ms     (int)   : artificial chunk delay in ms
+      - use_processor        (bool)  : pass response through the text processor
+      - chunk_delay_ms       (int)   : artificial chunk delay in ms
       - debug_log            (bool)  : verbose bridge logging
-      - rimuovi_think_tags   (bool)  : strip <think>…</think> tags
-      - voce_locale_abilitata(bool)  : enable local Piper TTS
-      - abilita_tools        (bool)  : expose Zentra plugins as LLM tools
+      - remove_think_tags    (bool)  : strip <think>…</think> tags
+      - local_voice_enabled  (bool)  : enable local Piper TTS
+      - enable_tools         (bool)  : expose Zentra plugins as LLM tools
     """
 
     def __init__(self) -> None:
@@ -82,11 +82,11 @@ class ZentraWebUIBridge:
 
         # Pre-build tool schemas (cached; rebuilt on config reload)
         self._tool_schemas = []
-        if self.abilita_tools:
+        if self.enable_tools:
             self._rebuild_tool_schemas()
 
         try:
-            brain_interface.inizializza_caveau()
+            brain_interface.initialize_vault()
         except Exception as exc:
             bridge_logger.error(f"Memory vault init error: {exc}")
 
@@ -97,13 +97,13 @@ class ZentraWebUIBridge:
         except Exception as exc:
             bridge_logger.warning(f"Config panel server could not start: {exc}")
 
-        if self.debug_attivo:
+        if self.debug_active:
             bridge_logger.info("=" * 50)
             bridge_logger.info("ZENTRA WEBUI BRIDGE V3 READY")
             bridge_logger.info(
-                f"Processor={self.usa_processore} | Delay={self.delay_ms}s | "
-                f"Think-strip={self.rimuovi_think} | TTS={self.voce_locale} | "
-                f"Tools={'ON' if self.abilita_tools else 'OFF'}"
+                f"Processor={self.use_processor} | Delay={self.delay_ms}s | "
+                f"Think-strip={self.remove_think} | TTS={self.local_voice} | "
+                f"Tools={'ON' if self.enable_tools else 'OFF'}"
             )
 
     # ------------------------------------------------------------------
@@ -113,13 +113,13 @@ class ZentraWebUIBridge:
     def _refresh_valves(self) -> None:
         """Reads bridge config values into instance attributes."""
         bridge_cfg = self.config.get("bridge", {})
-        self.usa_processore = bridge_cfg.get("usa_processore",        False)
-        self.delay_ms       = bridge_cfg.get("ritardo_chunk_ms",      0) / 1000.0
-        self.debug_attivo   = bridge_cfg.get("debug_log",             True)
-        self.rimuovi_think  = bridge_cfg.get("rimuovi_think_tags",    True)
-        self.voce_locale    = bridge_cfg.get("voce_locale_abilitata", False)
-        self.abilita_tools  = bridge_cfg.get("abilita_tools",         True)
-        self.voce_cfg       = self.config.get("voce", {})
+        self.use_processor = bridge_cfg.get("use_processor",       False)
+        self.delay_ms      = bridge_cfg.get("chunk_delay_ms",      0) / 1000.0
+        self.debug_active  = bridge_cfg.get("debug_log",           True)
+        self.remove_think  = bridge_cfg.get("remove_think_tags",   True)
+        self.local_voice   = bridge_cfg.get("local_voice_enabled", False)
+        self.enable_tools  = bridge_cfg.get("enable_tools",        True)
+        self.voice_cfg     = self.config.get("voice", {})
 
     def _rebuild_tool_schemas(self) -> None:
         """Rebuilds the tool schema list from the plugin registry."""
@@ -129,12 +129,12 @@ class ZentraWebUIBridge:
     def _resolve_backend_cfg(self) -> dict:
         """Extracts and returns the active backend sub-config dict."""
         from core.llm.manager import manager
-        backend_type = self.config.get("backend", {}).get("tipo", "ollama")
+        backend_type = self.config.get("backend", {}).get("type", "ollama")
         backend_cfg  = self.config.get("backend", {}).get(backend_type, {}).copy()
-        modello = manager.resolve_model()
-        if modello:
-            backend_cfg["modello"] = modello
-        backend_cfg["tipo_backend"] = backend_type
+        model = manager.resolve_model()
+        if model:
+            backend_cfg["model"] = model
+        backend_cfg["backend_type"] = backend_type
         return backend_cfg
 
     # ------------------------------------------------------------------
@@ -149,19 +149,19 @@ class ZentraWebUIBridge:
         # Reload config on every request (picks up F7 panel changes)
         self.config = self.config_manager.reload()
         self._refresh_valves()
-        if self.abilita_tools:
+        if self.enable_tools:
             self._rebuild_tool_schemas()
 
-        if self.debug_attivo:
+        if self.debug_active:
             bridge_logger.info(f"[STREAM] >>> {user_input[:120]}")
 
         system_prompt = build_system_prompt(self.config, BRIDGE_DIR)
         backend_cfg   = self._resolve_backend_cfg()
 
-        if self.debug_attivo:
+        if self.debug_active:
             bridge_logger.info(
-                f"[STREAM] Backend={backend_cfg.get('tipo_backend')} "
-                f"Model={backend_cfg.get('modello')}"
+                f"[STREAM] Backend={backend_cfg.get('backend_type')} "
+                f"Model={backend_cfg.get('model')}"
             )
 
         testo_completo = ""
@@ -173,7 +173,7 @@ class ZentraWebUIBridge:
                 backend_cfg    = backend_cfg,
                 llm_config     = self.config.get("llm", {}),
                 tool_schemas   = self._tool_schemas,
-                rimuovi_think  = self.rimuovi_think,
+                remove_think   = self.remove_think,
                 delay_ms       = self.delay_ms,
             )
 
@@ -191,45 +191,48 @@ class ZentraWebUIBridge:
 
         # Post-stream: save to memory and trigger local TTS (non-blocking)
         try:
-            brain_interface.salva_messaggio("user", user_input)
+            brain_interface.save_message("user", user_input)
             if testo_completo.strip():
-                brain_interface.salva_messaggio("assistant", testo_completo)
-                if self.voce_locale:
-                    speak_local(testo_completo, self.voce_cfg, BRIDGE_DIR)
+                brain_interface.save_message("assistant", testo_completo)
+                if self.local_voice:
+                    speak_local(testo_completo, self.voice_cfg, BRIDGE_DIR)
         except Exception as exc:
             bridge_logger.error(f"[STREAM] Memory/TTS post-processing error: {exc}")
 
-        if self.debug_attivo:
+        if self.debug_active:
             bridge_logger.info(
                 f"[STREAM] DONE. Chars={len(testo_completo)} "
-                f"TTS={'ON' if self.voce_locale else 'OFF'}"
+                f"TTS={'ON' if self.local_voice else 'OFF'}"
             )
 
     def chat(self, user_input: str) -> str:
         """
         Non-streaming chat.  Returns the full response text.
-        Falls back to text-processor if ``usa_processore`` is True.
+        Non-streaming chat. Returns the full response text.
+        Falls back to text-processor if ``use_processor`` is True.
         """
         self.config = self.config_manager.reload()
         self._refresh_valves()
 
-        if self.debug_attivo:
+        if self.debug_active:
             bridge_logger.info(f"[NON-STREAM] >>> {user_input[:120]}")
 
         try:
-            risposta_grezza = brain.genera_risposta(user_input, self.config)
-            if self.usa_processore:
-                risposta_video, _ = processore.elabora_scambio(
-                    risposta_grezza, stato_voce=False
+            raw_response = brain.generate_response(user_input, self.config)
+            if self.use_processor:
+                video_response, _ = processore.process_exchange(
+                    raw_response, voice_status=False
                 )
             else:
-                risposta_video = risposta_grezza
+                video_response = raw_response
 
-            brain_interface.salva_messaggio("user",      user_input)
-            brain_interface.salva_messaggio("assistant", risposta_video)
-            if self.voce_locale:
-                speak_local(risposta_video, self.voce_cfg, BRIDGE_DIR)
-            return risposta_video
+            # brain_interface.save_message already called inside process_exchange if needed, 
+            # but here we do it explicitly to be sure.
+            brain_interface.save_message("user",      user_input)
+            brain_interface.save_message("assistant", video_response)
+            if self.local_voice:
+                speak_local(video_response, self.voice_cfg, BRIDGE_DIR)
+            return video_response
 
         except Exception as exc:
             bridge_logger.error(f"[NON-STREAM] Error: {exc}")

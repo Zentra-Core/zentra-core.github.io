@@ -39,7 +39,7 @@ def _run_inference(session_id: str, user_message: str, history: list):
         cfg = ConfigManager()
         cfg.reload()
 
-        risposta = brain.genera_risposta(user_message, config_esterno=cfg.config)
+        risposta = brain.generate_response(user_message, config_esterno=cfg.config)
 
         if isinstance(risposta, str):
             full_text = risposta
@@ -79,12 +79,12 @@ def _maybe_generate_tts(text: str, cfg):
     try:
         from app.config import ConfigManager
         br   = cfg.config.get("bridge", {})
-        voce = cfg.config.get("voce", {})
-        if not br.get("voce_locale_abilitata", False):
+        voce = cfg.config.get("voice", {})
+        if not br.get("local_voice_enabled", False):
             return
         import subprocess
         piper = voce.get("piper_path",   r"C:\piper\piper.exe")
-        model = voce.get("modello_onnx", "")
+        model = voce.get("onnx_model", "")
         if not os.path.exists(piper) or not model:
             return
         # output at Zentra root

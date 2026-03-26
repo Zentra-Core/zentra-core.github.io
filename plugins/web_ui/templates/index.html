@@ -300,7 +300,7 @@
       <div class="card-title">{{ t('webui_conf_backend_title') }}</div>
       <div class="field">
         <label>{{ t('webui_conf_backend_type') }}</label>
-        <select id="backend-tipo">
+        <select id="backend-type">
           <option value="cloud">{{ t('webui_conf_backend_cloud_opt') }}</option>
           <option value="ollama">{{ t('webui_conf_backend_ollama_opt') }}</option>
           <option value="kobold">{{ t('webui_conf_backend_kobold_opt') }}</option>
@@ -310,13 +310,13 @@
 
     <div class="card" id="card-cloud">
       <div class="card-title">{{ t('webui_conf_cloud_title') }}</div>
-      <div class="field"><label>{{ t('webui_conf_model_active') }}</label><select id="cloud-modello"></select></div>
+      <div class="field"><label>{{ t('webui_conf_model_active') }}</label><select id="cloud-model"></select></div>
       <div class="field"><label>{{ t('webui_conf_temp') }}</label><input type="number" id="cloud-temp" min="0" max="2" step="0.05"></div>
     </div>
 
     <div class="card" id="card-ollama" style="display:none">
       <div class="card-title">{{ t('webui_conf_ollama_title') }}</div>
-      <div class="field"><label>{{ t('webui_conf_model_active') }}</label><select id="ollama-modello"></select></div>
+      <div class="field"><label>{{ t('webui_conf_model_active') }}</label><select id="ollama-model"></select></div>
       <div class="grid-2">
         <div class="field"><label>{{ t('webui_conf_temp') }}</label><input type="number" id="ollama-temp" min="0" max="2" step="0.05"></div>
         <div class="field"><label>{{ t('webui_conf_gpu_layers') }}</label><input type="number" id="ollama-gpu" min="-1" max="200" step="1"></div>
@@ -330,7 +330,7 @@
     <div class="card" id="card-kobold" style="display:none">
       <div class="card-title">{{ t('webui_conf_kobold_title') }}</div>
       <div class="field"><label>{{ t('webui_conf_url_server') }}</label><input type="text" id="kobold-url" placeholder="http://localhost:5001"></div>
-      <div class="field"><label>{{ t('webui_conf_model_active') }}</label><input type="text" id="kobold-modello"></div>
+      <div class="field"><label>{{ t('webui_conf_model_active') }}</label><input type="text" id="kobold-model"></div>
       <div class="grid-2">
         <div class="field"><label>{{ t('webui_conf_temp') }}</label><input type="number" id="kobold-temp" min="0" max="2" step="0.05"></div>
         <div class="field"><label>{{ t('webui_conf_max_length') }}</label><input type="number" id="kobold-max" min="64" max="8192" step="64"></div>
@@ -372,7 +372,7 @@
       <div class="card-title">{{ t('webui_conf_routing_title') }}</div>
       <div class="field">
         <label>{{ t('webui_conf_routing_mode') }}</label>
-        <select id="route-modalita">
+        <select id="route-mode">
           <option value="auto">{{ t('webui_conf_routing_auto') }}</option>
           <option value="forza_nativo">{{ t('webui_conf_routing_native') }}</option>
           <option value="forza_legacy">{{ t('webui_conf_routing_legacy') }}</option>
@@ -380,7 +380,7 @@
       </div>
       <div class="field">
         <label>{{ t('webui_conf_routing_locked') }}</label>
-        <input type="text" id="route-modelli" placeholder="es. qwen2.5:0.5b, gemma2:2b">
+        <input type="text" id="route-models" placeholder="es. qwen2.5:0.5b, gemma2:2b">
       </div>
     </div>
   </div>
@@ -389,7 +389,20 @@
   <div id="tab-ia" class="panel">
     <div class="card">
       <div class="card-title">{{ t('webui_conf_persona_title') }}</div>
-      <div class="field"><label>{{ t('webui_conf_persona') }}</label><select id="ia-personalita"></select></div>
+      <div class="field"><label>{{ t('webui_conf_persona') }}</label><select id="ia-personality"></select></div>
+    </div>
+    <div class="card">
+      <div class="card-title">{{ t('label_special_instructions') }}</div>
+      <div class="field">
+        <textarea id="ia-instructions" rows="4" placeholder="Es: Sii sempre molto conciso ed evita gli asterischi..."></textarea>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">{{ t('label_save_special_instructions') }}</div>
+        <label class="switch"><input type="checkbox" id="ia-save-instructions"><span class="slider"></span></label>
+      </div>
+      <div style="margin-top: 12px; text-align: right;">
+        <button class="btn btn-secondary" onclick="document.getElementById('ia-instructions').value='';">{{ t('label_clear_special_instructions') }}</button>
+      </div>
     </div>
   </div>
 
@@ -399,11 +412,11 @@
       <div class="card-title">{{ t('webui_conf_bridge_title') }}</div>
       <div class="toggle-row">
         <div class="toggle-info">{{ t('webui_conf_bridge_proc') }}<div class="toggle-sub">{{ t('webui_conf_bridge_proc_sub') }}</div></div>
-        <label class="switch"><input type="checkbox" id="br-processore"><span class="slider"></span></label>
+        <label class="switch"><input type="checkbox" id="br-processor"><span class="slider"></span></label>
       </div>
       <div class="toggle-row">
         <div class="toggle-info">{{ t('webui_conf_bridge_think') }}<div class="toggle-sub">{{ t('webui_conf_bridge_think_sub') }}</div></div>
-        <label class="switch"><input type="checkbox" id="br-think"><span class="slider"></span></label>
+        <label class="switch"><input type="checkbox" id="br-think-tags"><span class="slider"></span></label>
       </div>
       <div class="toggle-row">
         <div class="toggle-info">{{ t('webui_conf_bridge_debug') }}</div>
@@ -415,11 +428,11 @@
       </div>
       <div class="toggle-row">
         <div class="toggle-info">{{ t('webui_conf_bridge_stt') }}</div>
-        <label class="switch"><input type="checkbox" id="br-stt"><span class="slider"></span></label>
+        <label class="switch"><input type="checkbox" id="br-voice-stt"><span class="slider"></span></label>
       </div>
       <div class="toggle-row">
         <div class="toggle-info">{{ t('webui_conf_bridge_tts') }}</div>
-        <label class="switch"><input type="checkbox" id="br-tts"><span class="slider"></span></label>
+        <label class="switch"><input type="checkbox" id="br-voice-enabled"><span class="slider"></span></label>
       </div>
       <div class="field" style="margin-top:16px;">
         <label>{{ t('webui_conf_bridge_delay') }}</label>
@@ -450,7 +463,7 @@
       <div class="field"><label>{{ t('webui_conf_voice_path') }}</label><input type="text" id="v-piper" placeholder="C:\piper\piper.exe"></div>
       <div class="field">
         <label>{{ t('webui_conf_voice_onnx') }}</label>
-        <select id="v-onnx"></select>
+        <select id="v-onnx-model"></select>
         <p style="font-size:12px;color:var(--muted);margin-top:4px;">{{ t('webui_conf_voice_info') }}</p>
       </div>
       <div class="grid-2">
@@ -463,9 +476,9 @@
     <div class="card">
       <div class="card-title">{{ t('webui_conf_voice_mic_title') }}</div>
       <div class="grid-2">
-        <div class="field"><label>{{ t('webui_conf_voice_energy') }}</label><input type="number" id="a-soglia" min="50" max="5000" step="50"></div>
+        <div class="field"><label>{{ t('webui_conf_voice_energy') }}</label><input type="number" id="a-threshold" min="50" max="5000" step="50"></div>
         <div class="field"><label>{{ t('webui_conf_voice_timeout') }}</label><input type="number" id="a-timeout" min="1" max="30" step="1"></div>
-        <div class="field"><label>{{ t('webui_conf_voice_limit') }}</label><input type="number" id="a-limite" min="5" max="60" step="1"></div>
+        <div class="field"><label>{{ t('webui_conf_voice_limit') }}</label><input type="number" id="a-limit" min="5" max="60" step="1"></div>
       </div>
     </div>
   </div>
@@ -476,7 +489,7 @@
       <div class="card-title">{{ t('webui_conf_sys_log_title') }}</div>
       <div class="field">
         <label>{{ t('webui_conf_sys_log_level') }}</label>
-        <select id="log-tipo">
+        <select id="log-type">
           <option value="info">Info</option>
           <option value="debug">Debug</option>
           <option value="both">Both</option>
@@ -496,7 +509,7 @@
       </div>
       <div class="field" style="margin-top:20px;">
         <label>{{ t('webui_conf_sys_lang') }}</label>
-        <select id="sys-lingua">
+        <select id="sys-language">
           <option value="en">English</option>
           <option value="it">Italian</option>
         </select>
@@ -531,7 +544,7 @@ function showTab(name) {
   event.target.classList.add('active');
 }
 
-document.getElementById('backend-tipo').addEventListener('change', function() {
+document.getElementById('backend-type').addEventListener('change', function() {
   const v = this.value;
   document.getElementById('card-cloud').style.display  = v === 'cloud'  ? '' : 'none';
   document.getElementById('card-ollama').style.display = v === 'ollama' ? '' : 'none';
@@ -569,14 +582,14 @@ async function initAll() {
 function populateUI() {
   const c = cfg;
 
-  const bt = c.backend?.tipo || 'ollama';
-  document.getElementById('backend-tipo').value = bt;
-  document.getElementById('backend-tipo').dispatchEvent(new Event('change'));
+  const bt = c.backend?.type || 'ollama';
+  document.getElementById('backend-type').value = bt;
+  document.getElementById('backend-type').dispatchEvent(new Event('change'));
 
   let allCloud = [];
   Object.values(sysOptions.cloud_models || {}).forEach(a => allCloud.push(...a));
-  populateSelect('cloud-modello', allCloud, c.backend?.cloud?.modello);
-  populateSelect('ollama-modello', sysOptions.ollama_models || [], c.backend?.ollama?.modello);
+  populateSelect('cloud-model', allCloud, c.backend?.cloud?.model);
+  populateSelect('ollama-model', sysOptions.ollama_models || [], c.backend?.ollama?.model);
 
   document.getElementById('cloud-temp').value    = c.backend?.cloud?.temperature   ?? 0.7;
   document.getElementById('ollama-temp').value   = c.backend?.ollama?.temperature  ?? 0.3;
@@ -586,7 +599,7 @@ function populateUI() {
   document.getElementById('ollama-top-p').value  = c.backend?.ollama?.top_p        ?? 0.9;
   document.getElementById('ollama-repeat').value = c.backend?.ollama?.repeat_penalty ?? 1.1;
   document.getElementById('kobold-url').value    = c.backend?.kobold?.url          || 'http://localhost:5001';
-  document.getElementById('kobold-modello').value= c.backend?.kobold?.modello      || '';
+  document.getElementById('kobold-model').value = c.backend?.kobold?.model      || '';
   document.getElementById('kobold-temp').value   = c.backend?.kobold?.temperature  ?? 0.8;
   document.getElementById('kobold-max').value    = c.backend?.kobold?.max_length   ?? 512;
   document.getElementById('kobold-top-p').value  = c.backend?.kobold?.top_p        ?? 0.92;
@@ -599,50 +612,52 @@ function populateUI() {
   document.getElementById('key-anthropic').value    = prov.anthropic?.api_key || '';
   document.getElementById('key-groq').value         = prov.groq?.api_key      || '';
   document.getElementById('key-gemini').value       = prov.gemini?.api_key    || '';
-  document.getElementById('models-openai').value    = (prov.openai?.modelli    || []).join('\n');
-  document.getElementById('models-anthropic').value = (prov.anthropic?.modelli || []).join('\n');
-  document.getElementById('models-groq').value      = (prov.groq?.modelli      || []).join('\n');
-  document.getElementById('models-gemini').value    = (prov.gemini?.modelli    || []).join('\n');
+  document.getElementById('models-openai').value    = (prov.openai?.models    || []).join('\n');
+  document.getElementById('models-anthropic').value = (prov.anthropic?.models || []).join('\n');
+  document.getElementById('models-groq').value      = (prov.groq?.models      || []).join('\n');
+  document.getElementById('models-gemini').value    = (prov.gemini?.models    || []).join('\n');
 
-  const rm = c.motore_routing || {};
-  document.getElementById('route-modalita').value = rm.modalita       || 'auto';
-  document.getElementById('route-modelli').value  = rm.modelli_legacy || '';
+  const rm = c.routing_engine || {};
+  document.getElementById('route-mode').value   = rm.mode       || 'auto';
+  document.getElementById('route-models').value = rm.legacy_models || '';
 
-  populateSelect('ia-personalita', sysOptions.personalita || [], c.ia?.personalita_attiva, true);
+  populateSelect('ia-personality', sysOptions.personalities || [], c.ai?.active_personality, true);
+  document.getElementById('ia-instructions').value = c.ai?.special_instructions || '';
+  document.getElementById('ia-save-instructions').checked = c.ai?.save_special_instructions || false;
 
   const br = c.bridge || {};
-  document.getElementById('br-processore').checked = br.usa_processore        ?? false;
-  document.getElementById('br-think').checked      = br.rimuovi_think_tags    ?? true;
-  document.getElementById('br-debug').checked      = br.debug_log             ?? true;
-  document.getElementById('br-tools').checked      = br.abilita_tools         ?? true;
-  document.getElementById('br-stt').checked        = br.voce_webui_stt        ?? true;
-  document.getElementById('br-tts').checked        = br.voce_locale_abilitata ?? false;
-  document.getElementById('br-delay').value        = br.ritardo_chunk_ms      ?? 0;
+  document.getElementById('br-processor').checked      = br.use_processor        ?? false;
+  document.getElementById('br-think-tags').checked     = br.remove_think_tags    ?? true;
+  document.getElementById('br-debug').checked          = br.debug_log             ?? true;
+  document.getElementById('br-tools').checked          = br.enable_tools         ?? true;
+  document.getElementById('br-voice-stt').checked      = br.webui_voice_stt        ?? true;
+  document.getElementById('br-voice-enabled').checked  = br.webui_voice_enabled ?? false;
+  document.getElementById('br-delay').value            = br.chunk_delay_ms      ?? 0;
 
-  const fi = c.filtri || {};
-  document.getElementById('fl-ast').checked    = fi.rimuovi_asterischi         ?? false;
-  document.getElementById('fl-tonde').checked  = fi.rimuovi_parentesi_tonde   ?? false;
-  document.getElementById('fl-quadre').checked = fi.rimuovi_parentesi_quadre  ?? false;
+  const fi = c.filters || {};
+  document.getElementById('fl-ast').checked    = fi.remove_asterisks         ?? false;
+  document.getElementById('fl-tonde').checked  = fi.remove_round_brackets   ?? false;
+  document.getElementById('fl-quadre').checked = fi.remove_square_brackets  ?? false;
 
-  const v = c.voce || {};
+  const v = c.voice || {};
   document.getElementById('v-piper').value  = v.piper_path || '';
-  const curOnnx = (v.modello_onnx || '').split('\\').pop().split('/').pop();
-  populateSelect('v-onnx', sysOptions.piper_voices || [], curOnnx, true);
+  const curOnnx = (v.onnx_model || '').split('\\').pop().split('/').pop();
+  populateSelect('v-onnx-model', sysOptions.piper_voices || [], curOnnx, true);
   document.getElementById('v-speed').value   = v.speed            ?? 1.2;
   document.getElementById('v-noise').value   = v.noise_scale      ?? 0.817;
   document.getElementById('v-noisew').value  = v.noise_w          ?? 0.9;
   document.getElementById('v-silence').value = v.sentence_silence ?? 0.1;
 
-  const a = c.ascolto || {};
-  document.getElementById('a-soglia').value  = a.soglia_energia   ?? 450;
-  document.getElementById('a-timeout').value = a.timeout_silenzio ?? 5;
-  document.getElementById('a-limite').value  = a.limite_frase     ?? 15;
+  const a = c.listening || {};
+  document.getElementById('a-threshold').value  = a.energy_threshold   ?? 450;
+  document.getElementById('a-timeout').value = a.silence_timeout ?? 5;
+  document.getElementById('a-limit').value  = a.phrase_limit     ?? 15;
 
   const slg = c.logging || {};
-  document.getElementById('log-tipo').value = slg.tipo_messaggi || 'both';
-  document.getElementById('log-dest').value = slg.destinazione  || 'chat';
-  document.getElementById('sys-fastboot').checked = (c.system || {}).avvio_rapido ?? false;
-  document.getElementById('sys-lingua').value = c.lingua || 'en';
+  document.getElementById('log-type').value = slg.message_types || 'both';
+  document.getElementById('log-dest').value = slg.destination  || 'chat';
+  document.getElementById('sys-fastboot').checked = (c.system || {}).fast_boot ?? false;
+  document.getElementById('sys-language').value = c.language || 'en';
 
   renderPlugins(c.plugins || {});
 }
@@ -673,10 +688,10 @@ function renderPlugins(plugins) {
 
 function buildPayload() {
   const out = JSON.parse(JSON.stringify(cfg));
-  out.backend.tipo                    = document.getElementById('backend-tipo').value;
-  out.backend.cloud.modello           = document.getElementById('cloud-modello').value;
+  out.backend.type                    = document.getElementById('backend-type').value;
+  out.backend.cloud.model           = document.getElementById('cloud-model').value;
   out.backend.cloud.temperature       = parseFloat(document.getElementById('cloud-temp').value);
-  out.backend.ollama.modello          = document.getElementById('ollama-modello').value;
+  out.backend.ollama.model          = document.getElementById('ollama-model').value;
   out.backend.ollama.temperature      = parseFloat(document.getElementById('ollama-temp').value);
   out.backend.ollama.num_gpu          = parseInt(document.getElementById('ollama-gpu').value);
   out.backend.ollama.num_predict      = parseInt(document.getElementById('ollama-predict').value);
@@ -684,7 +699,7 @@ function buildPayload() {
   out.backend.ollama.top_p            = parseFloat(document.getElementById('ollama-top-p').value);
   out.backend.ollama.repeat_penalty   = parseFloat(document.getElementById('ollama-repeat').value);
   out.backend.kobold.url              = document.getElementById('kobold-url').value;
-  out.backend.kobold.modello          = document.getElementById('kobold-modello').value;
+  out.backend.kobold.model          = document.getElementById('kobold-model').value;
   out.backend.kobold.temperature      = parseFloat(document.getElementById('kobold-temp').value);
   out.backend.kobold.max_length       = parseInt(document.getElementById('kobold-max').value);
   out.backend.kobold.top_p            = parseFloat(document.getElementById('kobold-top-p').value);
@@ -698,51 +713,53 @@ function buildPayload() {
     const k = document.getElementById('key-'+p).value.trim();
     if (k) out.llm.providers[p].api_key = k;
     const rawM = document.getElementById('models-'+p).value.trim();
-    if (rawM) out.llm.providers[p].modelli = rawM.split('\n').map(s=>s.trim()).filter(Boolean);
+    if (rawM) out.llm.providers[p].models = rawM.split('\n').map(s=>s.trim()).filter(Boolean);
   });
 
-  out.motore_routing = out.motore_routing || {};
-  out.motore_routing.modalita       = document.getElementById('route-modalita').value;
-  out.motore_routing.modelli_legacy = document.getElementById('route-modelli').value;
+  out.routing_engine = out.routing_engine || {};
+  out.routing_engine.mode       = document.getElementById('route-mode').value;
+  out.routing_engine.legacy_models = document.getElementById('route-models').value;
 
-  out.ia = out.ia || {};
-  out.ia.personalita_attiva = document.getElementById('ia-personalita').value;
+  out.ai = out.ai || {};
+  out.ai.active_personality = document.getElementById('ia-personality').value;
+  out.ai.special_instructions = document.getElementById('ia-instructions').value;
+  out.ai.save_special_instructions = document.getElementById('ia-save-instructions').checked;
 
   out.bridge = out.bridge || {};
-  out.bridge.usa_processore        = document.getElementById('br-processore').checked;
-  out.bridge.rimuovi_think_tags    = document.getElementById('br-think').checked;
+  out.bridge.use_processor        = document.getElementById('br-processor').checked;
+  out.bridge.remove_think_tags    = document.getElementById('br-think-tags').checked;
   out.bridge.debug_log             = document.getElementById('br-debug').checked;
-  out.bridge.abilita_tools         = document.getElementById('br-tools').checked;
-  out.bridge.voce_webui_stt        = document.getElementById('br-stt').checked;
-  out.bridge.voce_locale_abilitata = document.getElementById('br-tts').checked;
-  out.bridge.ritardo_chunk_ms      = parseInt(document.getElementById('br-delay').value);
+  out.bridge.enable_tools         = document.getElementById('br-tools').checked;
+  out.bridge.webui_voice_stt        = document.getElementById('br-voice-stt').checked;
+  out.bridge.webui_voice_enabled = document.getElementById('br-voice-enabled').checked;
+  out.bridge.chunk_delay_ms      = parseInt(document.getElementById('br-delay').value);
 
-  out.filtri = out.filtri || {};
-  out.filtri.rimuovi_asterischi       = document.getElementById('fl-ast').checked;
-  out.filtri.rimuovi_parentesi_tonde  = document.getElementById('fl-tonde').checked;
-  out.filtri.rimuovi_parentesi_quadre = document.getElementById('fl-quadre').checked;
+  out.filters = out.filters || {};
+  out.filters.remove_asterisks       = document.getElementById('fl-ast').checked;
+  out.filters.remove_round_brackets  = document.getElementById('fl-tonde').checked;
+  out.filters.remove_square_brackets = document.getElementById('fl-quadre').checked;
 
-  out.voce = out.voce || {};
-  out.voce.piper_path   = document.getElementById('v-piper').value;
+  out.voice = out.voice || {};
+  out.voice.piper_path   = document.getElementById('v-piper').value;
   const pdir = sysOptions.piper_dir || 'C:\\piper';
   const sel  = document.getElementById('v-onnx').value;
-  out.voce.modello_onnx = (sel.includes('\\') || sel.includes('/')) ? sel : pdir + '\\' + sel;
-  out.voce.speed            = parseFloat(document.getElementById('v-speed').value);
-  out.voce.noise_scale      = parseFloat(document.getElementById('v-noise').value);
-  out.voce.noise_w          = parseFloat(document.getElementById('v-noisew').value);
-  out.voce.sentence_silence = parseFloat(document.getElementById('v-silence').value);
+  out.voice.onnx_model = (sel.includes('\\') || sel.includes('/')) ? sel : pdir + '\\' + sel;
+  out.voice.speed            = parseFloat(document.getElementById('v-speed').value);
+  out.voice.noise_scale      = parseFloat(document.getElementById('v-noise').value);
+  out.voice.noise_w          = parseFloat(document.getElementById('v-noisew').value);
+  out.voice.sentence_silence = parseFloat(document.getElementById('v-silence').value);
 
-  out.ascolto = out.ascolto || {};
-  out.ascolto.soglia_energia   = parseInt(document.getElementById('a-soglia').value);
-  out.ascolto.timeout_silenzio = parseInt(document.getElementById('a-timeout').value);
-  out.ascolto.limite_frase     = parseInt(document.getElementById('a-limite').value);
+  out.listening = out.listening || {};
+  out.listening.energy_threshold   = parseInt(document.getElementById('a-threshold').value);
+  out.listening.silence_timeout = parseInt(document.getElementById('a-timeout').value);
+  out.listening.phrase_limit     = parseInt(document.getElementById('a-limit').value);
 
   out.logging = out.logging || {};
-  out.logging.tipo_messaggi = document.getElementById('log-tipo').value;
-  out.logging.destinazione  = document.getElementById('log-dest').value;
+  out.logging.message_types = document.getElementById('log-type').value;
+  out.logging.destination  = document.getElementById('log-dest').value;
   out.system  = out.system || {};
-  out.system.avvio_rapido = document.getElementById('sys-fastboot').checked;
-  out.lingua  = document.getElementById('sys-lingua').value;
+  out.system.fast_boot = document.getElementById('sys-fastboot').checked;
+  out.language  = document.getElementById('sys-language').value;
 
   document.querySelectorAll('[data-plugin]').forEach(cb => {
     const tag = cb.dataset.plugin;

@@ -15,7 +15,7 @@ except ImportError:
     class DummyLogger:
         def debug(self, *args, **kwargs): print("[SYS_DEBUG]", *args)
         def info(self, *args, **kwargs): print("[SYS_INFO]", *args)
-        def errore(self, *args, **kwargs): print("[SYS_ERR]", *args)
+        def error(self, *args, **kwargs): print("[SYS_ERR]", *args)
     logger = DummyLogger()
     class DummyTranslator:
         def t(self, key, **kwargs): return key
@@ -28,8 +28,8 @@ except ImportError:
 class SystemTools:
     """
     Plugin: System
-    Strumenti centrali di sistema. Permette di gestire il SO, leggere l'ora, 
-    eseguire comandi terminale, gestire programmi, cartelle e configurazioni.
+    Central system tools. Allows managing the OS, reading the time,
+    executing terminal commands, managing programs, folders, and configurations.
     """
 
     def __init__(self):
@@ -105,8 +105,8 @@ class SystemTools:
 
     def get_time(self) -> str:
         """
-        Restituisce l'ora locale attuale formattata (HH:MM).
-        Usa questo strumento per rispondere quando ti viene chiesta l'ora esatta.
+        Returns the current local time (HH:MM).
+        Use this tool to answer when asked for the exact time.
         """
         ora = datetime.datetime.now().strftime("%H:%M")
         logger.debug(f"PLUGIN_{self.tag}", "Executing 'time' command")
@@ -114,8 +114,8 @@ class SystemTools:
 
     def reboot_system(self) -> str:
         """
-        Riavvia l'intero sistema Zentra Core.
-        Usa questo strumento se ci sono problemi critici o se l'utente richiede un riavvio.
+        Reboots the entire Zentra Core system.
+        Use this tool if there are critical issues or if the user requests a reboot.
         """
         logger.info(translator.t("plugin_system_reboot_admin"))
         logger.debug(f"PLUGIN_{self.tag}", "Executing reboot")
@@ -140,8 +140,8 @@ class SystemTools:
 
     def read_errors(self) -> str:
         """
-        Legge specificamente gli ultimi errori (crash, eccezioni) registrati dal sistema nel log degli errori.
-        Essenziale per diagnosticare malfunzionamenti.
+        Reads specifically the latest errors (crashes, exceptions) recorded by the system.
+        Essential for diagnosing malfunctions.
         """
         tipo_str = translator.t("plugin_system_log_errors")
         logger.info(translator.t("plugin_system_log_access_msg", type=tipo_str))
@@ -152,21 +152,21 @@ class SystemTools:
 
     def open_terminal(self) -> str:
         """
-        Apre una nuova finestra indipendente del prompt dei comandi di Windows (CMD).
+        Opens a new independent Windows command prompt (CMD) window.
         """
         try:
             logger.info("Opening independent external CMD instance.")
             subprocess.Popen("start cmd.exe", shell=True)
             return translator.t("plugin_system_terminal_opened")
         except Exception as e:
-            logger.errore(f"Terminal open failed: {e}")
+            logger.error(f"Terminal open failed: {e}")
             return translator.t("plugin_system_terminal_fail", error=str(e))
 
     def open_program(self, program_name: str) -> str:
         """
-        Avvia un programma locale specificato dal nome.
+        Starts a local program specified by name.
         
-        :param program_name: Il nome del programma da aprire (es. 'notepad', 'chrome', o altri nomi registrati).
+        :param program_name: The name of the program to open (e.g., 'notepad', 'chrome').
         """
         prog = program_name.strip().lower()
         logger.debug(f"PLUGIN_{self.tag}", f"Opening program: {prog}")
@@ -187,9 +187,9 @@ class SystemTools:
 
     def explore_folder(self, folder_path: str) -> str:
         """
-        Apre il file manager del sistema operativo in una cartella specifica.
+        Opens the file manager in a specific folder.
         
-        :param folder_path: Il percorso o l'alias della cartella (es. 'desktop', 'download', o un path assoluto).
+        :param folder_path: The path or alias of the folder (e.g., 'desktop', 'download').
         """
         percorso = folder_path.strip().lower()
         logger.debug(f"PLUGIN_{self.tag}", f"Opening folder: {percorso}")
@@ -204,12 +204,12 @@ class SystemTools:
 
     def set_configuration(self, section: str, key: str, value: str) -> str:
         """
-        Modifica un valore all'interno del file di configurazione principale (config.json).
-        Attenzione: va usato solo su richiesta esplicita dell'utente.
+        Modifies a value within the main configuration file (config.json).
+        Warning: use only upon explicit user request.
         
-        :param section: La sezione root del config (es. 'llm', 'backend', 'voce').
-        :param key: La chiave specifica da modificare.
-        :param value: Il nuovo valore (testo, numerico o 'true'/'false').
+        :param section: The root section of the config (e.g., 'llm', 'backend', 'voice').
+        :param key: The specific key to modify.
+        :param value: The new value (text, numeric, or 'true'/'false').
         """
         cfg = ConfigManager()
         if not cfg.get_plugin_config(self.tag, "enable_config_set", True):
@@ -240,10 +240,10 @@ class SystemTools:
 
     def execute_shell_command(self, command: str) -> str:
         """
-        Esegue un comando shell (cmd.exe) nel terminale in background e restituisce l'output.
-        Ideale per diagnostica, automazione o interrogazioni di sistema.
+        Executes a shell command (cmd.exe) in the background and returns the output.
+        Ideal for diagnostics, automation, or system queries.
         
-        :param command: Il comando esatto da passare alla shell.
+        :param command: The exact command to pass to the shell.
         """
         shell_cmd = command.strip()
         logger.debug(f"PLUGIN_{self.tag}", f"Executing shell command: {shell_cmd}")
@@ -261,10 +261,10 @@ class SystemTools:
             return output if output.strip() else translator.t("plugin_system_shell_success", cmd=shell_cmd)
         except subprocess.CalledProcessError as e:
             msg_err = f"Shell Error: {e.output}"
-            logger.errore(msg_err)
+            logger.error(msg_err)
             return msg_err
         except Exception as e:
-            logger.errore(f"Unexpected shell error: {e}")
+            logger.error(f"Unexpected shell error: {e}")
             return f"Error: {e}"
 
 # Istanzia pubblicamente lo strumento per l'esportazione verso il Core

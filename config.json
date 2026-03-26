@@ -1,19 +1,18 @@
 {
-    "ascolto": {
-        "limite_frase": 15,
-        "soglia_energia": 450,
-        "stato_ascolto": false,
-        "timeout_silenzio": 5
+    "listening": {
+        "phrase_limit": 15,
+        "energy_threshold": 450,
+        "listening_status": true,
+        "silence_timeout": 5
     },
-    "avvio_rapido": true,
     "backend": {
         "cloud": {
-            "modello": "gemini/gemini-3-flash-preview",
+            "model": "gemini/gemini-3-flash-preview",
             "temperature": 0.7
         },
         "kobold": {
             "max_length": 512,
-            "modello": "vikhr-qwen-2.5-1.5b-instruct-q4_k_m.gguf",
+            "model": "vikhr-qwen-2.5-1.5b-instruct-q4_k_m.gguf",
             "rep_pen": 1.1,
             "temperature": 0.8,
             "top_p": 0.92,
@@ -21,7 +20,7 @@
         },
         "ollama": {
             "keep_alive": "120m",
-            "modelli_disponibili": {
+            "available_models": {
                 "1": "gemma3:1b-it-q4_K_M",
                 "2": "huihui_ai/gemma3-abliterated:270m",
                 "3": "huihui_ai/gemma3-abliterated:1b",
@@ -33,7 +32,7 @@
                 "9": "qwen2.5:1.5b",
                 "10": "llama3.2:1b"
             },
-            "modello": "qwen2.5:1.5b",
+            "model": "qwen2.5:1.5b",
             "num_ctx": 4096,
             "num_gpu": 25,
             "num_predict": 250,
@@ -41,52 +40,49 @@
             "temperature": 0.3,
             "top_p": 0.9
         },
-        "tipo": "cloud"
+        "type": "cloud"
     },
     "bridge": {
-        "abilita_tools": true,
+        "use_processor": true,
+        "chunk_delay_ms": 0,
         "debug_log": true,
-        "rimuovi_think_tags": true,
-        "ritardo_chunk_ms": 0,
-        "usa_processore": true,
-        "voce_locale_abilitata": true,
-        "voce_webui_stt": true
+        "remove_think_tags": true,
+        "local_voice_enabled": false,
+        "enable_tools": true
     },
-    "filtri": {
-        "rimuovi_asterischi": true,
-        "rimuovi_markdown": true,
-        "rimuovi_parentesi_quadre": false,
-        "rimuovi_parentesi_tonde": true,
-        "sostituzioni_personalizzate": {
-            "IA": "intelligenza artificiale",
-            "PC": "computer"
-        }
+    "filters": {
+        "remove_asterisks": true,
+        "remove_round_brackets": true,
+        "remove_square_brackets": false,
+        "custom_replacements": {}
     },
-    "ia": {
-        "personalita_attiva": "zentra_dark_Adult.txt",
-        "personalita_disponibili": {
+    "ai": {
+        "active_personality": "Zentra_dark_Adult.txt",
+        "available_personalities": {
             "1": "nova_tech.txt",
             "2": "sebastian_pro.txt",
             "3": "Zentra.txt",
             "4": "Zentra_dark.txt",
             "5": "Zentra_dark_Adult.txt"
-        }
+        },
+        "special_instructions": "",
+        "save_special_instructions": false
     },
-    "lingua": "en",
+    "language": "en",
     "llm": {
         "allow_cloud": true,
         "debug_llm": true,
         "providers": {
             "anthropic": {
                 "api_key": "",
-                "modelli": [
+                "models": [
                     "anthropic/claude-3-5-sonnet-20240620",
                     "anthropic/claude-3-opus-20240229"
                 ]
             },
             "gemini": {
                 "api_key": "",
-                "modelli": [
+                "models": [
                     "gemini/gemini-3.1-flash-lite-preview",
                     "gemini/gemini-3-flash-preview",
                     "gemini/gemini-2.0-flash",
@@ -98,7 +94,7 @@
             },
             "groq": {
                 "api_key": "",
-                "modelli": [
+                "models": [
                     "groq/llama-3.3-70b-versatile",
                     "groq/llama-3.1-70b-versatile",
                     "groq/mixtral-8x7b-32768",
@@ -109,7 +105,7 @@
             },
             "openai": {
                 "api_key": "",
-                "modelli": [
+                "models": [
                     "openai/gpt-4o",
                     "openai/gpt-4o-mini",
                     "openai/gpt-3.5-turbo"
@@ -118,17 +114,17 @@
         }
     },
     "logging": {
-        "destinazione": "console",
-        "livello": "INFO",
-        "tipo_messaggi": "both"
+        "destination": "console",
+        "level": "INFO",
+        "message_types": "both"
     },
     "monitor": {
         "check_interval": 1,
         "restart_delay": 2
     },
-    "motore_routing": {
-        "modalita": "auto",
-        "modelli_legacy": ""
+    "routing_engine": {
+        "mode": "auto",
+        "legacy_models": ""
     },
     "plugins": {
         "DASHBOARD": {
@@ -154,7 +150,7 @@
             "default_character": "",
             "default_scene": "",
             "enabled": true,
-            "modello_llm": "",
+            "llm_model": "",
             "scenes_dir": "plugins\\roleplay\\scenes"
         },
         "SYSTEM": {
@@ -181,7 +177,7 @@
         },
         "WEB": {
             "enabled": true,
-            "modello_llm": "",
+            "llm_model": "",
             "open_in_new_tab": false,
             "search_engine": "google",
             "use_https": true
@@ -199,20 +195,20 @@
             "port": 7070
         }
     },
-    "processore": {
+    "processor": {
         "debug_mode": false,
         "log_level": "INFO"
     },
     "system": {
-        "avvio_rapido": false
+        "fast_boot": false
     },
-    "voce": {
-        "modello_onnx": "C:\\piper\\it_IT-paola-medium.onnx",
+    "voice": {
+        "onnx_model": "C:\\piper\\it_IT-paola-medium.onnx",
         "noise_scale": 0.817,
         "noise_w": 0.9,
         "piper_path": "C:\\piper\\piper.exe",
         "sentence_silence": 0.1,
         "speed": 1.2,
-        "stato_voce": false
+        "voice_status": true
     }
 }

@@ -11,21 +11,21 @@ except ImportError:
 
 class WebLegacyPlugin(BaseLegacyPlugin):
     """
-    Versione Legacy a Oggetti del plugin WEB.
-    Permette ai modelli piccoli di cercare su internet o aprire siti tramite semplici tag:
-    es. [WEB: cerca:meteo di oggi] oppure [WEB: apri:youtube.com]
+    Legacy Object-Oriented version of the WEB plugin.
+    Allows small models to search the internet or open sites via simple tags:
+    e.g. [WEB: search:today's weather] or [WEB: open:youtube.com]
     """
     def __init__(self):
         desc = translator.t("plugin_web_desc") if 'translator' in globals() else "Web Browsing"
         super().__init__("WEB", desc)
         
-    def ottieni_comandi(self) -> dict:
+    def get_commands(self) -> dict:
         return {
-            "cerca:<testo>": "Cerca qualcosa su internet (es. cerca:meteo Roma)",
-            "apri:<sito>": "Apre un sito web specifico (es. apri:wikipedia.org)"
+            "search:<text>": "Search for something on the internet (e.g. search:Rome weather)",
+            "open:<site>": "Open a specific website (e.g. open:wikipedia.org)"
         }
         
-    # --- HELPER (Presi dal modulo Nativo) ---
+    # --- HELPERS ---
     def _get_search_url(self, query: str) -> str:
         engine = "google"
         if 'ConfigManager' in globals():
@@ -58,35 +58,37 @@ class WebLegacyPlugin(BaseLegacyPlugin):
             webbrowser.open(url)
 
     # --- CORE LOGIC ---
-    def elabora_tag(self, comando: str) -> str:
-        comando = comando.strip()
+    def process_tag(self, command: str) -> str:
+        command = command.strip()
         if 'logger' in globals():
-            logger.debug("PLUGIN_WEB_LEGACY", f"Ricevuto comando: {comando}")
+            logger.debug("PLUGIN_WEB_LEGACY", f"Received command: {command}")
         
-        if comando.startswith("cerca:"):
-            ricerca = comando[6:].strip()
-            if not ricerca: return "Nessun testo di ricerca fornito."
+        if command.startswith("search:") or command.startswith("cerca:"):
+            prefix = "search:" if command.startswith("search:") else "cerca:"
+            ricerca = command[len(prefix):].strip()
+            if not ricerca: return "No search query provided."
             try:
                 url_ricerca = self._get_search_url(ricerca)
                 self._open_target_url(url_ricerca)
                 if 'translator' in globals():
                     return translator.t("plugin_web_search_success", query=ricerca)
-                return f"Ricerca per '{ricerca}' effettuata."
+                return f"Search for '{ricerca}' performed."
             except Exception as e:
-                return f"Errore di rete: {e}"
+                return f"Network error: {e}"
                 
-        elif comando.startswith("apri:"):
-            indirizzo = comando[5:].strip()
-            if not indirizzo: return "Nessun sito fornito."
+        elif command.startswith("open:") or command.startswith("apri:"):
+            prefix = "open:" if command.startswith("open:") else "apri:"
+            indirizzo = command[len(prefix):].strip()
+            if not indirizzo: return "No website provided."
             try:
                 self._open_target_url(indirizzo)
                 if 'translator' in globals():
                     return translator.t("plugin_web_open_success", url=indirizzo)
-                return f"Sito {indirizzo} aperto."
+                return f"Site {indirizzo} opened."
             except Exception as e:
-                return f"Errore: {e}"
+                return f"Error: {e}"
                 
-        return f"Sintassi tag non valida per il comando WEB: {comando}"
+        return f"Invalid tag syntax for WEB command: {command}"
 
 def get_plugin():
     return WebLegacyPlugin()

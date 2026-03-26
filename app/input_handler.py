@@ -1,5 +1,5 @@
 """
-Gestione input tastiera e vocale.
+Keyboard and voice input management.
 """
 
 import sys
@@ -20,42 +20,59 @@ class InputHandler:
         self.state = state_manager
         self.config = config_manager
 
-    def handle_keyboard_input(self, prefisso, input_utente):
-        """Gestisce input da tastiera."""
-        evento, nuovo_input = interface.leggi_tastiera(prefisso, input_utente)
+    def handle_keyboard_input(self, prefix, user_input):
+        """Handles keyboard input."""
+        evento, input_utente = interface.read_keyboard_input(prefix, user_input)
         
         if evento == "ENTER":
-            return self._process_text_input(nuovo_input, prefisso)
+            return self._process_text_input(input_utente, prefix)
         elif evento == "CLEAR":
             return "CLEAR", ""
         elif evento in ["F1", "F2", "F3", "F4", "F5", "F6", "F7"]:
-            return evento, nuovo_input
+            return evento, input_utente
         elif evento == "ESC":
-            return self._handle_esc(prefisso)
+            return self._handle_esc(prefix)
         
-        return None, nuovo_input
+        return None, input_utente
 
-    def handle_voice_input(self, prefisso):
-        """Gestisce input vocale."""
+    def handle_voice_input(self, prefix):
+        """Handles voice input."""
         dashboard_mod = plugin_loader.get_plugin_module("DASHBOARD")
         if dashboard_mod:
             tools = getattr(dashboard_mod, "tools", None)
             raw_fn = getattr(tools, "_get_raw_backend_status", None) if tools else None
             if raw_fn and raw_fn() not in ["READY", "CLOUD", "ONLINE"]:
                 print(f"\n\033[93m[SYSTEM] Backend not ready yet. Please wait...\033[0m")
-                self.state.comando_vocale_rilevato = None
+                self.state.detected_voice_command = None
                 return
 
-        testo_v = self.state.comando_vocale_rilevato
-        self.state.comando_vocale_rilevato = None
+        text_v = self.state.detected_voice_command
+        self.state.detected_voice_command = None
         
-        # Indica che stiamo processando input vocale
-        self._execute_exchange(testo_v, prefisso, is_voice=True)
+        # Indicates we are processing voice input
+        self._execute_exchange(text_v, prefix, is_voice=True)
 
     def _process_text_input(self, testo, prefisso):
         """Processa input testuale."""
         if not testo.strip():
             return None, testo
+            
+        testo_pulito = testo.strip()
+        if testo_pulito.startswith("/istruzione") or testo_pulito.startswith("/instruction"):
+            istruzione = testo_pulito.replace("/istruzione", "").replace("/instruction", "").strip()
+            self.config.set(istruzione, 'ai', 'special_instructions')
+            salva_persistente = self.config.get('ai', 'save_special_instructions', default=False)
+            if salva_persistente:
+                self.config.save()
+                
+            if istruzione:
+                msg = f"\n\033[92m[SYSTEM] Special Instructions activated: '{istruzione}'\033[0m"
+                if not salva_persistente:
+                    msg += " (RAM only)"
+            else:
+                msg = f"\n\033[93m[SYSTEM] Special Instructions cleared.\033[0m"
+            print(msg)
+            return "CLEAR", ""
             
         dashboard_mod = plugin_loader.get_plugin_module("DASHBOARD")
         if dashboard_mod:
@@ -70,32 +87,34 @@ class InputHandler:
         self._execute_exchange(testo, prefisso, is_voice=False)
         return "PROCESSED", ""
 
-    def _execute_exchange(self, testo, prefisso, is_voice=False):
-        """Esegue lo scambio (testo -> risposta) con supporto ESC."""
-        self.state.sistema_in_elaborazione = True
-        self.state.sistema_status = translator.t("thinking")
+    def _execute_exchange(self, text, prefix, is_voice=False):
+        """Executes the exchange (text -> response) with ESC support."""
+        self.state.system_processing = True
+        self.state.system_status = translator.t("thinking")
         
-        # Feedback visivo
+        # Visual feedback
         sys.stdout.write(f"\r{' ' * 80}\r")
-        label = "Admin (Voce)" if is_voice else "Admin"
-        print(f"{prefisso}\033[92m{label}: {testo}\033[0m")
+        label = "Admin (Voice)" if is_voice else "Admin"
+        print(f"{prefix}\033[92m{label}: {text}\033[0m")
         print(f"\033[93m[{translator.t('press_esc_to_stop')}]\033[0m")
         
-        interface.avvia_pensiero()
+        interface.start_thinking()
         
-        risultato = [None, None]
-        errore = [None]
+        result = [None, None]
+        error = [None]
         stop_event = threading.Event()
 
-        def esegui():
+        def execute():
             try:
-                rv, tv = processore.elabora_scambio(testo, self.state.stato_voce)
-                risultato[0] = rv
-                risultato[1] = tv
+                video_response, clean_voice_text = processore.process_exchange(
+                    text, voice_status=self.state.voice_status
+                )
+                result[0] = video_response
+                result[1] = clean_voice_text
             except Exception as e:
-                errore[0] = e
+                error[0] = e
 
-        thread = threading.Thread(target=esegui)
+        thread = threading.Thread(target=execute)
         thread.start()
 
         while thread.is_alive():
@@ -105,86 +124,81 @@ class InputHandler:
             time.sleep(0.1)
 
         if stop_event.is_set():
-            interface.ferma_pensiero()
-            voce.ferma_voce() # Interrompe immediatamente l'audio se in riproduzione
-            # Pulisci il buffer della tastiera da eventuali ESC multipli premuti tenendo premuto il tasto
+            interface.stop_thinking()
+            voce.stop_voice() # Immediately stop audio if playing
+            # Clear keyboard buffer from multiple ESC presses
             while msvcrt.kbhit():
                 msvcrt.getch()
             print(f"\n\033[93m[SYSTEM] {translator.t('request_cancelled')}\033[0m")
-            self.state.sistema_status = translator.t("ready")
-            self.state.sistema_in_elaborazione = False
-            sys.stdout.write(prefisso)
+            self.state.system_status = translator.t("ready")
+            self.state.system_processing = False
+            sys.stdout.write(prefix)
             sys.stdout.flush()
             return
 
         thread.join()
-        interface.ferma_pensiero()
+        interface.stop_thinking()
 
-        if errore[0]:
-            logger.errore(f"[INPUT] Error: {errore[0]}")
+        if error[0]:
+            logger.error(f"[INPUT] Error: {error[0]}")
         else:
-            risposta_video, testo_voce_pulito = risultato
-            # Salvataggio in memoria
-            brain_interface.salva_messaggio("user", testo)
-            brain_interface.salva_messaggio("assistant", risposta_video)
+            video_response, clean_voice_text = result
+            # Save to memory
+            brain_interface.save_message("user", text)
+            brain_interface.save_message("assistant", video_response)
             
-            # Mostra la risposta
-            interface.scrivi_zentra(risposta_video)
-            if self.state.stato_voce and testo_voce_pulito:
-                self.state.sistema_status = translator.t("speaking")
-                interface.aggiorna_barra_stato_in_place(
+        # Show response
+            interface.write_zentra(video_response)
+            if self.state.voice_status and clean_voice_text:
+                self.state.system_status = translator.t("speaking")
+                res = plugin_loader.get_formatted_capabilities()
+                interface.update_status_bar_in_place(
                     self.config.config, 
-                    self.state.stato_voce, 
-                    self.state.stato_ascolto, 
-                    self.state.sistema_status
+                    self.state.voice_status, 
+                    self.state.listening_status, 
+                    self.state.system_status
                 )
-                voce.parla(testo_voce_pulito, state=self.state)
-                # Al termine della voce, torna a PRONTO (già gestito in fondo al metodo)
+                voce.parla(clean_voice_text, state=self.state)
+                # At the end of voice, returns to READY (already handled below)
 
-        self.state.sistema_status = translator.t("ready")
-        self.state.sistema_in_elaborazione = False
-        # Forza un refresh della barra di stato per rimuovere "PENSANDO" o "PARLANDO"
-        interface.aggiorna_barra_stato_in_place(
-            self.config.config, 
-            self.state.stato_voce, 
-            self.state.stato_ascolto, 
-            self.state.sistema_status
+        self.state.system_status = translator.t("ready")
+        self.state.system_processing = False
+        # Force a status bar refresh to remove "THINKING" or "SPEAKING"
+        interface.update_status_bar_in_place(
+            self.config.config, self.state.voice_status, self.state.listening_status, self.state.system_status
         )
-        # Ripristina il prompt a video per il prossimo input
-        sys.stdout.write(prefisso)
+        # Restore prompt for next input
+        sys.stdout.write(prefix)
         sys.stdout.flush()
 
-    def _handle_esc(self, prefisso):
-        """Gestisce pressione ESC: ferma la voce e, se necessario, chiede conferma uscita."""
-        ora = time.time()
-        # Se la voce è stata fermata manualmente da pochissimo, ignora questo ESC (race condition buffer)
-        if ora - self.state.ultimo_stop_voce < 0.5:
-            return "CANCELLED", "" # Ignora silenziosamente
-
-        # Se Zentra stava parlando, ESC deve solo fermare la voce e tornare al prompt
-        if self.state.sistema_parla or voce.sta_parlando:
-            voce.ferma_voce()
-            self.state.sistema_parla = False
-            return "PROCESSED", "" # Torna al prompt
+    def _handle_esc(self, prefix):
+        """Handles ESC key: stops voice and, if necessary, asks for exit confirmation."""
+        now = time.time()
+        # If voice was stopped manually very recently, ignore this ESC (race condition buffer)
+        # If Zentra was speaking, ESC should just stop the voice and return to prompt
+        if self.state.system_speaking or voce.sta_parlando:
+            voce.stop_voice()
+            self.state.system_speaking = False
+            return "PROCESSED", "" # Back to prompt
             
-        # Altrimenti, chiede conferma per uscire
-        sys.stdout.write(f"\n\033[93m[SYSTEM] {translator.t('confirm_exit')} (S/N): \033[0m")
+        # Otherwise, ask for exit confirmation
+        sys.stdout.write(f"\n\033[93m[SYSTEM] {translator.t('confirm_exit')} (Y/N): \033[0m")
         sys.stdout.flush()
         
-        # Aspetta un carattere S o N
+        # Wait for Y or N character
         while True:
             if msvcrt.kbhit():
                 ch = msvcrt.getch().decode('utf-8', errors='ignore').upper()
-                if ch == 'S':
-                    print("S")
+                if ch == 'Y' or ch == 'S': # Keep S for compatibility with Italian habits
+                    print("Y")
                     return "EXIT", None
                 elif ch == 'N':
                     print("N")
-                    sys.stdout.write(f"\r{' ' * 50}\r{prefisso}")
+                    sys.stdout.write(f"\r{' ' * 50}\r{prefix}")
                     sys.stdout.flush()
-                    return "CANCELLED", "" # Torna al prompt senza uscire
-                elif ch == '\x1b': # ESC di nuovo per annullare
-                    sys.stdout.write(f"\r{' ' * 50}\r{prefisso}")
+                    return "CANCELLED", "" # Back to prompt without exiting
+                elif ch == '\x1b': # ESC again to cancel
+                    sys.stdout.write(f"\r{' ' * 50}\r{prefix}")
                     sys.stdout.flush()
                     return "CANCELLED", ""
             time.sleep(0.05)

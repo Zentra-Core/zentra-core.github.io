@@ -6,7 +6,7 @@ try:
 except ImportError:
     class DummyLogger:
         def debug(self, *args, **kwargs): print("[FM_DEBUG]", *args)
-        def errore(self, *args, **kwargs): print("[FM_ERR]", *args)
+        def error(self, *args, **kwargs): print("[FILE_ERR]", *args)
     logger = DummyLogger()
     class DummyTranslator:
         def t(self, key, **kwargs): return key
@@ -19,8 +19,8 @@ except ImportError:
 class FileManager:
     """
     Plugin: File Manager
-    Strumenti per l'interazione con il file system locale.
-    Permette di elencare cartelle, contare file e leggere il contenuto di documenti testuali.
+    Tools for interaction with the local file system.
+    Allows listing folders, counting files, and reading the content of text documents.
     """
 
     def __init__(self):
@@ -84,10 +84,10 @@ class FileManager:
 
     def list_files(self, path: str) -> str:
         """
-        Elenca le cartelle e i file presenti in un determinato percorso.
+        Lists the folders and files present in a specific path.
         
-        :param path: Il percorso della directory da ispezionare (es. 'desktop' o un percorso assoluto).
-        :return: Una stringa riassuntiva con il contenuto della cartella.
+        :param path: The path of the directory to inspect (e.g., 'desktop' or an absolute path).
+        :return: A summary string with the folder content.
         """
         target = path.strip()
         espanso = self._espandi_percorso(target)
@@ -121,10 +121,10 @@ class FileManager:
 
     def count_items(self, path: str) -> str:
         """
-        Conta il numero totale di file e cartelle in un dato percorso, senza elencarli.
+        Counts the total number of files and folders in a given path, without listing them.
         
-        :param path: Il percorso della directory da ispezionare.
-        :return: Una stringa con il conteggio degli elementi.
+        :param path: The path of the directory to inspect.
+        :return: A string with the count of elements.
         """
         target = path.strip()
         espanso = self._espandi_percorso(target)
@@ -142,11 +142,11 @@ class FileManager:
 
     def read_file(self, path: str) -> str:
         """
-        Legge il contenuto testuale di un file specificato dal percorso.
-        Se il file è molto lungo, ne legge solo una parte iniziale definita nelle impostazioni.
+        Reads the textual content of a file specified by the path.
+        If the file is very long, it only reads an initial part defined in settings.
         
-        :param path: Il percorso del file testuale da leggere.
-        :return: Le prime righe del file come testo.
+        :param path: The path of the text file to read.
+        :return: The first lines of the file as text.
         """
         target = path.strip()
         espanso = self._espandi_percorso(target)
