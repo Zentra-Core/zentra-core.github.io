@@ -3,7 +3,7 @@
   <img src="https://raw.githubusercontent.com/Zentra-Core/zentra-core.github.io/main/assets/Zentra_Core_Logo.jpg" width="400" alt="Logo de Zentra">
 </p>
 
-# Zentra Core - Versión 0.9.6 (Estabilización OOP)
+# Zentra Core - Versión 0.9.7 (WebUI Nativa & I18N)
 Idiomas: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP.md)
 
 # 🤖 Zentra Core
@@ -15,20 +15,19 @@ Idiomas: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ES
 **Zentra Core** es una plataforma de asistencia de IA "local-first" que se ejecuta íntegramente en tu propia máquina.
 Combina LLMs locales, interacción por voz, automatización del sistema y una arquitectura de plugins modulares para crear un compañero digital totalmente personalizable.
 
-Ahora completamente migrado a una **arquitectura estable orientada a objetos (OOP)**, Zentra 0.9.6 ofrece fiabilidad y rendimiento sin precedentes. Gracias a **LiteLLM**, soporta Ollama, KoboldCpp y los principales proveedores de la nube (OpenAI, Anthropic, Gemini, Groq) con streaming nativo.
+Ahora completamente migrado a una **arquitectura estable de Plugins Nativos**, Zentra 0.9.7 ofrece una interfaz Web dedicada (Chat + Config) e internacionalización completa. Gracias a **LiteLLM**, soporta Ollama, KoboldCpp y los principales proveedores de la nube con streaming en tiempo real y TTS local.
 
 ---
 
-## ✨ Características Principales (v0.9.6)
-* 🏗️ **Core OOP Estable** — Totalmente refactorizado para una estabilidad de nivel profesional.
-* 🧠 **Streaming Multi-Nube** — Soporte nativo para Groq, OpenAI y Gemini con efecto "máquina de escribir".
-* 🔄 **F7 Live-Sync** — Cambia los ajustes en el panel de configuración y aplícalos al instante sin reiniciar.
-* 🔌 **Plugins Standalone** — Cada plugin es ahora un módulo independiente que puede funcionar incluso sin el core.
-* 🎙️ **Interacción por Voz Multilingüe** — Entrada y salida de voz con selección automática de idioma (ES/EN/IT).
-* ⚙️ **Control del Sistema** — Ejecuta comandos, abre apps, gestiona archivos y controla el hardware.
+## ✨ Características Principales (v0.9.7)
+* 🏗️ **Plugin WebUI Nativo** — Migrado de un bridge a un plugin core (`plugins/web_ui/`) para máximo rendimiento y estabilidad.
+* 🌐 **I18N Global (Multilingüe)** — Soporte completo para Inglés (default) e Italiano en Terminal e interfaz Web con cambio en tiempo real.
+* 🧠 **Streaming Multi-Nube** — Soporte nativo para Groq, OpenAI, Gemini y Anthropic con efecto "máquina de escribir".
+* 🔄 **Live-Sync Config** — Cambia cualquier ajuste en el Panel Web y aplícalo al instante sin reiniciar el sistema.
+* 🎙️ **Chat de Voz Integrado** — Interfaz de Chat nativa con integración de Piper TTS y reproducción de audio automática.
+* 🔌 **Botones Macro de Plugins** — La lista de plugins lateral ahora incluye macros clicables para inyectar comandos especializados al instante.
 * 💾 **Memoria Persistente** — Memoria SQLite con contexto compartido entre WebUI y Terminal.
-* 🖥️ **Registro Refinado** — Ventanas de depuración técnica aisladas e historial de chat limpio.
-* 🔗 **WebUI Bridge** — Plena compatibilidad con Open WebUI y APIs de streaming local.
+* 🚀 **Lanzador Standalone** — Archivo `run_zentra_web.bat` dedicado para iniciar el servidor Web de forma independiente.
 
 ---
 
