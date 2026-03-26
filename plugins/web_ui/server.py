@@ -12,6 +12,18 @@ log = logging.getLogger("ZentraWebUIServer")
 
 _global_server_instance = None
 _server_lock = threading.Lock()
+_state_manager = None   # Injected by application.py after startup
+
+
+def set_state_manager(sm) -> None:
+    """Inject the live StateManager so audio-toggle routes can use it."""
+    global _state_manager
+    _state_manager = sm
+
+
+def get_state_manager():
+    """Returns current state_manager (may be None before injection)."""
+    return _state_manager
 
 
 class ZentraWebUIServer:
@@ -46,8 +58,9 @@ class ZentraWebUIServer:
         except Exception:
             pass
 
-        # Register all routes
-        init_routes(app, self.config_manager, self.root_dir, self.logger)
+        # Register all routes — pass getter so routes always read the current SM
+        from plugins.web_ui.server import get_state_manager as _get_sm
+        init_routes(app, self.config_manager, self.root_dir, self.logger, _get_sm)
         init_chat_routes(app, self.config_manager, self.root_dir, self.logger)
 
         def _run():

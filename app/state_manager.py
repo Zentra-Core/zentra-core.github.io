@@ -5,9 +5,10 @@ Centralized management of application states.
 import threading
 
 class StateManager:
-    def __init__(self, initial_voice_status=True, initial_listening_status=True):
+    def __init__(self, initial_voice_status=True, initial_listening_status=True, initial_audio_mode="auto"):
         self._voice_status = initial_voice_status
         self._listening_status = initial_listening_status
+        self._audio_mode = initial_audio_mode   # "auto" | "console" | "web"
         self._last_esc = 0
         self._detected_voice_command = None
         self._system_processing = False
@@ -95,4 +96,14 @@ class StateManager:
     @last_voice_stop.setter
     def last_voice_stop(self, value):
         with self._lock:
-            self._last_voice_stop = value
+            self._last_voice_stop = value
+
+    @property
+    def audio_mode(self):
+        with self._lock:
+            return self._audio_mode
+
+    @audio_mode.setter
+    def audio_mode(self, value):
+        with self._lock:
+            self._audio_mode = value

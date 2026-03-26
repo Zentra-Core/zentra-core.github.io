@@ -7,7 +7,7 @@ import keyboard
 import msvcrt
 is_speaking = False
 
-def parla(text, state=None):
+def speak(text, state=None):
     global is_speaking
     if not text: return
     

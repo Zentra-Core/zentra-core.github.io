@@ -1,11 +1,11 @@
 import speech_recognition as sr
-from . import voce
+from . import voice
 import json
 import time
 
-def ascolta(state=None):
+def listen(state=None):
     # Redundant check: if system is speaking, don't listen at all
-    if (state and state.system_speaking) or voce.is_speaking: 
+    if (state and state.system_speaking) or voice.is_speaking: 
         return ""
     
     try:
@@ -20,7 +20,7 @@ def ascolta(state=None):
     
     with sr.Microphone() as source:
         # Small delay to avoid hearing the echo of the system's own voice
-        if (state and state.system_speaking) or voce.is_speaking: return ""
+        if (state and state.system_speaking) or voice.is_speaking: return ""
         
         try:
             # Adjust for ambient noise
@@ -30,7 +30,7 @@ def ascolta(state=None):
                              phrase_time_limit=conf.get('phrase_limit', 15))
             
             # If system started speaking WHILE listening, discard everything
-            if (state and state.system_speaking) or voce.is_speaking: return ""
+            if (state and state.system_speaking) or voice.is_speaking: return ""
             
             text = r.recognize_google(audio, language="it-IT", show_all=False)
             return text.lower()

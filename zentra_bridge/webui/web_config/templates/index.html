@@ -783,11 +783,11 @@ function populateUI() {
   document.getElementById('fl-quadre').checked = fi.rimuovi_parentesi_quadre ?? false;
 
   // Voice TTS (Dynamic Dropdown for ONNX models)
-  const v = c.voce || {};
+  const v = c.voice || {};
   document.getElementById('v-piper').value   = v.piper_path       || '';
   
   // Format ONNX from short name back to absolute path for Zentra Core compatibility
-  const exactOnnxPath = v.modello_onnx || '';
+  const exactOnnxPath = v.onnx_model || '';
   const onnxFileNames = (sysOptions.piper_voices || []);
   populateSelect('v-onnx', onnxFileNames, exactOnnxPath.split('\\').pop() || exactOnnxPath.split('/').pop(), true);
 
@@ -797,10 +797,10 @@ function populateUI() {
   document.getElementById('v-silence').value = v.sentence_silence ?? 0.1;
 
   // Local Ambient Mic Listening
-  const a = c.ascolto || {};
-  document.getElementById('a-soglia').value  = a.soglia_energia   ?? 450;
-  document.getElementById('a-timeout').value = a.timeout_silenzio ?? 5;
-  document.getElementById('a-limite').value  = a.limite_frase     ?? 15;
+  const a = c.listening || {};
+  document.getElementById('a-soglia').value  = a.energy_threshold ?? 450;
+  document.getElementById('a-timeout').value = a.silence_timeout  ?? 5;
+  document.getElementById('a-limite').value  = a.phrase_limit      ?? 15;
 
   // Logging & System Root Directives
   const slg = c.logging || {};
@@ -909,28 +909,28 @@ function buildPayload() {
   out.filtri.rimuovi_parentesi_quadre = document.getElementById('fl-quadre').checked;
 
   // Voice TTS Path Reconstruction Helper
-  out.voce = out.voce || {};
-  out.voce.piper_path       = document.getElementById('v-piper').value;
+  out.voice = out.voice || {};
+  out.voice.piper_path       = document.getElementById('v-piper').value;
   
   // Riassembla il path assoluto per il piper .onnx richiesto da Core
   const pdir = sysOptions.piper_dir || "C:\\piper";
   let voiceSel = document.getElementById('v-onnx').value;
   if(!voiceSel.includes("\\") && !voiceSel.includes("/")) {
-      out.voce.modello_onnx = pdir + "\\" + voiceSel;
+      out.voice.onnx_model = pdir + "\\" + voiceSel;
   } else {
-      out.voce.modello_onnx = voiceSel;
+      out.voice.onnx_model = voiceSel;
   }
 
-  out.voce.speed            = parseFloat(document.getElementById('v-speed').value);
-  out.voce.noise_scale      = parseFloat(document.getElementById('v-noise').value);
-  out.voce.noise_w          = parseFloat(document.getElementById('v-noisew').value);
-  out.voce.sentence_silence = parseFloat(document.getElementById('v-silence').value);
+  out.voice.speed            = parseFloat(document.getElementById('v-speed').value);
+  out.voice.noise_scale      = parseFloat(document.getElementById('v-noise').value);
+  out.voice.noise_w          = parseFloat(document.getElementById('v-noisew').value);
+  out.voice.sentence_silence = parseFloat(document.getElementById('v-silence').value);
 
   // Ascolto Ambient
-  out.ascolto = out.ascolto || {};
-  out.ascolto.soglia_energia   = parseInt(document.getElementById('a-soglia').value);
-  out.ascolto.timeout_silenzio = parseInt(document.getElementById('a-timeout').value);
-  out.ascolto.limite_frase     = parseInt(document.getElementById('a-limite').value);
+  out.listening = out.listening || {};
+  out.listening.energy_threshold = parseInt(document.getElementById('a-soglia').value);
+  out.listening.silence_timeout  = parseInt(document.getElementById('a-timeout').value);
+  out.listening.phrase_limit     = parseInt(document.getElementById('a-limite').value);
 
   // Logging & System Root
   out.logging = out.logging || {};

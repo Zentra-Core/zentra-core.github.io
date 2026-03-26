@@ -12,14 +12,14 @@ import logging
 bridge_logger = logging.getLogger("WebUI_Bridge")
 
 
-def speak_local(testo: str, voce_cfg: dict, bridge_dir: str) -> None:
+def speak_local(testo: str, voice_cfg: dict, bridge_dir: str) -> None:
     """
     Synthesises `testo` with Piper and plays the resulting WAV file.
     Spawns a daemon thread so the caller is never blocked.
 
     Args:
         testo:      The text to synthesise.
-        voce_cfg:   The ``voce`` section of config.json.
+        voice_cfg:   The ``voice`` section of config.json.
         bridge_dir: Absolute path to the Zentra-Core root (used for WAV output).
     """
     if not testo or not testo.strip():
@@ -27,13 +27,13 @@ def speak_local(testo: str, voce_cfg: dict, bridge_dir: str) -> None:
 
     def _run() -> None:
         try:
-            piper_path   = voce_cfg.get("piper_path",   r"C:\piper\piper.exe")
-            model_path   = voce_cfg.get("onnx_model", r"C:\piper\it_IT-paola-medium.onnx")
-            speed        = voce_cfg.get("speed",               1.2)
+            piper_path   = voice_cfg.get("piper_path",   r"C:\piper\piper.exe")
+            model_path   = voice_cfg.get("onnx_model", r"C:\piper\it_IT-paola-medium.onnx")
+            speed        = voice_cfg.get("speed",               1.2)
             length_scale = round(1.0 / max(0.1, speed), 3)
-            noise_scale  = voce_cfg.get("noise_scale",       0.817)
-            noise_w      = voce_cfg.get("noise_w",            0.9)
-            silence      = voce_cfg.get("sentence_silence",   0.1)
+            noise_scale  = voice_cfg.get("noise_scale",       0.817)
+            noise_w      = voice_cfg.get("noise_w",            0.9)
+            silence      = voice_cfg.get("sentence_silence",   0.1)
 
             testo_pulito = testo.strip().replace('"', "").replace("\n", " ")
             wav_path     = os.path.join(bridge_dir, "risposta_bridge.wav")

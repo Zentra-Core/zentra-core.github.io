@@ -6,7 +6,7 @@ Provides:
   POST /api/chat             -> Accept message, start inference, return session_id
   GET  /api/stream/<sid>     -> SSE stream of tokens
   GET  /api/history          -> Session history
-  GET  /api/audio            -> Last TTS WAV file
+  GET  /api/audio            -> Last TTS WAV file (for web playback)
 """
 import os
 import json
@@ -29,7 +29,6 @@ def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr):
 
     try:
         from core.llm import brain
-        from app.config import ConfigManager
     except ImportError as e:
         sess["queue"].put({"type": "error", "text": f"Core non importabile: {e}"})
         sess["done"] = True
@@ -51,7 +50,7 @@ def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr):
 
         try:
             from core.processing import processore
-            full_text = processore.processa(full_text, cfg.config)
+            full_text = processore.processa(full_text, cfg_mgr.config)
         except Exception:
             pass
 
@@ -73,31 +72,65 @@ def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr):
 
 
 def _maybe_generate_tts(text: str, cfg_mgr):
+    """
+    Generate a WAV file via Piper for web playback.
+
+    Logic:
+      - audio_mode == "console"  → skip (console handles audio, web stays silent)
+      - audio_mode == "web"      → always generate for web
+      - audio_mode == "auto"     → generate for web if voice_status is ON
+    """
     global _last_audio_path
     try:
-        br      = cfg_mgr.config.get("bridge", {})
-        voice   = cfg_mgr.config.get("voice", {})
+        cfg        = cfg_mgr.config
+        audio_mode = cfg.get("audio_mode", "auto")
+        voice_cfg  = cfg.get("voice", {})
+        voice_on   = voice_cfg.get("voice_status", False)
 
-        # We generate TTS for the Web UI if its specific toggle is ON.
-        # This works independently of the global 'voice_status' (F5),
-        # allowing for 'Silent Console / Audible Web' configurations.
-        if not br.get("webui_voice_enabled", False):
+        # Decide whether to synthesise for web
+        if audio_mode == "console":
+            return                          # Console owns audio → web is silent
+        if audio_mode == "auto" and not voice_on:
+            return                          # Auto + voice disabled → skip
+
+        # Resolve Piper paths
+        piper_path = voice_cfg.get("piper_path", r"C:\piper\piper.exe")
+        model_path = voice_cfg.get("onnx_model", "")
+        if not os.path.exists(piper_path) or not model_path:
+            _chat_log.debug("[Chat] TTS skipped: piper not found or model empty")
             return
-        import subprocess
-        piper = voce.get("piper_path",   r"C:\piper\piper.exe")
-        model = voce.get("onnx_model", "")
-        if not os.path.exists(piper) or not model:
-            return
-        # output at Zentra root
+
+        # Build optional flags
+        length_scale     = 1.0 / max(0.1, voice_cfg.get("speed", 1.0))
+        noise_scale      = voice_cfg.get("noise_scale", 0.667)
+        noise_w          = voice_cfg.get("noise_w", 0.8)
+        sentence_silence = voice_cfg.get("sentence_silence", 0.2)
+
         root = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
         out  = os.path.join(root, "risposta.wav")
+
+        import subprocess
+        clean_text = text.replace('"', '').replace('\n', ' ')
+        command = [
+            piper_path, "-m", model_path,
+            "--length_scale",     str(length_scale),
+            "--noise_scale",      str(noise_scale),
+            "--noise_w",          str(noise_w),
+            "--sentence_silence", str(sentence_silence),
+            "-f", out,
+        ]
         proc = subprocess.Popen(
-            [piper, "-m", model, "--output_file", out],
-            stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            command,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
         )
-        proc.communicate(input=text.encode("utf-8"))
+        proc.communicate(input=clean_text.encode("utf-8"))
+
         if os.path.exists(out):
             _last_audio_path = out
+            _chat_log.debug(f"[Chat] TTS generated → {out}")
+
     except Exception as e:
         _chat_log.debug(f"[Chat] TTS error: {e}")
 
@@ -176,5 +209,7 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
     def api_audio():
         from flask import send_file, jsonify
         if _last_audio_path and os.path.exists(_last_audio_path):
-            return send_file(_last_audio_path, mimetype="audio/wav")
+            # Add a timestamp to bust browser cache between responses
+            return send_file(_last_audio_path, mimetype="audio/wav",
+                             download_name="zentra_response.wav")
         return jsonify({"error": "No audio available"}), 404

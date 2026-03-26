@@ -17,6 +17,8 @@
   --accent2:   #a78bfa;
   --accent-g:  linear-gradient(135deg, #6c8cff, #a78bfa);
   --green:     #34d399;
+  --red:       #f87171;
+  --yellow:    #fbbf24;
   --text:      #e2e8f0;
   --muted:     #4a5568;
   --border:    rgba(108,140,255,0.15);
@@ -50,6 +52,24 @@ body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px;
 .status-text { color:var(--muted); }
 .status-val { color:var(--text); font-weight:600; }
 
+/* Audio controls in sidebar */
+.audio-controls { padding:8px 14px 0; }
+.audio-toggle-row { display:flex; gap:8px; margin-bottom:8px; }
+.audio-toggle-btn {
+  flex:1; display:flex; align-items:center; justify-content:center; gap:5px;
+  padding:7px 8px; border-radius:8px; border:1px solid var(--border);
+  background:var(--glass); color:var(--muted); font-family:inherit; font-size:12px;
+  font-weight:600; cursor:pointer; transition:all .25s; letter-spacing:.3px;
+}
+.audio-toggle-btn:hover { background:var(--glass-b); color:var(--text); }
+.audio-toggle-btn.on  { background:rgba(52,211,153,.12); border-color:rgba(52,211,153,.4); color:var(--green); }
+.audio-toggle-btn.off { background:rgba(248,113,113,.08); border-color:rgba(248,113,113,.3); color:var(--red); }
+
+.mode-selector { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:8px;
+  color:var(--text); font-family:inherit; font-size:12px; padding:6px 10px; cursor:pointer; outline:none; }
+.mode-selector:focus { border-color:var(--accent); }
+.mode-label { font-size:10px; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:5px; padding:0 2px; }
+
 .sidebar-footer { margin-top:auto; padding:12px 14px 16px; border-top:1px solid var(--border); }
 
 /* MAIN */
@@ -58,6 +78,14 @@ body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px;
 #topbar { background:rgba(8,11,20,0.85); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); padding:12px 24px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-shrink:0; }
 
 #model-badge { display:inline-flex; align-items:center; gap:6px; background:var(--glass); border:1px solid var(--border); border-radius:20px; padding:4px 12px; font-size:12px; font-weight:600; color:var(--accent); }
+
+/* Topbar audio indicator chips */
+.topbar-chips { display:flex; gap:6px; align-items:center; }
+.topbar-chip { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600;
+  padding:3px 9px; border-radius:12px; border:1px solid var(--border);
+  background:var(--glass); color:var(--muted); letter-spacing:.3px; transition:all .25s; }
+.topbar-chip.on  { background:rgba(52,211,153,.1);  border-color:rgba(52,211,153,.3);  color:var(--green); }
+.topbar-chip.off { background:rgba(248,113,113,.07); border-color:rgba(248,113,113,.25); color:var(--red); }
 
 #chat-area { flex:1; overflow-y:auto; padding:24px; display:flex; flex-direction:column; gap:16px; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
 #chat-area::-webkit-scrollbar { width:4px; }
@@ -88,8 +116,8 @@ body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px;
 .msg-bubble pre { background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.07); border-radius:8px; padding:12px 14px; margin:10px 0; overflow-x:auto; font-family:'JetBrains Mono',monospace; font-size:13px; color:#c4b5fd; }
 .msg-bubble pre code { background:none; border:none; padding:0; color:inherit; }
 
-.audio-badge { margin-top:8px; display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); }
-.audio-badge audio { height:24px; opacity:.8; }
+.audio-badge { margin-top:10px; display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); background:rgba(52,211,153,.06); border:1px solid rgba(52,211,153,.2); border-radius:8px; padding:6px 10px; }
+.audio-badge audio { height:24px; opacity:.85; flex:1; }
 
 .cursor { display:inline-block; width:10px; height:16px; background:var(--accent); border-radius:2px; animation:blink .6s step-end infinite; vertical-align:text-bottom; margin-left:2px; }
 @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0;} }
@@ -133,6 +161,26 @@ body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px;
     <div style="width:7px;height:7px;border-radius:50%;background:var(--accent2);box-shadow:0 0 6px var(--accent2);flex-shrink:0;"></div>
     <div style="overflow:hidden;"><div class="status-text">{{ t('webui_chat_model') }}</div><div class="status-val" id="sb-model" style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</div></div>
   </div>
+
+  <!-- ── Audio Controls ── -->
+  <div class="audio-controls">
+    <div class="sidebar-label" style="padding:0 2px;margin-bottom:8px;">🔊 AUDIO</div>
+    <div class="audio-toggle-row">
+      <button class="audio-toggle-btn" id="mic-btn" onclick="toggleMic()" title="Toggle Microphone (F4 equivalent)">
+        🎤 <span id="mic-label">MIC</span>
+      </button>
+      <button class="audio-toggle-btn" id="tts-btn" onclick="toggleTTS()" title="Toggle Voice Output (F5 equivalent)">
+        🔊 <span id="tts-label">TTS</span>
+      </button>
+    </div>
+    <div class="mode-label">AUDIO MODE</div>
+    <select class="mode-selector" id="audio-mode-select" onchange="setAudioMode(this.value)" title="Controls who handles audio: console, web, or auto">
+      <option value="auto">⚡ Auto (smart routing)</option>
+      <option value="web">🌐 Web only</option>
+      <option value="console">🖥️ Console only</option>
+    </select>
+  </div>
+
   <div class="sidebar-section">
     <div class="sidebar-label">{{ t('webui_chat_nav') }}</div>
     <button class="sidebar-btn active" onclick="clearChat()"><span class="icon">💬</span> {{ t('webui_chat_new') }}</button>
@@ -150,8 +198,10 @@ body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px;
 <div id="main">
   <div id="topbar">
     <div><div id="model-badge">🧠 <span id="tb-model">{{ t('webui_chat_loading') }}</span></div></div>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <div id="tts-indicator" style="display:none;font-size:12px;color:var(--muted);">🔊 TTS</div>
+    <div class="topbar-chips">
+      <div class="topbar-chip" id="chip-mic">🎤 MIC: —</div>
+      <div class="topbar-chip" id="chip-tts">🔊 TTS: —</div>
+      <div class="topbar-chip" id="chip-mode" style="color:var(--accent2);border-color:rgba(167,139,250,.25);background:rgba(167,139,250,.07);">⚡ AUTO</div>
       <a href="/zentra/config/ui" target="_blank" style="font-size:12px;color:var(--muted);text-decoration:none;padding:5px 10px;background:var(--glass);border:1px solid var(--border);border-radius:6px;transition:all .2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">⚙️ Config</a>
     </div>
   </div>
@@ -183,16 +233,85 @@ body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px;
 </div>
 
 <script>
-let history = [], isStreaming = false, hasTTS = false;
-const chatArea = document.getElementById('chat-area');
-const userInput = document.getElementById('user-input');
-const sendBtn = document.getElementById('send-btn');
-const welcome = document.getElementById('welcome');
+let history = [], isStreaming = false;
+let currentMicOn  = false;
+let currentTTSOn  = false;
+let currentMode   = 'auto';
+
+const chatArea   = document.getElementById('chat-area');
+const userInput  = document.getElementById('user-input');
+const sendBtn    = document.getElementById('send-btn');
+const welcome    = document.getElementById('welcome');
+const micBtn     = document.getElementById('mic-btn');
+const ttsBtn     = document.getElementById('tts-btn');
+const modeSelect = document.getElementById('audio-mode-select');
 
 function hideWelcome() { if(welcome) welcome.style.display = 'none'; }
 function autoResize(ta) { ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,160)+'px'; }
 function handleKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
 function startPrompt(text) { userInput.value=text; autoResize(userInput); sendMessage(); }
+
+// ── Audio toggle helpers ──────────────────────────────────────────────────────
+
+function _applyMicState(on) {
+  currentMicOn = on;
+  const label = on ? 'ON' : 'OFF';
+  document.getElementById('mic-label').textContent = label;
+  micBtn.className = 'audio-toggle-btn ' + (on ? 'on' : 'off');
+  const chip = document.getElementById('chip-mic');
+  chip.textContent = '🎤 MIC: ' + label;
+  chip.className   = 'topbar-chip ' + (on ? 'on' : 'off');
+}
+
+function _applyTTSState(on) {
+  currentTTSOn = on;
+  const label = on ? 'ON' : 'OFF';
+  document.getElementById('tts-label').textContent = label;
+  ttsBtn.className = 'audio-toggle-btn ' + (on ? 'on' : 'off');
+  const chip = document.getElementById('chip-tts');
+  chip.textContent = '🔊 TTS: ' + label;
+  chip.className   = 'topbar-chip ' + (on ? 'on' : 'off');
+}
+
+function _applyModeState(mode) {
+  currentMode = mode;
+  // Sync dropdown without triggering onchange
+  for(let opt of modeSelect.options) { opt.selected = opt.value === mode; }
+  const icons = { auto:'⚡', web:'🌐', console:'🖥️' };
+  document.getElementById('chip-mode').textContent = (icons[mode]||'⚡') + ' ' + mode.toUpperCase();
+}
+
+async function toggleMic() {
+  try {
+    const r    = await fetch('/api/audio/toggle/mic', {method:'POST'});
+    const data = await r.json();
+    if (data.ok) _applyMicState(data.listening_status);
+    else console.warn('[Audio] toggleMic error:', data.error);
+  } catch(e) { console.error('[Audio] toggleMic failed', e); }
+}
+
+async function toggleTTS() {
+  try {
+    const r    = await fetch('/api/audio/toggle/tts', {method:'POST'});
+    const data = await r.json();
+    if (data.ok) _applyTTSState(data.voice_status);
+    else console.warn('[Audio] toggleTTS error:', data.error);
+  } catch(e) { console.error('[Audio] toggleTTS failed', e); }
+}
+
+async function setAudioMode(mode) {
+  try {
+    const r    = await fetch('/api/audio/mode', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({mode})
+    });
+    const data = await r.json();
+    if (data.ok) _applyModeState(data.audio_mode);
+    else console.warn('[Audio] setAudioMode error:', data.error);
+  } catch(e) { console.error('[Audio] setAudioMode failed', e); }
+}
+
+// ── Chat logic ────────────────────────────────────────────────────────────────
 
 function addBubble(role, text, id) {
   const isUser = role === 'user';
@@ -258,7 +377,10 @@ async function sendMessage() {
         history.push({role:'user',content:text});
         history.push({role:'assistant',content:aiText});
         isStreaming=false; sendBtn.disabled=false;
-        if(hasTTS) tryLoadAudio(aiBubble);
+        // Load audio if TTS is on and we're not in console-only mode
+        if (currentTTSOn && currentMode !== 'console') {
+          tryLoadAudio(aiBubble);
+        }
       }
     };
     evtSrc.onerror = () => {
@@ -274,8 +396,10 @@ async function sendMessage() {
 }
 
 async function tryLoadAudio(bubble) {
+  // Small delay to let Piper finish writing the file
+  await new Promise(r => setTimeout(r, 800));
   try {
-    const r = await fetch('/api/audio');
+    const r = await fetch('/api/audio?t=' + Date.now());
     if(!r.ok) return;
     const url = URL.createObjectURL(await r.blob());
     const badge = document.createElement('div');
@@ -298,8 +422,12 @@ async function refreshStatus() {
     document.getElementById('sb-backend').textContent = d.backend||'—';
     document.getElementById('sb-model').textContent   = d.model||'—';
     document.getElementById('tb-model').textContent   = d.model||'{{ t("webui_chat_offline") }}';
-    hasTTS = d.tts && d.tts.includes('ON');
-    document.getElementById('tts-indicator').style.display = hasTTS?'block':'none';
+
+    // Sync audio state from server (source of truth)
+    _applyMicState(d.mic === 'ON');
+    _applyTTSState(d.tts === 'ON');
+    _applyModeState(d.audio_mode || 'auto');
+
   } catch(e) { document.getElementById('tb-model').textContent='{{ t("webui_chat_offline") }}'; }
 }
 
@@ -321,7 +449,7 @@ async function loadPlugins() {
     for(const [tag,pc] of Object.entries(cfg.plugins||{})) {
       const on = pc.enabled!==false;
       const pText = prompts[tag] ? prompts[tag].replace(/'/g, "\\'") : '';
-      const onClick = on && pText ? `onclick="document.getElementById('userInput').value='${pText}'; document.getElementById('userInput').focus();"` : '';
+      const onClick = on && pText ? `onclick="document.getElementById('user-input').value='${pText}'; document.getElementById('user-input').focus();"` : '';
       const cursor = on && pText ? 'cursor:pointer;' : (on ? 'cursor:default;' : 'cursor:not-allowed;');
       html+=`<div class="sidebar-btn" ${onClick} style="font-size:12px;${!on?'opacity:.4;':''}${cursor}"><span class="icon">${icons[tag]||'🧩'}</span> ${tag}</div>`;
     }

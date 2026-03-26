@@ -46,7 +46,8 @@ class ZentraApplication:
         
         cv = self.config_manager.get('voice', 'voice_status', default=True)
         ca = self.config_manager.get('listening', 'listening_status', default=True)
-        self.state_manager = StateManager(initial_voice_status=cv, initial_listening_status=ca)
+        am = self.config_manager.config.get('audio_mode', 'auto')
+        self.state_manager = StateManager(initial_voice_status=cv, initial_listening_status=ca, initial_audio_mode=am)
         
         self.input_handler = InputHandler(self.state_manager, self.config_manager)
         self.model_manager = ModelManager(self.config_manager)
@@ -70,6 +71,13 @@ class ZentraApplication:
         plugin_loader.update_capability_registry(self.config_manager.config)
         self.state_manager.system_status = translator.t("sync_plugins")
         plugin_loader.sync_plugin_config(self.config_manager)
+        
+        # Inject state_manager into WebUI server after plugin load (for audio toggle routes)
+        try:
+            from plugins.web_ui.server import set_state_manager
+            set_state_manager(self.state_manager)
+        except Exception as _e:
+            logger.warning("APP", f"Could not inject state_manager into WebUI: {_e}")
         
         # Synchronize list of available personalities in config
         personality_files = interface.list_personalities()
@@ -101,13 +109,13 @@ class ZentraApplication:
 
     def _show_welcome(self):
         """Shows welcome message."""
-        from core.audio import voce
+        from core.audio import voice
         self.state_manager.system_status = translator.t("speaking")
         message = self.config_manager.config.get("behavior", {}).get("welcome_message", translator.t("system_ready"))
         interface.write_zentra(message)
         if self.state_manager.voice_status:
             try:
-                voce.parla(translator.t("system_ready"))
+                voice.speak(translator.t("system_ready"))
             except Exception as e:
                 logger.warning("APP", f"Welcome voice failed (non-critical): {e}")
         self.state_manager.system_processing = False

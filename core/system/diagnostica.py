@@ -12,7 +12,7 @@ import psutil
 import msvcrt
 import json
 from core.logging import logger
-from core.audio import voce
+from core.audio import voice
 from ui import interface
 from core.system.version import VERSION, COPYRIGHT, get_version_string
 from core.i18n import translator
@@ -38,7 +38,7 @@ def check_bypass():
 def print_and_speak(video_text, voice_text=None):
     print(video_text)
     if voice_text:
-        voce.parla(voice_text)
+        voice.speak(voice_text)
     time.sleep(0.1)
 
 def check_folders():

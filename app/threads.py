@@ -4,7 +4,7 @@ Separate thread management.
 
 import threading
 import time
-from core.audio import ascolto, voce
+from core.audio import listen, voice
 from core.logging import logger
 
 class AscoltoThread(threading.Thread):
@@ -16,10 +16,13 @@ class AscoltoThread(threading.Thread):
     def run(self):
         logger.info("[LISTENING THREAD] Initialized.")
         while True:
-            if (self.state.listening_status and 
+            # Skip mic listening if web UI owns audio
+            audio_mode = getattr(self.state, 'audio_mode', 'auto')
+            if (audio_mode != 'web' and
+                self.state.listening_status and 
                 not self.state.system_speaking and 
                 not self.state.system_processing):
-                text = ascolto.ascolta(state=self.state)
+                text = listen.listen(state=self.state)
                 if text and len(text.strip()) > 1:
                     logger.info(f"[LISTENING THREAD] Input detected: '{text}'")
                     self.state.detected_voice_command = text

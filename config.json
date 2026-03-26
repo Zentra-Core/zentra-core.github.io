@@ -11,6 +11,7 @@
         "save_special_instructions": false,
         "special_instructions": ""
     },
+    "audio_mode": "web",
     "backend": {
         "cloud": {
             "model": "gemini/gemini-2.5-flash",

@@ -8,7 +8,7 @@ import threading
 import msvcrt
 from ui import interface
 from core.processing import processore
-from core.audio import voce
+from core.audio import voice
 from core.logging import logger
 from core.system import plugin_loader
 from core.i18n import translator
@@ -126,7 +126,7 @@ class InputHandler:
 
         if stop_event.is_set():
             interface.stop_thinking()
-            voce.stop_voice() # Immediately stop audio if playing
+            voice.stop_voice() # Immediately stop audio if playing
             # Clear keyboard buffer from multiple ESC presses
             while msvcrt.kbhit():
                 msvcrt.getch()
@@ -159,7 +159,7 @@ class InputHandler:
                     self.state.listening_status, 
                     self.state.system_status
                 )
-                voce.parla(clean_voice_text, state=self.state)
+                voice.speak(clean_voice_text, state=self.state)
                 # At the end of voice, returns to READY (already handled below)
 
         self.state.system_status = translator.t("ready")
@@ -177,8 +177,8 @@ class InputHandler:
         now = time.time()
         # If voice was stopped manually very recently, ignore this ESC (race condition buffer)
         # If Zentra was speaking, ESC should just stop the voice and return to prompt
-        if self.state.system_speaking or voce.sta_parlando:
-            voce.stop_voice()
+        if self.state.system_speaking or voice.is_speaking:
+            voice.stop_voice()
             self.state.system_speaking = False
             return "PROCESSED", "" # Back to prompt
             

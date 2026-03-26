@@ -7,7 +7,7 @@ class Parameter:
     Rappresenta un parametro di configurazione con metadati per l'editor.
     """
     def __init__(self, section, key, label, param_type, **kwargs):
-        self.section = section          # 'backend', 'voce', 'ascolto', 'filtri', 'logging', 'plugin'
+        self.section = section          # 'backend', 'voice', 'listening', 'filtri', 'logging', 'plugin'
         self.key = key                  # nome nel config.json
         self.label = label              # nome visualizzato
         self.type = param_type          # 'int', 'float', 'bool', 'str', 'command', 'info'
