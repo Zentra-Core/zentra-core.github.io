@@ -300,11 +300,19 @@ class ConfigEditor:
                 sys.exit(42)
                 
             elif result == "SAVE":
+                import os
+                # Pulisce lo schermo per chiarezza per il report esito testuale
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print(f"\n\n\033[92m{'═'*55}")
+                print("   ✅ CONFIGURAZIONE SALVATA CON SUCCESSO!   ")
+                print(f"{'═'*55}\033[0m")
+                
                 if self.modified:
                     self._save_config()
-                # Auto-riavvio garantito se ci sono state modifiche salvate dall'utente
-                print(f"\n\033[91m{translator.t('rebooting_msg')}\033[0m")
-                time.sleep(1)
+                
+                # Auto-riavvio garantito per applicare le modifiche
+                print(f"\n\033[93m{translator.t('rebooting_msg')}...\033[0m")
+                time.sleep(2)
                 sys.exit(42)
                 
             elif result == "DISCARD":

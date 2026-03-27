@@ -15,6 +15,8 @@ class StateManager:
         self._system_status = "STARTUP"
         self._system_speaking = False
         self._last_voice_stop = 0
+        self._push_to_talk = False
+        self._ptt_hotkey = "ctrl+shift"
         self._lock = threading.Lock()
 
     # Thread-safe properties
@@ -106,4 +108,24 @@ class StateManager:
     @audio_mode.setter
     def audio_mode(self, value):
         with self._lock:
-            self._audio_mode = value
+            self._audio_mode = value
+
+    @property
+    def push_to_talk(self):
+        with self._lock:
+            return self._push_to_talk
+
+    @push_to_talk.setter
+    def push_to_talk(self, value):
+        with self._lock:
+            self._push_to_talk = value
+
+    @property
+    def ptt_hotkey(self):
+        with self._lock:
+            return self._ptt_hotkey
+
+    @ptt_hotkey.setter
+    def ptt_hotkey(self, value):
+        with self._lock:
+            self._ptt_hotkey = value

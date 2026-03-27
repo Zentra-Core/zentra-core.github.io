@@ -110,6 +110,8 @@ def build_parameter_list(config):
                            min=1, max=10, step=1))
     params.append(Parameter('listening', 'phrase_limit', translator.t("label_phrase_limit"), 'int', 
                            min=5, max=60, step=5))
+    params.append(Parameter('listening', 'push_to_talk', 'Abilita Push-To-Talk (PTT)', 'bool'))
+    params.append(Parameter('listening', 'ptt_hotkey', 'Shortcut Tasto PTT', 'str'))
 
     # --- Filters ---
     filters = config.get('filters', {})
@@ -125,6 +127,7 @@ def build_parameter_list(config):
     # --- Comando speciale RIAVVIA e opzioni di sistema ---
     params.append(Parameter('system', 'fast_boot', translator.t("label_avvio_rapido"), 'bool'))
     params.append(Parameter('system', 'language', translator.t("label_lingua_system"), 'str', options=['it', 'en']))
+    params.append(Parameter('system', 'audio_mode', 'Routing Audio Principale', 'str', options=['auto', 'console', 'web']))
     params.append(Parameter('system', 'reboot', translator.t("label_reboot"), 'command', 
                            command='reboot'))
     params.append(Parameter('system', 'save_exit', translator.t("label_save_exit"), 'command', 

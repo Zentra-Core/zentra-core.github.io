@@ -101,7 +101,8 @@ def show_complete_ui(config, voice_status, listening_status, system_status="READ
     mic = "ON" if listening_status else "OFF"
     spk = "ON" if voice_status else "OFF"
     
-    L = 90  # Larghezza fissa per l'allineamento
+    import shutil
+    L = max(90, shutil.get_terminal_size((115, 30)).columns - 1)
     
     # 1. BARRA SUPERIORE (TITOLO) - NERO VERO
     titolo = translator.t("welcome", version=version.VERSION).center(L)
@@ -112,6 +113,10 @@ def show_complete_ui(config, voice_status, listening_status, system_status="READ
     mic_len = 2 if listening_status else 3
     spk_str = "ON" if voice_status else f"{Fore.RED}OFF{Fore.WHITE}"
     spk_len = 2 if voice_status else 3
+    
+    is_ptt = config.get("listening", {}).get("push_to_talk", False)
+    ptt_str = "ON" if is_ptt else f"{Fore.RED}OFF{Fore.WHITE}"
+    ptt_len = 2 if is_ptt else 3
     
     # Attempts to translate status if it's a known key, otherwise uses as is
     status_translated = translate_status(system_status)
@@ -127,13 +132,22 @@ def show_complete_ui(config, voice_status, listening_status, system_status="READ
     header_mic = translator.t("header_mic")
     header_voc = translator.t("header_voice")
     
-    # Visible length (without color codes)
+    # Dynamic Truncation
     visible_status_text = translator.t("system_status", status=status_translated)
-    visible_len = len(f" {visible_status_text} | {header_mod}: {model} | {header_ani}: {soul} | {header_mic}:  | {header_voc}:  ") + mic_len + spk_len
+    base_len = len(f" {visible_status_text} | {header_mod}:  | {header_ani}:  | {header_mic}:  | {header_voc}:  | PTT:  ") + mic_len + spk_len + ptt_len
+    
+    avail_space = max(20, L - base_len)
+    space_mod = avail_space // 2
+    space_ani = avail_space - space_mod
+    
+    if len(model) > space_mod: model = model[:max(3, space_mod-2)] + ".."
+    if len(soul) > space_ani: soul = soul[:max(3, space_ani-2)] + ".."
+    
+    visible_len = base_len + len(model) + len(soul)
     pad_left = max(0, L - visible_len) // 2
     pad_right = max(0, L - visible_len) - pad_left
     
-    info_status_colored = f" {info_status} | {header_mod}: {model} | {header_ani}: {soul} | {header_mic}: {mic_str} | {header_voc}: {spk_str} "
+    info_status_colored = f" {info_status} | {header_mod}: {model} | {header_ani}: {soul} | {header_mic}: {mic_str} | {header_voc}: {spk_str} | PTT: {ptt_str} "
     print(f"{Back.BLUE}{Fore.WHITE}{' '*pad_left}{info_status_colored}{' '*pad_right}{Style.RESET_ALL}")
     
     # 3. HARDWARE BAR (DYNAMIC)
@@ -146,8 +160,15 @@ def show_complete_ui(config, voice_status, listening_status, system_status="READ
         f" {translator.t('menu_help')} | {translator.t('menu_models')} | "
         f"{translator.t('menu_persona')} | {translator.t('menu_mic')} | "
         f"{translator.t('menu_voice')} | {translator.t('menu_reboot')} | "
-        f"{translator.t('menu_config')} | {translator.t('menu_exit')} "
+        f"{translator.t('menu_config')} | PTT (F8) | {translator.t('menu_exit')} "
     )
+    # Truncate if comandi size is larger than L
+    import re
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    visible_cmd_len = len(ansi_escape.sub('', comandi))
+    if visible_cmd_len > L:
+        # If still too long, fall back to something minimalist
+        comandi = " F1..F7: Menu | F8: PTT | ESC: Exit "
     print(f"{Style.DIM}{comandi.center(L)}{Style.RESET_ALL}")
     print(f"{Fore.CYAN}{'━' * L}{Style.RESET_ALL}")
     
@@ -161,10 +182,11 @@ def show_complete_ui(config, voice_status, listening_status, system_status="READ
 def get_hardware_row(config=None, dashboard_mod=None):
     """
     Returns the formatted string for the hardware row (CPU, RAM, VRAM, backend).
-    Guarantees a fixed length of 90 characters to avoid UI corruption/wrap.
+    Guarantees it respects the terminal width to avoid UI corruption/wrap.
     """
     import re
-    L = 90
+    import shutil
+    L = max(90, shutil.get_terminal_size((115, 30)).columns - 1)
     
     if dashboard_mod is None:
         dashboard_mod = plugin_loader.get_plugin_module("DASHBOARD")
@@ -226,7 +248,12 @@ def update_status_bar_in_place(config, voice_status, listening_status, system_st
     spk_str = "ON" if voice_status else f"{Fore.RED}OFF{Fore.WHITE}"
     spk_len = 2 if voice_status else 3
     
-    L = 90
+    is_ptt = config.get("listening", {}).get("push_to_talk", False)
+    ptt_str = "ON" if is_ptt else f"{Fore.RED}OFF{Fore.WHITE}"
+    ptt_len = 2 if is_ptt else 3
+    
+    import shutil
+    L = max(90, shutil.get_terminal_size((115, 30)).columns - 1)
     status_translated = translate_status(system_status)
     status_color = get_status_color(system_status)
     
@@ -238,12 +265,22 @@ def update_status_bar_in_place(config, voice_status, listening_status, system_st
     header_mic = translator.t("header_mic")
     header_voc = translator.t("header_voice")
     
+    # Dynamic Truncation
     visible_status_text = translator.t("system_status", status=status_translated)
-    visible_len = len(f" {visible_status_text} | {header_mod}: {model} | {header_ani}: {soul} | {header_mic}:  | {header_voc}:  ") + mic_len + spk_len
+    base_len = len(f" {visible_status_text} | {header_mod}:  | {header_ani}:  | {header_mic}:  | {header_voc}:  | PTT:  ") + mic_len + spk_len + ptt_len
+    
+    avail_space = max(20, L - base_len)
+    space_mod = avail_space // 2
+    space_ani = avail_space - space_mod
+    
+    if len(model) > space_mod: model = model[:max(3, space_mod-2)] + ".."
+    if len(soul) > space_ani: soul = soul[:max(3, space_ani-2)] + ".."
+    
+    visible_len = base_len + len(model) + len(soul)
     pad_left = max(0, L - visible_len) // 2
     pad_right = max(0, L - visible_len) - pad_left
     
-    info_status_colored = f" {info_status} | {header_mod}: {model} | {header_ani}: {soul} | {header_mic}: {mic_str} | {header_voc}: {spk_str} "
+    info_status_colored = f" {info_status} | {header_mod}: {model} | {header_ani}: {soul} | {header_mic}: {mic_str} | {header_voc}: {spk_str} | PTT: {ptt_str} "
     formatted_row = f"{Back.BLUE}{Fore.WHITE}{' '*pad_left}{info_status_colored}{' '*pad_right}{Style.RESET_ALL}"
     
     with stdout_lock:
@@ -392,8 +429,7 @@ def read_keyboard_input(prefix, current_input):
             if special_key == b'?': return "F5", current_input
             if special_key == b'@': return "F6", current_input
             if special_key == b'A': return "F7", current_input
-            # Optional: add F8-F12 if desired
-            # if special_key == b'B': return "F8", current_input
+            if special_key == b'B': return "F8", current_input
             # if special_key == b'C': return "F9", current_input
             # if special_key == b'D': return "F10", current_input
             # if special_key == b'E': return "F11", current_input

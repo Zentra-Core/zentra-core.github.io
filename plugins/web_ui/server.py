@@ -10,6 +10,9 @@ from .routes_chat import init_chat_routes
 
 log = logging.getLogger("ZentraWebUIServer")
 
+from app.state_manager import StateManager
+from app.threads import AscoltoThread
+
 _global_server_instance = None
 _server_lock = threading.Lock()
 _state_manager = None   # Injected by application.py after startup
@@ -59,8 +62,7 @@ class ZentraWebUIServer:
             pass
 
         # Register all routes — pass getter so routes always read the current SM
-        from plugins.web_ui.server import get_state_manager as _get_sm
-        init_routes(app, self.config_manager, self.root_dir, self.logger, _get_sm)
+        init_routes(app, self.config_manager, self.root_dir, self.logger, get_state_manager)
         init_chat_routes(app, self.config_manager, self.root_dir, self.logger)
 
         def _run():
@@ -111,10 +113,39 @@ if __name__ == "__main__":
     )
     from app.config import ConfigManager
     from core.i18n.translator import init_translator
+    from core.logging import logger
     cfg = ConfigManager()
     
+    # Initialize basic logging
+    logger.init_logger(cfg.config)
+    
     # Initialize translator with current config language
-    init_translator(cfg.get("language", "en"))
+    init_translator(cfg.config.get("language", "en"))
+
+    # Initialize state manager with config
+    sm = StateManager(
+        initial_voice_status=cfg.get('voice', 'voice_status', default=True),
+        initial_listening_status=cfg.get('listening', 'listening_status', default=True),
+        initial_audio_mode=cfg.get('audio_mode', default='auto')
+    )
+    sm.push_to_talk = cfg.get('listening', 'push_to_talk', default=False)
+    sm.ptt_hotkey   = cfg.get('listening', 'ptt_hotkey', default='ctrl+shift')
+    set_state_manager(sm)
+
+    # Start the listening thread (Whisper + PTT)
+    logger.info("[WEB] Starting standalone audio engine...")
+    audio_th = AscoltoThread(sm)
+    audio_th.start()
+
+    # Auto-open browser in standalone mode
+    def _delayed_browser():
+        import time
+        import webbrowser
+        time.sleep(1.5)
+        webbrowser.open(f"http://127.0.0.1:7070/chat")
+    
+    import threading
+    threading.Thread(target=_delayed_browser, daemon=True).start()
 
     start_if_needed(cfg, root, port=7070)
 

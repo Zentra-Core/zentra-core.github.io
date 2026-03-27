@@ -47,19 +47,40 @@ class UIManager:
 
                 if key == KEY_ESC:
                     if self.modified:
-                        if self._confirm(translator.t("exit_without_saving")):
-                            return "DISCARD"
+                        print(f"\n\n{GIALLO}Hai delle modifiche non salvate. [S] = Salva ed Esci | [N] = Scarta Modifiche | [ESC] = Annulla{RESET}")
+                        while True:
+                            c = self._wait_for_key()
+                            if c in (ord('s'), ord('S'), ord('y'), ord('Y'), KEY_ENTER):
+                                return "SAVE"
+                            elif c in (ord('n'), ord('N')):
+                                return "DISCARD"
+                            elif c == KEY_ESC:
+                                break # Ritorna all'editor continuo
                     else:
                         return "NO_CHANGES"
                 elif key == KEY_ENTER:
-                    # Se il parametro è una stringa libera (e non readonly), attiva modifica
+                    # Comportamento ENTER: Se è stringa libera, edita. Se bool, togga. Se comando, esegue.
                     param = self.param_list[self.cursor]
                     if param.readonly:
                         pass  # ignora per sola lettura
                     elif param.type == 'str' and not param.options:
                         self._edit_string(param)
-                    else:
-                        break
+                    elif param.type == 'bool':
+                        current = self.get_value(param)
+                        self.set_value(param, not current)
+                        self.modified = True
+                    elif param.type == 'command':
+                        if param.command == 'save_exit':
+                            return "SAVE"
+                        elif param.command == 'reboot':
+                            return "REBOOT"
+                        elif param.command == 'clear_instructions':
+                            dummy_param = type('T', (), {'section': 'ai', 'key': 'special_instructions'})()
+                            self.set_value(dummy_param, "")
+                            self.modified = True
+                            print(f"\n{VERDE}{translator.t('instruction_cleared')}{RESET}")
+                            import time
+                            time.sleep(0.8)
                 elif key == KEY_UP:
                     if self.cursor > 0:
                         self.cursor -= 1
@@ -72,16 +93,17 @@ class UIManager:
                         pass  # sola lettura, nessuna azione
                     elif param.type == 'command':
                         if param.command == 'reboot':
-                            print(f"\n{GIALLO}{translator.t('rebooting_msg')}{RESET}")
                             return "REBOOT"
-                        elif param.command == 'clear_istruzioni':
+                        elif param.command == 'save_exit':
+                            return "SAVE"
+                        elif param.command == 'clear_instructions':
                             # Rimuove sia dal config temporaneo che salvato
-                            dummy_param = type('T', (), {'section': 'ia', 'key': 'istruzioni_speciali'})()
+                            dummy_param = type('T', (), {'section': 'ai', 'key': 'special_instructions'})()
                             self.set_value(dummy_param, "")
                             self.modified = True
                             print(f"\n{VERDE}{translator.t('instruction_cleared')}{RESET}")
                             import time
-                            time.sleep(0.5)
+                            time.sleep(0.8)
                     else:
                         current = self.get_value(param)
                         if param.type in ('int', 'float'):

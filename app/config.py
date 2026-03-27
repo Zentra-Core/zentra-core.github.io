@@ -44,7 +44,14 @@ class ConfigManager:
             "backend": {"type": "ollama", "ollama": {}}, 
             "ai": {"special_instructions": "", "save_special_instructions": False},
             "language": "en",
-            "routing_engine": {"mode": "auto", "legacy_models": ""}
+            "routing_engine": {"mode": "auto", "legacy_models": ""},
+            "listening": {
+                "energy_threshold": 450,
+                "silence_timeout": 5,
+                "phrase_limit": 15,
+                "push_to_talk": False,
+                "ptt_hotkey": "ctrl+shift"
+            }
         }
 
     def _migrate_to_english(self, data):

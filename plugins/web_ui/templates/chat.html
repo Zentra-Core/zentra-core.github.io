@@ -172,6 +172,9 @@ body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px;
       <button class="audio-toggle-btn" id="tts-btn" onclick="toggleTTS()" title="Toggle Voice Output (F5 equivalent)">
         🔊 <span id="tts-label">TTS</span>
       </button>
+      <button class="audio-toggle-btn" id="ptt-btn" onclick="togglePTT()" title="Toggle Push-To-Talk (F8 equivalent)">
+        ⌨️ <span id="ptt-label">PTT</span>
+      </button>
     </div>
     <div class="mode-label">AUDIO MODE</div>
     <select class="mode-selector" id="audio-mode-select" onchange="setAudioMode(this.value)" title="Controls who handles audio: console, web, or auto">
@@ -184,7 +187,6 @@ body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px;
   <div class="sidebar-section">
     <div class="sidebar-label">{{ t('webui_chat_nav') }}</div>
     <button class="sidebar-btn active" onclick="clearChat()"><span class="icon">💬</span> {{ t('webui_chat_new') }}</button>
-    <a class="sidebar-btn" href="/zentra/config/ui" target="_blank"><span class="icon">⚙️</span> {{ t('webui_chat_config') }}</a>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-label">{{ t('webui_chat_active_plugins') }}</div>
@@ -201,6 +203,7 @@ body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px;
     <div class="topbar-chips">
       <div class="topbar-chip" id="chip-mic">🎤 MIC: —</div>
       <div class="topbar-chip" id="chip-tts">🔊 TTS: —</div>
+      <div class="topbar-chip" id="chip-ptt">⌨️ PTT: —</div>
       <div class="topbar-chip" id="chip-mode" style="color:var(--accent2);border-color:rgba(167,139,250,.25);background:rgba(167,139,250,.07);">⚡ AUTO</div>
       <a href="/zentra/config/ui" target="_blank" style="font-size:12px;color:var(--muted);text-decoration:none;padding:5px 10px;background:var(--glass);border:1px solid var(--border);border-radius:6px;transition:all .2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">⚙️ Config</a>
     </div>
@@ -236,6 +239,7 @@ body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px;
 let history = [], isStreaming = false;
 let currentMicOn  = false;
 let currentTTSOn  = false;
+let currentPTTOn  = false;
 let currentMode   = 'auto';
 
 const chatArea   = document.getElementById('chat-area');
@@ -244,6 +248,7 @@ const sendBtn    = document.getElementById('send-btn');
 const welcome    = document.getElementById('welcome');
 const micBtn     = document.getElementById('mic-btn');
 const ttsBtn     = document.getElementById('tts-btn');
+const pttBtn     = document.getElementById('ptt-btn');
 const modeSelect = document.getElementById('audio-mode-select');
 
 function hideWelcome() { if(welcome) welcome.style.display = 'none'; }
@@ -273,6 +278,16 @@ function _applyTTSState(on) {
   chip.className   = 'topbar-chip ' + (on ? 'on' : 'off');
 }
 
+function _applyPTTState(on) {
+  currentPTTOn = on;
+  const label = on ? 'ON' : 'OFF';
+  document.getElementById('ptt-label').textContent = label;
+  pttBtn.className = 'audio-toggle-btn ' + (on ? 'on' : 'off');
+  const chip = document.getElementById('chip-ptt');
+  chip.textContent = '⌨️ PTT: ' + label;
+  chip.className   = 'topbar-chip ' + (on ? 'on' : 'off');
+}
+
 function _applyModeState(mode) {
   currentMode = mode;
   // Sync dropdown without triggering onchange
@@ -297,6 +312,15 @@ async function toggleTTS() {
     if (data.ok) _applyTTSState(data.voice_status);
     else console.warn('[Audio] toggleTTS error:', data.error);
   } catch(e) { console.error('[Audio] toggleTTS failed', e); }
+}
+
+async function togglePTT() {
+  try {
+    const r    = await fetch('/api/audio/toggle/ptt', {method:'POST'});
+    const data = await r.json();
+    if (data.ok) _applyPTTState(data.push_to_talk);
+    else console.warn('[Audio] togglePTT error:', data.error);
+  } catch(e) { console.error('[Audio] togglePTT failed', e); }
 }
 
 async function setAudioMode(mode) {
@@ -370,6 +394,8 @@ async function sendMessage() {
         aiBubble.innerHTML = renderMarkdown(aiText);
         aiBubble.appendChild(cursor);
         chatArea.scrollTop = chatArea.scrollHeight;
+      } else if(ev.type==='audio_ready') {
+        tryLoadAudio(aiBubble);
       } else if(ev.type==='done'||ev.type==='error') {
         cursor.remove();
         aiBubble.innerHTML = renderMarkdown(aiText||(ev.type==='error'?'❌ '+ev.text:''));
@@ -377,10 +403,6 @@ async function sendMessage() {
         history.push({role:'user',content:text});
         history.push({role:'assistant',content:aiText});
         isStreaming=false; sendBtn.disabled=false;
-        // Load audio if TTS is on and we're not in console-only mode
-        if (currentTTSOn && currentMode !== 'console') {
-          tryLoadAudio(aiBubble);
-        }
       }
     };
     evtSrc.onerror = () => {
@@ -396,17 +418,34 @@ async function sendMessage() {
 }
 
 async function tryLoadAudio(bubble) {
-  // Small delay to let Piper finish writing the file
-  await new Promise(r => setTimeout(r, 800));
-  try {
-    const r = await fetch('/api/audio?t=' + Date.now());
-    if(!r.ok) return;
-    const url = URL.createObjectURL(await r.blob());
-    const badge = document.createElement('div');
-    badge.className='audio-badge';
-    badge.innerHTML=`🔊 <audio controls autoplay src="${url}"></audio>`;
-    bubble.appendChild(badge);
-  } catch(e){}
+  const url = '/api/audio?t=' + Date.now();
+  console.log("[Audio] Creating element for URL:", url);
+  
+  const badge = document.createElement('div');
+  badge.className='audio-badge';
+  badge.innerHTML = '🔊 ';
+  
+  const audio = document.createElement('audio');
+  audio.controls = true;
+  audio.src = url;
+  badge.appendChild(audio);
+  bubble.appendChild(badge);
+  
+  audio.oncanplaythrough = () => {
+    console.log("[Audio] Can play through, starting...");
+    audio.play().catch(err => {
+      console.warn("[Audio] Autoplay blocked:", err);
+      const hint = document.createElement('span');
+      hint.style.fontSize = '10px';
+      hint.style.color = 'var(--accent)';
+      hint.textContent = ' (Clicca Play)';
+      badge.appendChild(hint);
+    });
+  };
+
+  audio.onerror = () => {
+    console.error("[Audio] Element error code:", audio.error ? audio.error.code : 'unknown');
+  };
 }
 
 function clearChat() {
@@ -426,6 +465,7 @@ async function refreshStatus() {
     // Sync audio state from server (source of truth)
     _applyMicState(d.mic === 'ON');
     _applyTTSState(d.tts === 'ON');
+    _applyPTTState(d.ptt === 'ON');
     _applyModeState(d.audio_mode || 'auto');
 
   } catch(e) { document.getElementById('tb-model').textContent='{{ t("webui_chat_offline") }}'; }
@@ -457,8 +497,25 @@ async function loadPlugins() {
   } catch(e){}
 }
 
+function initEvents() {
+  const evtSrc = new EventSource('/api/events');
+  evtSrc.onmessage = (e) => {
+    const ev = JSON.parse(e.data);
+    if (ev.type === 'voice_detected' && ev.text) {
+      console.log("[Audio] Voice command received:", ev.text);
+      if (!isStreaming) {
+        startPrompt(ev.text);
+      }
+    }
+  };
+  evtSrc.onerror = () => {
+    console.warn("[Events] Connection lost, retrying...");
+  };
+}
+
 refreshStatus();
 loadPlugins();
+initEvents();
 setInterval(refreshStatus, 4000);
 userInput.focus();
 </script>

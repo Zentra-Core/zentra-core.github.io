@@ -47,7 +47,12 @@ class ZentraApplication:
         cv = self.config_manager.get('voice', 'voice_status', default=True)
         ca = self.config_manager.get('listening', 'listening_status', default=True)
         am = self.config_manager.config.get('audio_mode', 'auto')
+        ptt = self.config_manager.config.get('listening', {}).get('push_to_talk', False)
+        hk = self.config_manager.config.get('listening', {}).get('ptt_hotkey', 'ctrl+shift')
+        
         self.state_manager = StateManager(initial_voice_status=cv, initial_listening_status=ca, initial_audio_mode=am)
+        self.state_manager.push_to_talk = ptt
+        self.state_manager.ptt_hotkey = hk
         
         self.input_handler = InputHandler(self.state_manager, self.config_manager)
         self.model_manager = ModelManager(self.config_manager)
@@ -114,15 +119,16 @@ class ZentraApplication:
         message = self.config_manager.config.get("behavior", {}).get("welcome_message", translator.t("system_ready"))
         interface.write_zentra(message)
         if self.state_manager.voice_status:
-            try:
-                voice.speak(translator.t("system_ready"))
-            except Exception as e:
-                logger.warning("APP", f"Welcome voice failed (non-critical): {e}")
+            # We skip speaking 'ready' here to speed up the prompt availability
+            pass
         self.state_manager.system_processing = False
         self.state_manager.system_status = translator.t("ready")
-        # Restart UI
+        
+        # Start the background UI updater
         ui_updater.start(self.config_manager, self.state_manager, plugin_loader.get_plugin_module("DASHBOARD"))
-        interface.show_complete_ui(
+        
+        # Update just the status bar in place, avoid clearing the screen
+        interface.update_status_bar_in_place(
             self.config_manager.config, 
             self.state_manager.voice_status, 
             self.state_manager.listening_status, 
@@ -239,6 +245,17 @@ class ZentraApplication:
             
         elif key == "F7":
             self._handle_f7()
+            
+        elif key == "F8":
+            is_ptt = self.state_manager.push_to_talk
+            new_ptt = not is_ptt
+            self.state_manager.push_to_talk = new_ptt
+            self.config_manager.set(new_ptt, 'listening', 'push_to_talk')
+            self.config_manager.save()
+            verb = "ON" if new_ptt else "OFF"
+            color = "\033[96m" if new_ptt else "\033[91m"
+            print(f"\n{color}[SYSTEM] Push-To-Talk (PTT): {verb}\033[0m")
+            time.sleep(0.5)
 
     def run(self):
         """Starts the main application loop."""
@@ -258,7 +275,7 @@ class ZentraApplication:
             self.state_manager.system_status
         )
 
-        if not config.get("system", {}).get("fast_boot", False):
+        if not config.get("fast_boot", False):
             self._show_boot_animation()
         
         self.state_manager.system_status = translator.t("ready")
@@ -299,7 +316,7 @@ class ZentraApplication:
             elif evento == "CANCELLED":
                 # L'input handler ha già ripristinato il prompt, non fare nulla
                 pass
-            elif evento in ["F1", "F2", "F3", "F4", "F5", "F6", "F7"]:
+            elif evento in ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"]:
                 menu_schermo_intero = ["F1", "F2", "F3", "F7"]
                 if evento in menu_schermo_intero:
                     ui_updater.stop()

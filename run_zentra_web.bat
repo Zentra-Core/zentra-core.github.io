@@ -1,11 +1,10 @@
 @echo off
-title Zentra — AI Web Interface
+title ZENTRA — Native Web Server
 color 0A
 
 echo.
 echo  ======================================
 echo   ZENTRA NATIVE WEB INTERFACE
-echo   Avvio del server locale su porta 7070
 echo  ======================================
 echo.
 
@@ -14,16 +13,14 @@ if exist "venv\Scripts\activate.bat" (
   call venv\Scripts\activate.bat
 )
 
-:: Avvia il server Flask (config + chat)
-start "Zentra Web Server" python -m plugins.web_ui.server
+echo [!] Avvio server Flask su porta 7070...
+echo [!] Apertura automatica del browser in corso...
+echo.
 
-:: Aspetta 2 secondi e poi apri il browser
-timeout /t 2 /nobreak >nul
-echo  Apertura browser su http://127.0.0.1:7070/chat ...
-start http://127.0.0.1:7070/chat
+:: Avvia il server direttamente nella finestra corrente. 
+:: Grazie all'aggiornamento di server.py, il browser si aprirà da solo.
+python -m plugins.web_ui.server
 
 echo.
-echo  Server avviato! Puoi chiudere questa finestra.
-echo  Il server continua a girare in background.
-echo.
+echo Server arrestato.
 pause

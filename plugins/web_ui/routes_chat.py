@@ -62,7 +62,8 @@ def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr):
         sess["history"].append({"role": "assistant",  "content": full_text})
         sess["queue"].put({"type": "done", "text": ""})
 
-        _maybe_generate_tts(full_text, cfg_mgr)
+        if _maybe_generate_tts(full_text, cfg_mgr):
+            sess["queue"].put({"type": "audio_ready", "text": ""})
 
     except Exception as exc:
         _chat_log.error(f"[Chat] Inference error: {exc}")
@@ -86,6 +87,7 @@ def _maybe_generate_tts(text: str, cfg_mgr):
         audio_mode = cfg.get("audio_mode", "auto")
         voice_cfg  = cfg.get("voice", {})
         voice_on   = voice_cfg.get("voice_status", False)
+        _chat_log.info(f"[Chat] TTS Check: Mode={audio_mode}, VoiceStatus={voice_on}")
 
         # Decide whether to synthesise for web
         if audio_mode == "console":
@@ -96,8 +98,11 @@ def _maybe_generate_tts(text: str, cfg_mgr):
         # Resolve Piper paths
         piper_path = voice_cfg.get("piper_path", r"C:\piper\piper.exe")
         model_path = voice_cfg.get("onnx_model", "")
-        if not os.path.exists(piper_path) or not model_path:
-            _chat_log.debug("[Chat] TTS skipped: piper not found or model empty")
+        if not os.path.exists(piper_path):
+            _chat_log.info(f"[Chat] TTS skip: Piper.exe not found at {piper_path}")
+            return
+        if not os.path.exists(model_path):
+            _chat_log.info(f"[Chat] TTS skip: ONNX model not found at {model_path}")
             return
 
         # Build optional flags
@@ -119,20 +124,30 @@ def _maybe_generate_tts(text: str, cfg_mgr):
             "--sentence_silence", str(sentence_silence),
             "-f", out,
         ]
+        _chat_log.info(f"[Chat] Piper command: {' '.join(command)}")
         proc = subprocess.Popen(
             command,
             stdin=subprocess.PIPE,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
         )
-        proc.communicate(input=clean_text.encode("utf-8"))
+        stdout, stderr = proc.communicate(input=clean_text.encode("utf-8"))
+
+        if proc.returncode != 0:
+            _chat_log.error(f"[Chat] Piper failed (code {proc.returncode}): {stderr.decode('utf-8', errors='ignore')}")
+            return
 
         if os.path.exists(out):
             _last_audio_path = out
-            _chat_log.debug(f"[Chat] TTS generated → {out}")
+            _chat_log.info(f"[Chat] TTS generated successfully -> {out}")
+            return True
+        else:
+            _chat_log.error("[Chat] Piper finished but risposta.wav was not created.")
+            return False
 
     except Exception as e:
         _chat_log.debug(f"[Chat] TTS error: {e}")
+        return False
 
 
 def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
@@ -177,14 +192,17 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
         def generate():
             while True:
                 try:
-                    ev = sess["queue"].get(timeout=30)
+                    # Shorter timeout to check sess["done"] frequently 
+                    ev = sess["queue"].get(timeout=0.5)
                     yield "data: " + json.dumps(ev) + "\n\n"
-                    if ev.get("type") in ("done", "error"):
+                    if ev.get("type") == "error":
                         break
                 except queue.Empty:
-                    yield "data: " + json.dumps({"type": "heartbeat"}) + "\n\n"
-                    if sess.get("done"):
+                    # If inference is officially finished AND no more events are queued, we can exit
+                    if sess.get("done") and sess["queue"].empty():
                         break
+                    yield "data: " + json.dumps({"type": "heartbeat"}) + "\n\n"
+            
             with _sessions_lock:
                 _sessions.pop(session_id, None)
 

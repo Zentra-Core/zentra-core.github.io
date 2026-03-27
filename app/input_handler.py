@@ -28,7 +28,7 @@ class InputHandler:
             return self._process_text_input(input_utente, prefix)
         elif evento == "CLEAR":
             return "CLEAR", ""
-        elif evento in ["F1", "F2", "F3", "F4", "F5", "F6", "F7"]:
+        elif evento in ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"]:
             return evento, input_utente
         elif evento == "ESC":
             return self._handle_esc(prefix)

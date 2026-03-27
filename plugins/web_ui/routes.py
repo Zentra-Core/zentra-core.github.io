@@ -1,4 +1,5 @@
 import os
+import json
 from flask import request, jsonify, render_template
 
 def init_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
@@ -22,6 +23,13 @@ def init_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
         cfg = cfg_mgr.reload()
         return jsonify(cfg)
 
+    @app.route("/api/models/refresh", methods=["POST"])
+    def refresh_models():
+        from app.model_manager import ModelManager
+        mm = ModelManager(cfg_mgr)
+        mm.get_available_models() # This updates the cache in config
+        return jsonify({"ok": True})
+
     @app.route("/zentra/options", methods=["GET"])
     def get_options():
         import glob
@@ -34,18 +42,29 @@ def init_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
         except:
             onnx_files = ["en_US-lessac-medium.onnx"]
             
-        ollama_models = list(cfg.get("backend", {}).get("ollama", {}).get("available_models", {}).values())
+        from app.model_manager import ModelManager
+        mm = ModelManager(cfg_mgr)
+        categorized = mm.get_available_models()
+        
+        ollama_models = categorized.get("Ollama (Local)", [])
         personalita   = list(cfg.get("ai", {}).get("available_personalities", {}).values())
-        cloud_models  = {
-            p: cfg.get("llm", {}).get("providers", {}).get(p, {}).get("models", [])
-            for p in ("openai", "anthropic", "groq", "gemini")
-        }
+        
+        # Flatten cloud models for the simple dropdown
+        cloud_models_flat = []
+        cloud_by_provider = {}
+        for cat, models in categorized.items():
+            if "Cloud" in cat:
+                cloud_models_flat.extend(models)
+                provider = cat.replace("Cloud (", "").replace(")", "").lower()
+                cloud_by_provider[provider] = models
+
         return jsonify({
             "piper_voices": onnx_files,
             "piper_dir":    piper_path_dir,
             "ollama_models": ollama_models,
             "personalities": personalita,
-            "cloud_models":  cloud_models
+            "cloud_models":  cloud_by_provider,
+            "all_cloud":     cloud_models_flat
         })
 
     @app.route("/zentra/config", methods=["POST"])
@@ -104,6 +123,8 @@ def init_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
 
             mic_status = "ON" if mic_on else "OFF"
             tts_status = "ON" if tts_on else "OFF"
+            ptt_on     = listen.get("push_to_talk", False)
+            ptt_status = "ON" if ptt_on else "OFF"
 
             from datetime import datetime
             config_path = os.path.join(root_dir, "config.json")
@@ -116,6 +137,7 @@ def init_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
                 "bridge":     ", ".join(flags) if flags else "default",
                 "mic":        mic_status,
                 "tts":        tts_status,
+                "ptt":        ptt_status,
                 "audio_mode": audio_mode,
                 "config":     f"last save {ts}",
             })
@@ -134,7 +156,10 @@ def init_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
             new_val = not sm.listening_status
             sm.listening_status = new_val
             cfg_mgr.set(new_val, "listening", "listening_status")
-            cfg_mgr.save()
+            if cfg_mgr.save():
+                logger.info(f"[WebUI] MIC toggled to {new_val} and saved.")
+            else:
+                logger.error("[WebUI] Failed to save MIC toggle.")
             # Keep processore in sync
             try:
                 from core.processing import processore
@@ -156,7 +181,10 @@ def init_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
             new_val = not sm.voice_status
             sm.voice_status = new_val
             cfg_mgr.set(new_val, "voice", "voice_status")
-            cfg_mgr.save()
+            if cfg_mgr.save():
+                logger.info(f"[WebUI] TTS toggled to {new_val} and saved.")
+            else:
+                logger.error("[WebUI] Failed to save TTS toggle.")
             try:
                 from core.processing import processore
                 processore.configure(cfg_mgr.config)
@@ -165,6 +193,26 @@ def init_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
             return jsonify({"ok": True, "voice_status": new_val})
         except Exception as exc:
             logger.error(f"[WebUI] toggle_tts error: {exc}")
+            return jsonify({"ok": False, "error": str(exc)}), 500
+
+    @app.route("/api/audio/toggle/ptt", methods=["POST"])
+    def toggle_ptt():
+        """Toggle push_to_talk flag — mirrors F8 on the console."""
+        try:
+            sm = _sm()
+            current_val = cfg_mgr.get("listening", "push_to_talk", default=False)
+            new_val = not current_val
+            cfg_mgr.set(new_val, "listening", "push_to_talk")
+            if cfg_mgr.save():
+                logger.info(f"[WebUI] PTT toggled to {new_val} and saved.")
+            else:
+                logger.error("[WebUI] Failed to save PTT toggle.")
+            # Synchronize the live StateManager
+            if sm is not None:
+                sm.push_to_talk = new_val
+            return jsonify({"ok": True, "push_to_talk": new_val})
+        except Exception as exc:
+            logger.error(f"[WebUI] toggle_ptt error: {exc}")
             return jsonify({"ok": False, "error": str(exc)}), 500
 
     @app.route("/api/audio/mode", methods=["POST"])
@@ -184,3 +232,94 @@ def init_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
         except Exception as exc:
             logger.error(f"[WebUI] set_audio_mode error: {exc}")
             return jsonify({"ok": False, "error": str(exc)}), 500
+
+    @app.route("/api/logs/stream")
+    def stream_logs():
+        """SSE endpoint that streams latest Info and Debug logs."""
+        from flask import Response, stream_with_context
+        import time
+        from datetime import datetime
+
+        logger.debug("[WebUI-Logs] SSE Connection Request Received")
+
+        def generate():
+            # Get current log file paths (dynamic based on date)
+            today = datetime.now().strftime('%Y-%m-%d')
+            logs_dir = os.path.join(root_dir, "logs")
+            info_path  = os.path.join(logs_dir, f"zentra_info_{today}.log")
+            debug_path = os.path.join(logs_dir, f"zentra_debug_{today}.log")
+            
+            files = {
+                'info':  {'path': info_path,  'pos': 0, 'label': 'INFO'},
+                'debug': {'path': debug_path, 'pos': 0, 'label': 'DEBUG'}
+            }
+
+            # 1. SEND HISTORY (Last 50 lines per file)
+            for k, f_info in files.items():
+                if os.path.exists(f_info['path']):
+                    try:
+                        with open(f_info['path'], 'r', encoding='utf-8', errors='replace') as f:
+                            lines = f.readlines()
+                            f_info['pos'] = f.tell() # Mark current end
+                            
+                            # Send last 50 lines as history
+                            for line in lines[-50:]:
+                                if line.strip():
+                                    data = json.dumps({
+                                        "time":  "---", # Historical
+                                        "level": f_info['label'],
+                                        "text":  line.strip()
+                                    })
+                                    yield f"data: {data}\n\n"
+                    except Exception as e:
+                        logger.error(f"[WebUI] Log history error for {k}: {e}")
+
+            # 2. POLL FOR NEW LINES
+            while True:
+                for k, f_info in files.items():
+                    if not os.path.exists(f_info['path']):
+                        continue
+                    
+                    try:
+                        # Check if file was rotated or truncated
+                        cur_size = os.path.getsize(f_info['path'])
+                        if cur_size < f_info['pos']:
+                            f_info['pos'] = 0 # reset
+                        
+                        with open(f_info['path'], 'r', encoding='utf-8', errors='replace') as f:
+                            f.seek(f_info['pos'])
+                            new_lines = f.readlines()
+                            f_info['pos'] = f.tell()
+                            
+                            for line in new_lines:
+                                if line.strip():
+                                    data = json.dumps({
+                                        "time":  datetime.now().strftime("%H:%M:%S"),
+                                        "level": f_info['label'],
+                                        "text":  line.strip()
+                                    })
+                                    yield f"data: {data}\n\n"
+                    except Exception as e:
+                        pass # Ignore transient errors during rotation
+                
+                time.sleep(1) # Poll for new lines every second
+
+        return Response(stream_with_context(generate()), mimetype="text/event-stream")
+
+    @app.route("/api/events")
+    def stream_events():
+        from flask import Response, stream_with_context
+        import time
+        sm = _sm()
+        
+        def generate():
+            while True:
+                if sm and sm.detected_voice_command:
+                    cmd = sm.detected_voice_command
+                    sm.detected_voice_command = None # Consumer clears it
+                    yield f"data: {json.dumps({'type': 'voice_detected', 'text': cmd})}\n\n"
+                
+                # We could add more event types here (e.g. state changes)
+                time.sleep(0.1)
+        
+        return Response(stream_with_context(generate()), mimetype="text/event-stream")

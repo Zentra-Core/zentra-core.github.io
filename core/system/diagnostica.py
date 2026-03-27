@@ -180,8 +180,8 @@ def start_wake_sequence(config):
     print(f"{CIANO}      (Press ESC at any time to skip){RESET}")
     print(f"{CIANO}==================================================={RESET}\n")
     
-    # FAST BOOT CHECK (Set to true in config -> system -> fast_boot)
-    fast_boot = config.get("system", {}).get("fast_boot", False)
+    # FAST BOOT CHECK (Set to true in config -> fast_boot)
+    fast_boot = config.get("fast_boot", False)
     
     if check_bypass(): return True
     if not fast_boot:
@@ -215,18 +215,9 @@ def start_wake_sequence(config):
     
         print(f"\n{CIANO}==================================================={RESET}")
     
-    # Extract voice language (e.g., "en_US-lessac..." -> "en", "it_IT-paola..." -> "it")
-    onnx_model = os.path.basename(config.get("voice", {}).get("onnx_model", "en_US-lessac.onnx"))
-    voice_language = onnx_model.split("_")[0] if "_" in onnx_model else "en"
-    
-    # Ask Translator for translation dictionary and force language
-    from core.i18n.translator import get_translator
-    t_obj = get_translator()
-    intro_greeting_voc = "Hello, I am Zentra" # Safe fallback
-    try:
-        intro_greeting_voc = t_obj.translations.get(voice_language, {}).get("intro_greeting", "Hello, I am Zentra")
-    except Exception:
-        pass
+    # Estrae la frase personalizzata adatta alla lingua corrente
+    from core.system.greeting import get_spoken_greeting
+    intro_greeting_voc = get_spoken_greeting(config)
  
     # Print in UI locale, speak in VOICE language
     print_and_speak(f"{VERDE}[SYSTEM] {RESET}" + translator.t("intro_greeting"), intro_greeting_voc)

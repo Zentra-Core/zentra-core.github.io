@@ -67,28 +67,36 @@ class WebUIPlugin:
 
         self._port = port
         self._url  = f"http://127.0.0.1:{port}"
+        self._server_started = False
+        self._cfg_mgr = cfg_mgr
+        self._auto_open = auto_open
 
-        # Launch the HTTP server (singleton — safe to call multiple times)
-        try:
-            from plugins.web_ui.server import start_if_needed
-            start_if_needed(cfg_mgr, _ROOT, port=port)
-            logger.info(f"[WEB_UI] Server started → {self._url}/chat")
-        except Exception as e:
-            logger.warning(f"[WEB_UI] Server startup error: {e}")
-
-        if auto_open:
-            threading.Timer(1.5, lambda: webbrowser.open(f"{self._url}/chat")).start()
+    def _ensure_server(self):
+        """Lazy starts the server only when the plugin is actually interacted with."""
+        if not self._server_started:
+            try:
+                from .server import start_if_needed
+                start_if_needed(self._cfg_mgr, _ROOT, port=self._port)
+                logger.info(f"[WEB_UI] Server started → {self._url}/chat")
+                self._server_started = True
+                if self._auto_open:
+                    threading.Timer(1.5, lambda: webbrowser.open(f"{self._url}/chat")).start()
+            except Exception as e:
+                logger.warning(f"[WEB_UI] Server startup error: {e}")
 
     @property
     def status(self) -> str:
+        self._ensure_server()
         return f"Online → {self._url}/chat"
 
     def get_panel_url(self) -> str:
         """Returns the URL of the chat interface."""
+        self._ensure_server()
         return f"{self._url}/chat"
 
     def open_browser(self) -> str:
         """Opens the Zentra web interface in the default browser."""
+        self._ensure_server()
         try:
             webbrowser.open(f"{self._url}/chat")
             return f"Browser opened at {self._url}/chat"

@@ -14,7 +14,7 @@
     "audio_mode": "web",
     "backend": {
         "cloud": {
-            "model": "gemini/gemini-2.5-flash",
+            "model": "gemini/gemini-flash-latest",
             "temperature": 0.7
         },
         "kobold": {
@@ -57,7 +57,7 @@
         "remove_think_tags": true,
         "use_processor": true,
         "webui_voice_enabled": true,
-        "webui_voice_stt": false
+        "webui_voice_stt": true
     },
     "fast_boot": true,
     "filters": {
@@ -71,11 +71,12 @@
         "energy_threshold": 450,
         "listening_status": true,
         "phrase_limit": 15,
+        "push_to_talk": true,
         "silence_timeout": 5
     },
     "llm": {
         "allow_cloud": true,
-        "debug_llm": true,
+        "debug_llm": false,
         "providers": {
             "anthropic": {
                 "api_key": "",
@@ -118,9 +119,13 @@
         }
     },
     "logging": {
+        "level": "DEBUG",
         "destination": "console",
-        "level": "INFO",
-        "message_types": "both"
+        "message_types": "both",
+        "web_level": "BOTH",
+        "web_max_history": 10,
+        "web_autoscroll": true,
+        "web_split": true
     },
     "monitor": {
         "check_interval": 1,
@@ -204,12 +209,12 @@
         "mode": "auto"
     },
     "system": {
-        "fast_boot": false
+        "fast_boot": true
     },
     "voice": {
         "noise_scale": 0.817,
         "noise_w": 0.9,
-        "onnx_model": "C:\\piper\\it_IT-paola-medium.onnx",
+        "onnx_model": "C:\\piper\\it_IT-aurora-medium.onnx",
         "piper_path": "C:\\piper\\piper.exe",
         "sentence_silence": 0.1,
         "speed": 1.2,
