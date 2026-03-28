@@ -187,10 +187,12 @@ def generate(system_prompt, user_message, config_or_subconfig, llm_config=None, 
         zlog_error(f"LiteLLM: Error: {error_msg}")
         
         if "400" in error_msg:
-            return f"[SYSTEM] Error 400: Invalid parameters for '{model_name}'."
+            return f"ZENTRA: ⚠️ Errore 400: Parametri non validi per '{model_name}'."
         if "404" in error_msg:
-            return f"[SYSTEM] Error 404: Model '{model_name}' not found."
+            return f"ZENTRA: ⚠️ Errore 404: Il modello '{model_name}' non è stato trovato o l'endpoint è errato."
         if "429" in error_msg:
-            return f"[SYSTEM] Quota Exhausted (429). Try again in 60 seconds."
+            return f"ZENTRA: ⚠️ Quota Esaurita (Errore 429). Troppe richieste o credito terminato. Riprova tra 60 secondi."
+        if "503" in error_msg or "ServiceUnavailableError" in error_msg:
+            return f"ZENTRA: ⚠️ Server AI Sovraccarico (Errore 503). Il provider {provider} è momentaneamente non disponibile. Riprova tra poco."
             
-        return f"[SYSTEM] Error: {error_msg[:100]}"
+        return f"ZENTRA: ⚠️ Errore LLM imprevisto: {error_msg[:100]}..."

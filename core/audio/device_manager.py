@@ -415,17 +415,16 @@ def set_input_device(index: int, name: str = "") -> bool:
 
 def maybe_scan_on_startup(force: bool = False) -> dict:
     """
-    Called at Zentra startup. Runs scan only if:
-    - auto_select is True AND test_on_startup is True, OR
-    - No device has been selected yet (index == -1), OR
-    - force=True
+    Called at Zentra startup.
+    Optimized: only scans if no device is selected.
+    If devices are already selected, it skips the slow scan to speed up boot.
     """
     cfg = _load_audio_config()
-    needs_scan = (
-        force
-        or cfg.get("output_device_index", -1) < 0
-        or (cfg.get("auto_select", True) and cfg.get("test_on_startup", True))
-    )
-    if needs_scan:
+    
+    # If we have valid indices, we skip the scan unless forced
+    has_config = cfg.get("output_device_index", -1) >= 0 and cfg.get("input_device_index", -1) >= 0
+    
+    if force or not has_config:
         return scan_and_select(verbose=True)
+        
     return cfg

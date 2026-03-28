@@ -92,8 +92,18 @@ def check_backend(config):
         
         payload = {"model": model, "prompt": "hi", "stream": False, "options": options}
         try:
-            print(f"   [>] Initializing VRAM for: {model} (num_gpu={options.get('num_gpu', 'default')})...")
-            response = requests.post(url, json=payload, timeout=120)
+            # Fast Check: Just verify if Ollama is alive and knows the model
+            tags_url = "http://localhost:11434/api/tags"
+            r_tags = requests.get(tags_url, timeout=2)
+            if r_tags.status_code == 200:
+                models = [m['name'] for m in r_tags.json().get('models', [])]
+                if model in models or any(model in m for m in models):
+                    print(f"   [+] {VERDE}{translator.t('diag_neural_online')}{RESET}")
+                    return True
+            
+            # Fallback to the heavier check if tags fail or model not sure
+            print(f"   [>] Initializing VRAM for: {model}...")
+            response = requests.post(url, json=payload, timeout=5) # Reduced timeout for boot
             if response.status_code == 200:
                 print(f"   [+] {VERDE}{translator.t('diag_neural_online')}{RESET}")
                 return True
