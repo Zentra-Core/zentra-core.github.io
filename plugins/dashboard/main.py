@@ -231,7 +231,7 @@ def get_stats():
         "ram": ram,
         "vram": vram_info,
         "gpu_load": gpu_load,
-        "stato_gpu": stato_gpu,
+        "gpu_status": stato_gpu,
         "backend_status": b_status
     }
 

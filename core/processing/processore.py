@@ -131,6 +131,7 @@ def process(raw_response, config=None, voice_status=False):
                 tags_found.append((tag.lower(), "", "simple", None))
                 
     # 3. Execution
+    tool_results = []
     for original_tag, action_or_args, call_type, method_name in tags_found:
         module_to_call = original_tag
         
@@ -166,6 +167,7 @@ def process(raw_response, config=None, voice_status=False):
                     result = exec_method(action_or_args)
                     if result:
                         logger.info(f"[OUTPUT {module_to_call.upper()}]:\n{result}")
+                        tool_results.append(str(result))
                 except Exception as e:
                     logger.error(f"[PROCESSOR] Legacy OOP error: {e}")
             
@@ -176,6 +178,7 @@ def process(raw_response, config=None, voice_status=False):
                     result = method(**action_or_args) if action_or_args else method()
                     if result:
                         logger.info(f"[OUTPUT {module_to_call.upper()}]:\n{result}")
+                        tool_results.append(str(result))
                 except Exception as e:
                     logger.error(f"[PROCESSOR] Tool error: {e}")
                     
@@ -185,24 +188,30 @@ def process(raw_response, config=None, voice_status=False):
                     result = plugin_obj.execute(action_or_args)
                     if result:
                         logger.info(f"[OUTPUT {module_to_call.upper()}]: {result}")
+                        tool_results.append(str(result))
                 except Exception as e:
                     logger.error(f"[PROCESSOR] Old Plugin error: {e}")
     
     # 4. Cleaning
-    video_response = re.sub(r'\[.*?:.*?\]', '', raw_response).strip()
-    video_response = re.sub(r'\[.*?\]', '', video_response).strip() # Remove simple tags too
+    base_video = re.sub(r'\[.*?:.*?\]', '', raw_response).strip()
+    base_video = re.sub(r'\[.*?\]', '', base_video).strip() # Remove simple tags too
     
-    if not video_response:
+    if not base_video:
         if tags_found:
-            video_response = translator.t('command_executed')
+            base_video = translator.t('command_executed')
         else:
-            video_response = translator.t('model_no_response_error')
+            base_video = translator.t('model_no_response_error')
     
-    video_response = filtri.clean_for_video(video_response)
+    video_response = filtri.clean_for_video(base_video)
     
     clean_voice_text = ""
     if voice_status:
-        clean_voice_text = filtri.clean_for_voice(video_response)
+        # We use base_video so Zentra speaks only her intention, not the raw JSON/logs.
+        clean_voice_text = filtri.clean_for_voice(base_video)
+        
+    if tool_results:
+        # Append raw plugin results explicitly to the GUI chat window (video_response)
+        video_response += "\n\n" + "\n\n".join(tool_results)
         
     return video_response, clean_voice_text
 

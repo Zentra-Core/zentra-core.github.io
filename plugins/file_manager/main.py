@@ -49,12 +49,12 @@ class FileManager:
         }
         self.status = "ONLINE"
 
-    def _espandi_percorso(self, target: str) -> str:
+    def _expand_path(self, target: str) -> str:
         """
-        Converte un target simbolico (es. 'desktop') in un percorso assoluto.
+        Converts a symbolic target (e.g., 'desktop') to an absolute path.
         
-        :param target: Il percorso simbolico o assoluto da espandere.
-        :return: Il percorso assoluto calcolato.
+        :param target: The symbolic or absolute path to expand.
+        :return: The calculated absolute path.
         """
         cfg_mgr = ConfigManager()
 
@@ -92,7 +92,7 @@ class FileManager:
         :return: A summary string with the folder content.
         """
         target = path.strip()
-        espanso = self._espandi_percorso(target)
+        espanso = self._expand_path(target)
         logger.debug(f"PLUGIN_{self.tag}", f"list: target={target}, path={espanso}")
 
         cfg_mgr = ConfigManager()
@@ -129,7 +129,7 @@ class FileManager:
         :return: A string with the count of elements.
         """
         target = path.strip()
-        espanso = self._espandi_percorso(target)
+        espanso = self._expand_path(target)
 
         try:
             if os.path.exists(espanso):
@@ -151,7 +151,7 @@ class FileManager:
         :return: The first lines of the file as text.
         """
         target = path.strip()
-        espanso = self._espandi_percorso(target)
+        espanso = self._expand_path(target)
 
         cfg_mgr = ConfigManager()
         max_read_lines = cfg_mgr.get_plugin_config(self.tag, "max_read_lines", 50)

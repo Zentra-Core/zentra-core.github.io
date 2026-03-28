@@ -261,13 +261,17 @@ def debug_ai(user_text, ai_response, tag_detected=None):
     info_tag = f" | TAG DETECTED: {tag_detected}" if tag_detected else ""
     logger.info(f"USER: {user_text} | AI: {ai_response}{info_tag}")
 
-def read_logs(n=10, errors_only=False):
-    """Returns the last N lines of the INFO log."""
+def read_logs(n=10, errors_only=False, debug_only=False):
+    """Returns the last N lines of the specified log file."""
     try:
-        if not os.path.exists(info_filename):
-            return "No logs found for today."
+        target_file = info_filename
+        if debug_only:
+            target_file = debug_filename
             
-        with open(info_filename, 'r', encoding='utf-8') as f:
+        if not os.path.exists(target_file):
+            return f"No logs found in {target_file} for today."
+            
+        with open(target_file, 'r', encoding='utf-8') as f:
             lines = f.readlines()
             if errors_only:
                 lines = [r for r in lines if "[ERROR]" in r]

@@ -116,7 +116,7 @@ def show_complete_ui(config, voice_status, listening_status, system_status="READ
     
     # --- ROW 1: TITLE BAR (CYAN) ---
     from core.system.version import get_version_string
-    titolo = f" Zentra Core {get_version_string()} "
+    titolo = f" {get_version_string()} "
     print(f"\033[46m\033[30m{titolo.center(L)}\033[0m")
     
     # --- ROW 2: COMMANDS MENU ---

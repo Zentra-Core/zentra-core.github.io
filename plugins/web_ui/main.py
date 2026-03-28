@@ -131,7 +131,7 @@ class WebUIPlugin:
 tools = WebUIPlugin()
 
 
-def esegui(comando: str) -> str:
+def execute(comando: str) -> str:
     cmd = comando.lower().strip()
     if cmd in ("open", "apri", "browser"):
         return tools.open_browser()

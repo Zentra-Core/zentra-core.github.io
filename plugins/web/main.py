@@ -129,3 +129,17 @@ def info():
 
 def status():
     return tools.status
+
+def execute(comando: str) -> str:
+    """Compatibilità legacy: smista i comandi testuali ai nuovi metodi ad oggetti."""
+    c = comando.strip()
+    c_lower = c.lower()
+    
+    if c_lower.startswith("search:") or c_lower.startswith("cerca:") or c_lower.startswith("search_web:"):
+        q = c.split(":", 1)[1].strip()
+        return tools.search_web(q)
+    elif c_lower.startswith("url:") or c_lower.startswith("apri:") or c_lower.startswith("open_url:"):
+        u = c.split(":", 1)[1].strip()
+        return tools.open_url(u)
+        
+    return f"Errore: Comando legacy '{comando}' non supportato o mancante."

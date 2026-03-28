@@ -150,6 +150,18 @@ class SystemTools:
         risultato_log = logger.read_logs(n=8, errors_only=True)
         return translator.t("plugin_system_log_analysis_done", type=tipo_str, log=risultato_log)
 
+    def read_debug_logs(self) -> str:
+        """
+        Reads the technical debug logs (LiteLLM, Brain processing).
+        Useful for advanced developers and deep diagnostics.
+        """
+        tipo_str = "DEBUG"
+        logger.info(translator.t("plugin_system_log_access_msg", type=tipo_str))
+        logger.debug(f"PLUGIN_{self.tag}", "Reading debug logs")
+        
+        risultato_log = logger.read_logs(n=10, debug_only=True)
+        return translator.t("plugin_system_log_analysis_done", type=tipo_str, log=risultato_log)
+
     def open_terminal(self) -> str:
         """
         Opens a new independent Windows command prompt (CMD) window.
@@ -318,6 +330,8 @@ def execute(comando: str) -> str:
         return tools.read_logs()
     elif c_lower in ("errors", "errori", "read_errors"):
         return tools.read_errors()
+    elif c_lower in ("debug", "debug_logs", "read_debug_logs"):
+        return tools.read_debug_logs()
     elif c_lower in ("time", "ora", "tempo", "get_time"):
         return tools.get_time()
     
