@@ -135,7 +135,7 @@ class SystemTools:
         logger.info(translator.t("plugin_system_log_access_msg", type=tipo_str))
         logger.debug(f"PLUGIN_{self.tag}", "Reading standard logs")
         
-        risultato_log = logger.leggi_log(n=8, solo_errori=False)
+        risultato_log = logger.read_logs(n=8, errors_only=False)
         return translator.t("plugin_system_log_analysis_done", type=tipo_str, log=risultato_log)
 
     def read_errors(self) -> str:
@@ -147,7 +147,7 @@ class SystemTools:
         logger.info(translator.t("plugin_system_log_access_msg", type=tipo_str))
         logger.debug(f"PLUGIN_{self.tag}", "Reading error logs")
         
-        risultato_log = logger.leggi_log(n=8, solo_errori=True)
+        risultato_log = logger.read_logs(n=8, errors_only=True)
         return translator.t("plugin_system_log_analysis_done", type=tipo_str, log=risultato_log)
 
     def open_terminal(self) -> str:
@@ -196,7 +196,28 @@ class SystemTools:
         logger.debug(f"PLUGIN_{self.tag}", f"Opening folder: {percorso}")
         
         mappings = self._get_explorer_mappings()
-        path = mappings.get(percorso, percorso)
+        
+        # Alias resolution for common folders
+        if percorso not in mappings:
+            if percorso == "downloads" and "download" in mappings:
+                path = mappings["download"]
+            elif percorso == "download" and "downloads" in mappings:
+                path = mappings["downloads"]
+            elif percorso == "documents" and "documenti" in mappings:
+                path = mappings["documenti"]
+            elif percorso == "documenti" and "documents" in mappings:
+                path = mappings["documents"]
+            else:
+                path = percorso
+        else:
+            path = mappings[percorso]
+
+        # Expand user path fallback just in case
+        if not os.path.exists(path):
+            expanded_path = os.path.expanduser(f"~\\{percorso.capitalize()}")
+            if os.path.exists(expanded_path):
+                path = expanded_path
+
         if os.path.exists(path):
             os.startfile(path)
             return translator.t("plugin_system_folder_opened", folder=percorso)

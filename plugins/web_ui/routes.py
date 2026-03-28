@@ -570,3 +570,26 @@ def init_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
                 time.sleep(0.1)
         
         return Response(stream_with_context(generate()), mimetype="text/event-stream")
+
+    @app.route("/api/system/reboot", methods=["POST"])
+    def system_reboot():
+        """Reboots the entire Zentra Core system via os._exit(0)."""
+        try:
+            logger.info("[WebUI] User requested system reboot from Web UI.")
+            
+            # Start a background thread to allow the HTTP response to complete first
+            def do_reboot():
+                import time, os, winsound
+                from core.i18n.translator import t
+                time.sleep(1.0)
+                print(f"\n\033[91m[WEB_UI] Riavvio del sistema in corso...\033[0m")
+                winsound.Beep(600, 150)
+                winsound.Beep(400, 150)
+                os._exit(0)
+                
+            threading.Thread(target=do_reboot, daemon=True).start()
+            return jsonify({"ok": True, "message": "Reboot initiated"})
+        except Exception as exc:
+            logger.error(f"[WebUI] system_reboot error: {exc}")
+            return jsonify({"ok": False, "error": str(exc)}), 500
+

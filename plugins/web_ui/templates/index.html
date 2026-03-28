@@ -679,6 +679,11 @@
         </select>
       </div>
     </div>
+    <div class="card" style="border-color: rgba(248,113,113,0.3);">
+      <div class="card-title" style="color: var(--red);">Power Control</div>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Trigger a full system restart of Zentra Core and the Web Server.</p>
+      <button class="btn btn-secondary" style="background:rgba(248,113,113,0.15); border-color:var(--red); color:var(--red); width: 100%;" onclick="rebootSystem()">🔄 Riavvia Zentra Server</button>
+    </div>
   </div>
 
   <!-- PLUGIN -->
@@ -1437,6 +1442,22 @@ setInterval(() => {
     body: JSON.stringify({ type: 'config' })
   }).catch(() => {});
 }, 5000);
+
+async function rebootSystem() {
+  if (!confirm("Sei sicuro di voler riavviare l'intero sistema Zentra? Ci vorranno alcuni secondi per tornare online.")) return;
+  
+  try {
+    const res = await fetch("/api/system/reboot", { method: "POST" });
+    if (res.ok) {
+      alert("Comando inviato! Attendi il riavvio del server locale prima di ricaricare la pagina.");
+    } else {
+      const err = await res.json();
+      alert("Errore durante il riavvio: " + (err.error || "Sconosciuto"));
+    }
+  } catch (e) {
+    alert("Errore di rete inviando il comando di riavvio: " + e);
+  }
+}
 </script>
 </body>
 </html>

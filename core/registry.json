@@ -135,7 +135,7 @@
         "description": "Native Web Interface — Chat + Config Panel on localhost:7070",
         "commands": {
             "get_panel_url": "Returns the URL of the chat interface.",
-            "open_browser": "Opens the Zentra web interface in the default browser."
+            "open_browser": "Opens the Zentra web interface in the default browser if not already open."
         },
         "status": "Online → http://127.0.0.1:7070/chat",
         "example": "",
