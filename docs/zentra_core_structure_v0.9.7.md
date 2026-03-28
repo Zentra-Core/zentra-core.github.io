@@ -1,5 +1,6 @@
 # Zentra Core v0.9.7 - Architecture Map
 
+
 A visual guide to the Zentra Core folder structure and system components as of version 0.9.7.
 
 ```text
