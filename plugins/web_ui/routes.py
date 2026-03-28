@@ -585,7 +585,7 @@ def init_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
                 print(f"\n\033[91m[WEB_UI] Riavvio del sistema in corso...\033[0m")
                 winsound.Beep(600, 150)
                 winsound.Beep(400, 150)
-                os._exit(0)
+                os._exit(42)
                 
             threading.Thread(target=do_reboot, daemon=True).start()
             return jsonify({"ok": True, "message": "Reboot initiated"})

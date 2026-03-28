@@ -32,7 +32,21 @@ body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); 
 body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px; height:600px; background:radial-gradient(circle, rgba(108,140,255,0.08) 0%, transparent 70%); pointer-events:none; z-index:0; }
 
 /* SIDEBAR */
-#sidebar { width:var(--sidebar-w); min-width:var(--sidebar-w); background:var(--bg2); border-right:1px solid var(--border); display:flex; flex-direction:column; z-index:10; overflow:hidden; }
+#sidebar { 
+  width:var(--sidebar-w); 
+  min-width:var(--sidebar-w); 
+  background:var(--bg2); 
+  border-right:1px solid var(--border); 
+  display:flex; 
+  flex-direction:column; 
+  z-index:10; 
+  overflow-y:auto; 
+  scrollbar-width:thin; 
+  scrollbar-color:var(--border) transparent; 
+}
+
+#sidebar::-webkit-scrollbar { width:4px; }
+#sidebar::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
 
 .sidebar-header { padding:18px 20px 14px; border-bottom:1px solid var(--border); }
 .logo { height: 26px; display: block; }
