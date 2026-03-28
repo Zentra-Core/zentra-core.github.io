@@ -143,18 +143,20 @@ def generate_response(user_text, external_config=None, tag=None):
         f"\n{translator.t('root_security_instruction')}\n"
         f"{translator.t('root_security_desc')}\n"
     )
+    # Concisely inject folder mappings to guide the AI without using absolute paths in guidelines
+    desktop_map = external_config.get("plugins", {}).get("FILE_MANAGER", {}).get("mappings", {}).get("desktop", "desktop") if external_config else "desktop"
+
     plugin_guidelines = (
         "\n### PLUGIN GUIDELINES ###\n"
-        "- [SYSTEM: time] for the current time\n"
-        "- [SYSTEM: open:notepad] to open programs\n"
-        "- [SYSTEM: terminal] to open the command prompt\n"
-        "- [SYSTEM: cmd:instruction] to execute shell commands\n"
-        "- [FILE_MANAGER: list:desktop] to list files on the desktop\n"
-        "- [FILE_MANAGER: read:document] to read a file\n"
-        "- [DASHBOARD: resources] for CPU/RAM\n"
-        "- [MEMORY: remember:text] to remember\n"
-        "- [MEMORY: read:n] for history\n"
+        "- [SYSTEM: time] - Get current local time\n"
+        "- [SYSTEM: open:prog_name] - Open notepad, chrome, etc.\n"
+        "- [SYSTEM: terminal] - Open Windows CMD prompt window\n"
+        "- [SYSTEM: explore:folder] - Open folder graphically (desktop, download, documents)\n"
+        "- [FILE_MANAGER: list:folder] - List files for your own analysis (does NOT open window)\n"
+        "- [DASHBOARD: resources] - Get CPU/RAM telemetry\n"
     )
+
+
 
     special_instructions = config.get('ai', {}).get('special_instructions', '').strip()
     special_instructions_block = f"\n### SPECIAL INSTRUCTIONS ###\n{special_instructions}\n" if special_instructions else ""

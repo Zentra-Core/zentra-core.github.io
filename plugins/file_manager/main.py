@@ -84,7 +84,9 @@ class FileManager:
 
     def list_files(self, path: str) -> str:
         """
-        Lists the folders and files present in a specific path.
+        SCANS and lists files/folders in a path to return the names to the AI.
+        Use this tool ONLY if you need to know the filenames to process them or answer questions. 
+        Does NOT open a visual window for the user.
         
         :param path: The path of the directory to inspect (e.g., 'desktop' or an absolute path).
         :return: A summary string with the folder content.
@@ -181,3 +183,20 @@ def info():
 
 def status():
     return tools.status
+
+def execute(comando: str) -> str:
+    """Compatibilità legacy: smista i comandi testuali ai nuovi metodi ad oggetti."""
+    c = comando.strip()
+    c_lower = c.lower()
+    
+    if c_lower.startswith("list:") or c_lower.startswith("lista:") or c_lower.startswith("list_files:"):
+        path = c.split(":", 1)[1].strip()
+        return tools.list_files(path)
+    elif c_lower.startswith("count:") or c_lower.startswith("conta:") or c_lower.startswith("count_items:"):
+        path = c.split(":", 1)[1].strip()
+        return tools.count_items(path)
+    elif c_lower.startswith("read:") or c_lower.startswith("leggi:") or c_lower.startswith("read_file:"):
+        path = c.split(":", 1)[1].strip()
+        return tools.read_file(path)
+        
+    return f"Errore: Comando legacy '{comando}' non supportato o mancante. Usa Tools Calling."

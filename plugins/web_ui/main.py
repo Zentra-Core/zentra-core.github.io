@@ -7,6 +7,8 @@ import sys
 import logging
 import threading
 import webbrowser
+import json
+import time
 
 try:
     from core.logging import logger
@@ -79,8 +81,8 @@ class WebUIPlugin:
                 start_if_needed(self._cfg_mgr, _ROOT, port=self._port)
                 logger.info(f"[WEB_UI] Server started → {self._url}/chat")
                 self._server_started = True
-                if self._auto_open:
-                    threading.Timer(1.5, lambda: webbrowser.open(f"{self._url}/chat")).start()
+                if self._auto_open and not self._is_ui_active():
+                    threading.Timer(5.0, lambda: webbrowser.open(f"{self._url}/chat")).start()
             except Exception as e:
                 logger.warning(f"[WEB_UI] Server startup error: {e}")
 
@@ -95,13 +97,34 @@ class WebUIPlugin:
         return f"{self._url}/chat"
 
     def open_browser(self) -> str:
-        """Opens the Zentra web interface in the default browser."""
+        """Opens the Zentra web interface in the default browser if not already open."""
         self._ensure_server()
+        if self._is_ui_active():
+            return "Web UI is already active in another tab."
         try:
             webbrowser.open(f"{self._url}/chat")
             return f"Browser opened at {self._url}/chat"
         except Exception as e:
             return f"Could not open browser: {e}"
+
+    def _is_ui_active(self) -> bool:
+        """Checks if there's a recent heartbeat from any UI page."""
+        try:
+            # Use root_dir if available, else relative path
+            h_file = os.path.join(_ROOT, "logs", "webui_heartbeat.json")
+            if not os.path.exists(h_file):
+                return False
+            
+            with open(h_file, "r") as f:
+                data = json.load(f)
+            
+            now = time.time()
+            for page, last_time in data.items():
+                if now - last_time < 30: # 30 seconds threshold
+                    return True
+            return False
+        except:
+            return False
 
 
 # ── Public plugin instance ────────────────────────────────────────────────────

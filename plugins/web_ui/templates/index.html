@@ -1428,6 +1428,15 @@ document.addEventListener('change', (e) => {
     saveConfig(true);
   }
 });
+
+// Heartbeat to prevent multiple tabs
+setInterval(() => {
+  fetch('/zentra/heartbeat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'config' })
+  }).catch(() => {});
+}, 5000);
 </script>
 </body>
 </html>

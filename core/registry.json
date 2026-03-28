@@ -33,7 +33,7 @@
         "description": "System file and directory management with user path and file reading support.",
         "commands": {
             "count_items": "Counts the total number of files and folders in a given path, without listing them.",
-            "list_files": "Lists the folders and files present in a specific path.",
+            "list_files": "SCANS and lists files/folders in a path to return the names to the AI.",
             "read_file": "Reads the textual content of a file specified by the path."
         },
         "status": "ONLINE",

@@ -51,9 +51,11 @@ def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr):
 
         try:
             from core.processing import processore
-            full_text = processore.processa(full_text, cfg_mgr.config)
-        except Exception:
+            full_text, _ = processore.process(full_text, config=cfg_mgr.config)
+        except Exception as e:
+            _chat_log.error(f"[Chat] Processor error: {e}")
             pass
+
 
         for i in range(0, len(full_text), 40):
             sess["queue"].put({"type": "token", "text": full_text[i:i+40]})

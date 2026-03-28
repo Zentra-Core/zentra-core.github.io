@@ -599,6 +599,15 @@ loadPlugins();
 initEvents();
 setInterval(refreshStatus, 4000);
 userInput.focus();
+
+// Heartbeat to prevent multiple tabs
+setInterval(() => {
+  fetch('/zentra/heartbeat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'chat' })
+  }).catch(() => {});
+}, 5000);
 </script>
 </body>
 </html>

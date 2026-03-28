@@ -187,9 +187,10 @@ class SystemTools:
 
     def explore_folder(self, folder_path: str) -> str:
         """
-        Opens the file manager in a specific folder.
+        OPENS a graphical Windows Explorer window for the specified folder. 
+        Use this tool when the user wants to visually 'see', 'open', or 'explore' a directory on their desktop.
         
-        :param folder_path: The path or alias of the folder (e.g., 'desktop', 'download').
+        :param folder_path: The path or alias of the folder (e.g., 'desktop', 'download', 'documents').
         """
         percorso = folder_path.strip().lower()
         logger.debug(f"PLUGIN_{self.tag}", f"Opening folder: {percorso}")
@@ -277,6 +278,30 @@ def info():
 def status():
     return tools.status
 
-def esegui(comando):
-    # Fallback legacy (molto limitato)
-    return f"Use tool calling for {comando}"
+def execute(comando: str) -> str:
+    """Compatibilità legacy: smista i comandi testuali ai nuovi metodi ad oggetti."""
+    c = comando.strip()
+    c_lower = c.lower()
+    
+    if c_lower in ("terminal", "cmd", "terminale", "prompt", "open_terminal"):
+        return tools.open_terminal()
+    elif c_lower.startswith("open:") or c_lower.startswith("program:") or c_lower.startswith("open_program:"):
+        prog = c.split(":", 1)[1].strip()
+        return tools.open_program(prog)
+    elif c_lower.startswith("explore:") or c_lower.startswith("folder:") or c_lower.startswith("apri:") or c_lower.startswith("explore_folder:"):
+        folder = c.split(":", 1)[1].strip()
+        return tools.explore_folder(folder)
+    elif c_lower in ("reboot", "reboot_system"):
+        return tools.reboot_system()
+    elif c_lower in ("logs", "log", "read_logs"):
+        return tools.read_logs()
+    elif c_lower in ("errors", "errori", "read_errors"):
+        return tools.read_errors()
+    elif c_lower in ("time", "ora", "tempo", "get_time"):
+        return tools.get_time()
+    
+    if c_lower.startswith("shell:") or c_lower.startswith("execute_shell_command:"):
+        shell_cmd = c.split(":", 1)[1].strip()
+        return tools.execute_shell_command(shell_cmd)
+        
+    return f"Errore: Comando legacy '{comando}' non supportato o mancante. Usa Tools Calling."
