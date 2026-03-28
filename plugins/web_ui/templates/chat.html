@@ -162,6 +162,7 @@ body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px;
 
 @media(max-width: 700px) { #sidebar { display:none; } }
 </style>
+{% include 'modules/chat_message_actions.html' %}
 </head>
 <body>
 
@@ -257,6 +258,7 @@ body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px;
   </div>
 
   <div id="input-bar">
+    {% include 'modules/chat_input_toolbar.html' %}
     <div class="input-wrap">
       <textarea id="user-input" rows="1" placeholder="{{ t('webui_chat_placeholder') }}" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
       <div class="input-actions">
@@ -410,6 +412,11 @@ function addBubble(role, text, id) {
   msg.appendChild(bubble);
   chatArea.appendChild(msg);
   chatArea.scrollTop = chatArea.scrollHeight;
+  // Attach inline action buttons
+  const hIdx = history ? history.length : -1;
+  if (typeof window.attachMessageActions === 'function') {
+    window.attachMessageActions(msg, isUser ? 'user' : 'ai', hIdx);
+  }
   return { msg, bubble };
 }
 
@@ -631,5 +638,7 @@ setInterval(() => {
   }).catch(() => {});
 }, 5000);
 </script>
+<script src="/static/js/chat_message_actions.js"></script>
+<script src="/static/js/chat_input_toolbar.js"></script>
 </body>
 </html>

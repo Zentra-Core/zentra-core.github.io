@@ -1456,18 +1456,18 @@ setInterval(() => {
 }, 5000);
 
 async function rebootSystem() {
-  if (!confirm("Sei sicuro di voler riavviare l'intero sistema Zentra? Ci vorranno alcuni secondi per tornare online.")) return;
-  
+  setSaveMsg('Rebooting...', 'err');
   try {
     const res = await fetch("/api/system/reboot", { method: "POST" });
     if (res.ok) {
-      alert("Comando inviato! Attendi il riavvio del server locale prima di ricaricare la pagina.");
+       console.log("Reboot command sent.");
+       setTimeout(() => { location.reload(); }, 5000);
     } else {
-      const err = await res.json();
-      alert("Errore durante il riavvio: " + (err.error || "Sconosciuto"));
+       const err = await res.json();
+       setSaveMsg("Reboot error: " + (err.error || "Unknown"), 'err');
     }
   } catch (e) {
-    alert("Errore di rete inviando il comando di riavvio: " + e);
+    setSaveMsg("Network error during reboot", 'err');
   }
 }
 </script>

@@ -291,3 +291,60 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
             return send_file(_last_audio_path, mimetype="audio/wav",
                              download_name="zentra_response.wav")
         return jsonify({"error": "No audio available"}), 404
+
+    @app.route("/api/upload", methods=["POST"])
+    def api_upload():
+        """Accept multipart file uploads, extract text context and return it."""
+        from flask import request, jsonify
+        import traceback
+        files = request.files.getlist("files")
+        if not files:
+            return jsonify({"ok": False, "error": "No files received"}), 400
+
+        context_parts = []
+        for f in files:
+            name = f.filename or "unknown"
+            ext  = os.path.splitext(name)[1].lower()
+            try:
+                if ext == ".txt" or ext == ".md" or ext == ".csv":
+                    text = f.read().decode("utf-8", errors="replace")
+                    context_parts.append(f"--- {name} ---\n{text}")
+
+                elif ext == ".pdf":
+                    try:
+                        import pypdf
+                        from io import BytesIO
+                        reader = pypdf.PdfReader(BytesIO(f.read()))
+                        text = "\n".join(p.extract_text() or "" for p in reader.pages)
+                        context_parts.append(f"--- {name} (PDF) ---\n{text}")
+                    except ImportError:
+                        context_parts.append(f"--- {name} ---\n[pypdf non installato, impossibile leggere il PDF]")
+
+                elif ext in (".docx",):
+                    try:
+                        import docx
+                        from io import BytesIO
+                        doc = docx.Document(BytesIO(f.read()))
+                        text = "\n".join(p.text for p in doc.paragraphs)
+                        context_parts.append(f"--- {name} (DOCX) ---\n{text}")
+                    except ImportError:
+                        context_parts.append(f"--- {name} ---\n[python-docx non installato, impossibile leggere il DOCX]")
+
+                elif ext in (".png", ".jpg", ".jpeg", ".webp"):
+                    # For images, just notify — vision support can be added later
+                    context_parts.append(f"--- {name} (Image) ---\n[Immagine allegata: {name}. Supporto visione non ancora disponibile.]")
+
+                else:
+                    context_parts.append(f"--- {name} ---\n[Tipo file non supportato: {ext}]")
+
+            except Exception as e:
+                context_parts.append(f"--- {name} ---\n[Errore durante la lettura: {e}]")
+
+        combined = "\n\n".join(context_parts)
+        return jsonify({"ok": True, "context": combined, "file_count": len(files)})
+
+    @app.route("/static/js/<filename>")
+    def serve_static_js(filename):
+        from flask import send_from_directory
+        js_dir = os.path.join(os.path.dirname(__file__), "static", "js")
+        return send_from_directory(js_dir, filename)
