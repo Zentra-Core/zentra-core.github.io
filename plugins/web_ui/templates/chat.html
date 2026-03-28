@@ -49,9 +49,10 @@ body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px;
 #sidebar::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
 
 .sidebar-header { padding:18px 20px 14px; border-bottom:1px solid var(--border); }
-.logo { height: 26px; display: block; }
-.logo img { height: 100%; display: block; }
-.logo-sub { font-size:11px; color:var(--muted); margin-top:2px; letter-spacing:.5px; text-transform:uppercase; }
+.logo { height: 32px; display: flex; align-items: center; gap: 10px; }
+.logo img { height: 100%; width: auto; display: block; filter: drop-shadow(0 0 8px rgba(108,140,255,0.3)); }
+.logo-text { font-size: 20px; font-weight: 700; background: var(--accent-g); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.logo-sub { font-size:10px; color:var(--muted); margin-top:2px; letter-spacing:.5px; text-transform:uppercase; font-weight: 500; }
 
 .sidebar-section { padding:16px 14px 8px; }
 .sidebar-label { font-size:10px; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:8px; padding:0 6px; }
@@ -109,7 +110,7 @@ body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px;
 #welcome { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; flex:1; text-align:center; padding:40px; }
 .welcome-logo { height:110px; display: flex; align-items: center; justify-content: center; filter:drop-shadow(0 0 40px rgba(108,140,255,.4)); margin-bottom: 5px; }
 .welcome-logo img { height: 100%; object-fit: contain; }
-.welcome-title { font-size:28px; font-weight:700; background:var(--accent-g); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.welcome-title { font-size:28px; font-weight:700; background:var(--accent-g); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
 .welcome-sub { font-size:15px; color:var(--muted); max-width:480px; line-height:1.6; }
 
 .quick-chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:8px; }
@@ -166,8 +167,11 @@ body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px;
 
 <div id="sidebar">
   <div class="sidebar-header">
-    <div class="logo"><img src="/assets/Zentra_Core_Logo_NBG.png" alt="Zentra Logo"></div>
-    <div class="logo-sub">{{ t('webui_chat_title') }}</div>
+    <div class="logo">
+      <img src="/assets/Zentra_Core_Logo_NBG.png" alt="Zentra Logo">
+      <span class="logo-text">ZENTRA</span>
+    </div>
+    <div class="logo-sub">Neural Cognitive Core</div>
   </div>
   <div class="status-pill">
     <div class="dot-pulse"></div>
@@ -394,7 +398,11 @@ function addBubble(role, text, id) {
   if(id) msg.id = id;
   const avatar = document.createElement('div');
   avatar.className = 'msg-avatar';
-  avatar.textContent = isUser ? '👤' : '⚡';
+  if (isUser) {
+    avatar.textContent = '👤';
+  } else {
+    avatar.innerHTML = `<img src="/assets/Zentra_Core_Logo_NBG.png" style="width:24px; height:24px; filter:drop-shadow(0 0 5px rgba(108,140,255,0.4));">`;
+  }
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble';
   if(text) bubble.innerHTML = renderMarkdown(text);

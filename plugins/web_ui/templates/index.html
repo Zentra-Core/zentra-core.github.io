@@ -49,6 +49,18 @@
   .logo {
     font-size: 22px;
     font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo img {
+    height: 32px;
+    width: auto;
+    filter: drop-shadow(0 0 8px rgba(108,140,255,0.2));
+  }
+
+  .logo-text {
     background: linear-gradient(90deg, var(--accent), var(--accent2));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -299,7 +311,10 @@
 <body>
 
 <header>
-  <div class="logo">⚡ Zentra <span>{{ t('webui_conf_title') }}</span></div>
+  <div class="logo">
+    <img src="/assets/Zentra_Core_Logo_NBG.png" alt="Zentra Logo">
+    <div class="logo-text">Zentra <span>{{ t('webui_conf_title') }}</span></div>
+  </div>
   <div id="status-dot">
     <div class="dot"></div>
     <span id="hdr-model">{{ t('webui_chat_loading') }}</span>
