@@ -234,6 +234,28 @@
         "web"
       ],
       "notes": "Affects terminal logs, UI labels, and voice responses."
+    },
+    {
+      "id": "SYSTEM_legacy_plugin",
+      "description": "Legacy system tool. Root Access: terminal management, reboot, log diagnostics. Commands: time, reboot, terminal, open:<name>, explore:<folder>, shell:<command>.",
+      "risk": "high",
+      "available_in": [
+        "cli",
+        "ai",
+        "plugin"
+      ],
+      "notes": "Legacy text-based routing plugin. High risk due to shell/open commands."
+    },
+    {
+      "id": "WEB_legacy_plugin",
+      "description": "Legacy web tool. Network access for Google searches and quick opening of websites. Commands: search:<text>, open:<site>.",
+      "risk": "low",
+      "available_in": [
+        "cli",
+        "ai",
+        "plugin"
+      ],
+      "notes": "Legacy text-based routing plugin."
     }
   ]
 }
