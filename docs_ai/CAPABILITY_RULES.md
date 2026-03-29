@@ -4,7 +4,7 @@ Definizione dei parametri e della struttura del sistema delle capacità.
 
 ## Struttura della Capability (JSON)
 
-Ogni entry in `SYSTEM_CAPABILITIES.json` deve seguire questo schema:
+Ogni entry in `SYSTEM_CAPABILITIES.json` deve seguire questo schema rigoroso (architettura Blueprints):
 
 ```json
 {
@@ -12,9 +12,17 @@ Ogni entry in `SYSTEM_CAPABILITIES.json` deve seguire questo schema:
   "description": "Spiegazione chiara di cosa fa",
   "risk": "low | medium | high",
   "available_in": ["cli", "web", "ai", "plugin"],
+  "implementation": {
+    "core_files": ["lista dei file fisici principali, es: app/module.py"],
+    "entry_points": ["Come viene invocata l'azione, es: F5 / Plugin Call"],
+    "config_keys": ["Chiavi di configurazione associate nel config.json"]
+  },
+  "verification_step": "Istruzione breve per verificare a mano o via codice se la feature è funzionante.",
   "notes": "Dettagli tecnici o limitazioni"
 }
 ```
+
+> **NOTA PER IA**: Questo livello di dettaglio è OBDLIGATORIO per evitare "regressioni funzionali". Se un file referenziato scompare dal codebase, l'IA deve attivare un avviso di perdita di codice "Documentation/Code Mismatch".
 
 ## Livelli di Rischio
 
