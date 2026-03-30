@@ -342,6 +342,7 @@
     <button class="tab" onclick="showTab('memory'); loadMemoryStatus();">🧠 Memory</button>
     <button class="tab" onclick="showTab('system')">{{ t('webui_conf_tab_sys') }}</button>
     <button class="tab" onclick="showTab('plugins')">{{ t('webui_conf_tab_plugins') }}</button>
+    <button class="tab" onclick="showTab('media')">🎥 Media</button>
     <button class="tab" onclick="showTab('logs'); startLogStream();">{{ t('webui_conf_tab_logs') }}</button>
   </div>
 
@@ -710,26 +711,62 @@
     <!-- Power Control section moved to footer -->
   </div>
 
+  <!-- MEDIA -->
+  <div id="tab-media" class="panel">
+    <div class="card" id="card-image-gen">
+      <div class="card-title">🎨 Image Generation</div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Provider</label>
+          <select id="igen-provider" onchange="onProviderChanged()">
+            <option value="pollinations">Pollinations.ai (Free)</option>
+            <option value="airforce">Airforce API (Free/Experimental)</option>
+            <option value="gemini">Google Gemini Imagen</option>
+            <option value="openai">OpenAI DALL-E</option>
+            <option value="stability">Stability.ai</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Model <button onclick="refreshImageModels()" style="margin-left:8px;padding:2px 10px;font-size:11px;border:1px solid var(--border);background:var(--bg3);color:var(--text);border-radius:6px;cursor:pointer;">&#8635; Refresh</button></label>
+          <select id="igen-model"><option>flux</option></select>
+          <span id="igen-model-status" style="font-size:11px;color:var(--muted);"></span>
+        </div>
+        <div class="field"><label>Width (px)</label><input type="number" id="igen-width" min="256" max="2048" step="64"></div>
+        <div class="field"><label>Height (px)</label><input type="number" id="igen-height" min="256" max="2048" step="64"></div>
+      </div>
+      <div class="field" id="igen-apikey-row" style="margin-top:10px;display:none;">
+        <label id="igen-apikey-label">API Key</label>
+        <input type="password" id="igen-apikey" placeholder="sk-...">
+        <small style="color:var(--muted);font-size:11px;">Key also accepted from .env file.</small>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info" style="font-weight:600; color:var(--text);">Enable Image Generation</div>
+        <label class="switch"><input type="checkbox" id="igen-enabled"><span class="slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">Remove Logo/Watermark (Pollinations only)</div>
+        <label class="switch"><input type="checkbox" id="igen-nologo"><span class="slider"></span></label>
+      </div>
+    </div>
+
+    <!-- Media Vault -->
+    <div class="card" id="card-media-vault">
+      <div class="card-title">🔐 Media Vault & Privacy</div>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">
+        Manage the images generated and saved by the AI on your local disk.
+      </p>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-secondary" onclick="openMediaVault()">📂 Open Storage Folder</button>
+        <button class="btn btn-secondary" style="background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.3); color:var(--red);" onclick="clearMediaVault()">🗑️ Clear All Generated Media</button>
+      </div>
+    </div>
+  </div>
+
   <!-- PLUGIN -->
   <div id="tab-plugins" class="panel">
     <div class="card">
       <div class="card-title">{{ t('webui_conf_plugin_active_title') }}</div>
       <div id="plugin-list"><p style="color:var(--muted);font-size:13px;">{{ t('webui_conf_msg_loading') }}</p></div>
-    </div>
-    <div class="card" id="card-image-gen">
-      <div class="card-title">🎨 Image Generation (Pollinations.ai)</div>
-      <div class="grid-2">
-        <div class="field"><label>Width (px)</label><input type="number" id="igen-width" min="256" max="2048" step="64"></div>
-        <div class="field"><label>Height (px)</label><input type="number" id="igen-height" min="256" max="2048" step="64"></div>
-      </div>
-      <div class="toggle-row">
-        <div class="toggle-info" style="font-weight:600; color:var(--text);">Abilita Image Generation</div>
-        <label class="switch"><input type="checkbox" id="igen-enabled" onchange="saveConfig(true)"><span class="slider"></span></label>
-      </div>
-      <div class="toggle-row">
-        <div class="toggle-info">Remove Logo/Watermark</div>
-        <label class="switch"><input type="checkbox" id="igen-nologo"><span class="slider"></span></label>
-      </div>
     </div>
   </div>
 
@@ -802,6 +839,7 @@ let cfg = {};
 let sysOptions = {};
 let audioDevices = null;
 let audioConfig = null;
+let mediaConfig = null;
 
 function showTab(name) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -846,11 +884,12 @@ async function initAll() {
   const start = Date.now();
   setSaveMsg('{{ t("webui_conf_msg_loading") }}', 'muted');
   try {
-    const [rOpts, rCfg, rAudio, rAudioCfg] = await Promise.all([
+    const [rOpts, rCfg, rAudio, rAudioCfg, rMediaCfg] = await Promise.all([
       fetch('/zentra/options'),
       fetch('/zentra/config'),
       fetch('/api/audio/devices'),
-      fetch('/api/audio/config')
+      fetch('/api/audio/config'),
+      fetch('/zentra/api/config/media')
     ]);
     
     sysOptions = await rOpts.json();
@@ -860,6 +899,10 @@ async function initAll() {
         const acData = await rAudioCfg.json();
         if (acData.ok) audioConfig = acData.config;
     } catch(e) { console.warn("Could not load audio config:", e); }
+    
+    try {
+        mediaConfig = await rMediaCfg.json();
+    } catch(e) { console.warn("Could not load media config:", e); }
     
     try {
         const adData = await rAudio.json();
@@ -1009,11 +1052,16 @@ function populateUI() {
   document.getElementById('cog-awareness').checked      = cog.include_self_awareness ?? true;
   document.getElementById('cog-max-history').value      = cog.max_history_messages ?? 20;
 
-    const igen = (c.plugins || {}).IMAGE_GEN || {};
+    const igen = (mediaConfig && mediaConfig.image_gen) ? mediaConfig.image_gen : {};
     document.getElementById('igen-enabled').checked = igen.enabled !== false;
+    document.getElementById('igen-provider').value = igen.provider || 'pollinations';
     document.getElementById('igen-width').value  = igen.width  || 1024;
     document.getElementById('igen-height').value = igen.height || 1024;
     document.getElementById('igen-nologo').checked = igen.nologo ?? true;
+    document.getElementById('igen-apikey').value = igen.api_key || '';
+    // Refresh models for current provider, then restore saved model
+    refreshImageModels(igen.model || 'flux');
+    onProviderChanged();
 
     renderPlugins(c.plugins || {});
     console.log("UI Populated successfully.");
@@ -1138,11 +1186,6 @@ function buildPayload() {
     out.plugins[tag].enabled = cb.checked;
   });
 
-  out.plugins.IMAGE_GEN = out.plugins.IMAGE_GEN || {};
-  out.plugins.IMAGE_GEN.enabled = document.getElementById('igen-enabled').checked;
-  out.plugins.IMAGE_GEN.width  = parseInt(document.getElementById('igen-width').value) || 1024;
-  out.plugins.IMAGE_GEN.height = parseInt(document.getElementById('igen-height').value) || 1024;
-  out.plugins.IMAGE_GEN.nologo = document.getElementById('igen-nologo').checked;
   } catch (err) { console.error("buildPayload err:", err); }
 
   return out;
@@ -1356,13 +1399,28 @@ async function refreshModels() {
   }
 }
 
+function buildMediaPayload() {
+    return {
+        image_gen: {
+            enabled: document.getElementById('igen-enabled').checked,
+            provider: document.getElementById('igen-provider').value,
+            model: document.getElementById('igen-model').value,
+            width: parseInt(document.getElementById('igen-width').value) || 1024,
+            height: parseInt(document.getElementById('igen-height').value) || 1024,
+            nologo: document.getElementById('igen-nologo').checked,
+            api_key: document.getElementById('igen-apikey').value.trim()
+        }
+    };
+}
+
 async function saveConfig(silent = false) {
   if (!silent) setSaveMsg('{{ t("webui_conf_msg_saving") }}', 'muted');
   try {
     const payload = buildPayload();
     const audioPayload = buildAudioPayload();
+    const mediaPayload = buildMediaPayload();
     
-    const [resCfg, resAud] = await Promise.all([
+    const [resCfg, resAud, resMed] = await Promise.all([
         fetch('/zentra/config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1372,13 +1430,19 @@ async function saveConfig(silent = false) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(audioPayload)
+        }),
+        fetch('/zentra/api/config/media', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(mediaPayload)
         })
     ]);
     
     const data = await resCfg.json();
     const audData = await resAud.json();
+    const medData = await resMed.json();
     
-    if (data.ok && audData.ok) {
+    if (data.ok && audData.ok && medData.ok) {
       if (!silent) {
           setSaveMsg('{{ t("webui_conf_msg_saved") }}', 'ok');
           setTimeout(() => location.reload(), 1500);
@@ -1487,6 +1551,75 @@ async function refreshStatus() {
     m.className = 'stat-val ' + (d.model && d.model !== '—' ? 'val-ok' : 'val-warn');
   } catch(e) {
     document.getElementById('hdr-model').textContent = '{{ t("webui_chat_offline") }}';
+  }
+}
+
+// ── Image Provider Logic (Media Tab) ──────────────────────────────
+// Map of providers that require an API key with label hint
+const PROVIDER_KEY_LABELS = {
+  gemini:    'Gemini API Key (GEMINI_API_KEY)',
+  openai:    'OpenAI API Key (OPENAI_API_KEY)',
+  stability: 'Stability API Key (STABILITY_API_KEY)',
+};
+
+function onProviderChanged() {
+  const provider = document.getElementById('igen-provider')?.value || 'pollinations';
+  const keyRow  = document.getElementById('igen-apikey-row');
+  const keyLbl  = document.getElementById('igen-apikey-label');
+  if (PROVIDER_KEY_LABELS[provider]) {
+    keyRow.style.display = '';
+    keyLbl.textContent   = PROVIDER_KEY_LABELS[provider];
+  } else {
+    keyRow.style.display = 'none';
+  }
+}
+
+async function refreshImageModels(restoreValue) {
+  const provider = document.getElementById('igen-provider')?.value || 'pollinations';
+  const sel     = document.getElementById('igen-model');
+  const status  = document.getElementById('igen-model-status');
+  if (!sel) return;
+  if (status) status.textContent = 'Loading...';
+  try {
+    const r = await fetch(`/zentra/api/media/models?provider=${encodeURIComponent(provider)}`);
+    const d = await r.json();
+    if (d.ok && Array.isArray(d.models) && d.models.length) {
+      sel.innerHTML = '';
+      d.models.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m; opt.textContent = m;
+        if (restoreValue && m === restoreValue) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      if (status) status.textContent = `${d.models.length} models`;
+    } else {
+      if (status) status.textContent = 'Using defaults';
+    }
+  } catch(e) {
+    if (status) status.textContent = 'Could not fetch';
+    console.warn('refreshImageModels error:', e);
+  }
+}
+
+async function openMediaVault() {
+  try {
+    const res = await fetch('/zentra/api/media/open-folder', { method: 'POST' });
+    if (!res.ok) alert('Impossibile aprire la cartella.');
+  } catch(e) { console.error(e); }
+}
+
+async function clearMediaVault() {
+  if (!confirm('Sei sicuro? Questa operazione ELIMINERÀ DEFINITIVAMENTE tutte le immagini salvate in locale.\n\nVuoi procedere?')) return;
+  try {
+    const res = await fetch('/zentra/api/media/clear', { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      alert(`Media Vault svuotato con successo.\nFile eliminati: ${data.deleted}`);
+    } else {
+      alert("Errore durante l'eliminazione: " + data.error);
+    }
+  } catch(e) {
+    alert('Errore di connessione al server.');
   }
 }
 

@@ -192,4 +192,6 @@ config.json
 *.mp3
 tmp/
 brain/
-*.log
+*.log
+data/
+

@@ -148,7 +148,7 @@
             "show_disabled": false
         },
         "IMAGE_GEN": {
-            "enabled": false,
+            "enabled": true,
             "height": 1024,
             "nologo": false,
             "width": 1024

@@ -31,6 +31,9 @@ OK: plugins/domotica/main.py
 OK: plugins/media/main.py
 OK: plugins/webcam/main.py
 OK: plugins/roleplay/main.py
+OK: plugins/image_gen/main.py
+OK: core/media_config.py
+OK: plugins/roleplay/main.py
 OK: zentra_proc_manager.py
 OK: ZENTRA_PROC_MANAGER.bat
 OK: app/application.py

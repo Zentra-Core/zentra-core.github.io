@@ -1,0 +1,14 @@
+{
+    "image_gen": {
+        "enabled": true,
+        "provider": "airforce",
+        "model": "imagen-3.0-generate-002",
+        "width": 1024,
+        "height": 1024,
+        "nologo": true,
+        "api_key": ""
+    },
+    "video_gen": {
+        "enabled": false
+    }
+}
