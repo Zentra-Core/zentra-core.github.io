@@ -186,6 +186,10 @@
             "shell_command_timeout": 15,
             "shell_command_whitelist": []
         },
+        "SYS_NET": {
+            "enabled": true,
+            "proxy_url": ""
+        },
         "WEB": {
             "enabled": true,
             "llm_model": "",

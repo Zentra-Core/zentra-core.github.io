@@ -7,6 +7,7 @@ import ctypes
 try:
     from core.logging import logger
     from core.i18n import translator
+    from app.config import ConfigManager
 except ImportError:
     class DummyLogger:
         def debug(self, *args, **kwargs): print("[SYS_NET]", *args)
@@ -16,6 +17,10 @@ except ImportError:
     class DummyTranslator:
         def t(self, key, **kwargs): return key
     translator = DummyTranslator()
+    class DummyConfig:
+        def get_plugin_config(self, tag, key, default): return default
+    def FakeConfigManager(): return DummyConfig()
+    ConfigManager = FakeConfigManager
 
 def is_admin():
     """Returns True if Zentra is running with Windows Administrator privileges."""
@@ -34,8 +39,16 @@ class SysNetTools:
 
     def __init__(self):
         self.tag = "SYS_NET"
-        self.desc = "Strumenti di rete avanzati: IP, Ping, Mappatura LAN, VPN/DNS."
+        self.desc = "Strumenti di rete avanzati: IP, Ping, Mappatura LAN, VPN/DNS e Proxy."
         self.status = "Online"
+        
+        self.config_schema = {
+            "proxy_url": {
+                "type": "str",
+                "default": "",
+                "description": "Indirizzo Proxy (es. socks5://127.0.0.1:2080 o http://ip:port). Lascia vuoto per non usare Nessun Proxy."
+            }
+        }
 
     # --- PHASE 1: NETWORK AWARENESS (READING) ---
 
@@ -78,11 +91,43 @@ class SysNetTools:
                 if "IPv4" in l or "Gateway" in l or "DNS Servers" in l and "IPv6" not in l:
                     results.append(f"[{adapter_name}] {l}")
             
+            cfg_proxy = ConfigManager().get_plugin_config(self.tag, "proxy_url", "")
+            proxy_info = f"\nZentra Configured Proxy: {cfg_proxy if cfg_proxy else 'None'}"
+            
             if not results:
-                return output[:1000] # Fallback raw
-            return "Local Network Configuration:\n" + "\n".join(results)
+                return output[:1000] + proxy_info
+            return "Local Network Configuration:\n" + "\n".join(results) + proxy_info
         except Exception as e:
             return f"Error fetching local network info: {e}"
+
+    def test_proxy(self) -> str:
+        """
+        Tests the configured Proxy by attempting to reach an external service an reports the IP.
+        Useful to verify if the proxy configuration bypasses blocks successfully.
+        """
+        cfg = ConfigManager()
+        proxy_url = cfg.get_plugin_config(self.tag, "proxy_url", "").strip()
+        
+        if not proxy_url:
+            return "Nessun proxy configurato in Zentra. La richiesta di test usera' la connessione standard."
+            
+        logger.debug(f"PLUGIN_{self.tag}", f"Testing proxy: {proxy_url}")
+        try:
+            import requests
+            proxies = {
+                "http": proxy_url,
+                "https": proxy_url
+            }
+            # Test connectivity and get IP through proxy
+            r = requests.get("https://api.ipify.org?format=json", proxies=proxies, timeout=10)
+            if r.status_code == 200:
+                ip_data = r.json()
+                return f"SUCCESS: Il Proxy funziona correttamente! L'IP in uscita registrato e': {ip_data.get('ip')}"
+            else:
+                return f"ATTENZIONE: Il proxy ha risposto con codice {r.status_code}."
+        except Exception as e:
+            logger.error(f"Failed to test proxy: {e}")
+            return f"ERRORE: Impossibile connettersi al proxy '{proxy_url}'. Dettagli: {e}"
 
     def ping_test(self, target: str) -> str:
         """

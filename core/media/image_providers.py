@@ -38,6 +38,18 @@ def _save_image_bytes(data: bytes, ext: str = "jpg") -> str:
         f.write(data)
     return filename
 
+def _get_proxies() -> dict:
+    """Read proxy configuration from SYS_NET plugin settings."""
+    try:
+        from app.config import ConfigManager
+        cfg = ConfigManager()
+        proxy_url = cfg.get_plugin_config("SYS_NET", "proxy_url", "").strip()
+        if proxy_url:
+            return {"http": proxy_url, "https": proxy_url}
+    except Exception as e:
+        _log_debug(f"[Engine] Proxy config error: {e}")
+    return {}
+
 
 def _ensure_english_prompt(prompt: str) -> str:
     """
@@ -64,7 +76,7 @@ def _ensure_english_prompt(prompt: str) -> str:
         import requests as _req
         enc = urllib.parse.quote(prompt)
         url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q={enc}"
-        r = _req.get(url, timeout=5)
+        r = _req.get(url, timeout=5, proxies=_get_proxies())
         if r.status_code == 200:
             data = r.json()
             translated = "".join([item[0] for item in data[0] if item[0]])
@@ -88,7 +100,7 @@ class PollinationsProvider:
         """Fetch model list from Pollinations API dynamically."""
         try:
             import requests
-            r = requests.get(PollinationsProvider.MODELS_URL, timeout=5)
+            r = requests.get(PollinationsProvider.MODELS_URL, timeout=5, proxies=_get_proxies())
             if r.status_code == 200:
                 data = r.json()
                 # API returns a list of model names or dicts
@@ -117,7 +129,7 @@ class PollinationsProvider:
         if api_key and len(api_key) > 20:
             headers["Authorization"] = f"Bearer {api_key}"
 
-        r = requests.get(url, headers=headers, timeout=30)
+        r = requests.get(url, headers=headers, timeout=30, proxies=_get_proxies())
         _log_debug(f"[Pollinations] HTTP {r.status_code}, bytes={len(r.content)}")
 
         if r.status_code != 200:
@@ -165,7 +177,7 @@ class GeminiProvider:
             }
             headers = {"Content-Type": "application/json"}
 
-            r = requests.post(url, json=payload, headers=headers, timeout=60)
+            r = requests.post(url, json=payload, headers=headers, timeout=60, proxies=_get_proxies())
             
             _log_debug(f"[Gemini] HTTP {r.status_code}, bytes={len(r.content)}")
 
@@ -216,8 +228,14 @@ class OpenAIProvider:
             import openai
             import requests as req_lib
             import base64
+            import httpx
 
-            client = openai.OpenAI(api_key=api_key)
+            proxies = _get_proxies()
+            if proxies and "http" in proxies:
+                http_client = httpx.Client(proxies=proxies["http"])
+                client = openai.OpenAI(api_key=api_key, http_client=http_client)
+            else:
+                client = openai.OpenAI(api_key=api_key)
 
             # DALL-E 3 supports 1024x1024, DALL-E 2 up to 1024x1024
             size_map = {
@@ -291,7 +309,7 @@ class StabilityProvider:
             data["model"] = "sd3-turbo" if "turbo" in model_lower else "sd3"
 
         _log_debug(f"[Stability] endpoint={endpoint}")
-        r = requests.post(endpoint, headers=headers, files={"none": ""}, data=data, timeout=60)
+        r = requests.post(endpoint, headers=headers, files={"none": ""}, data=data, timeout=60, proxies=_get_proxies())
         _log_debug(f"[Stability] HTTP {r.status_code}, bytes={len(r.content)}")
 
         if r.status_code != 200:
@@ -327,7 +345,7 @@ class AirforceProvider:
         _log_debug(f"[Airforce] URL: {url}")
         
         headers = {"User-Agent": "Mozilla/5.0"}
-        r = requests.get(url, headers=headers, timeout=45)
+        r = requests.get(url, headers=headers, timeout=45, proxies=_get_proxies())
         
         if r.status_code != 200:
             raise Exception(f"Airforce HTTP {r.status_code}")

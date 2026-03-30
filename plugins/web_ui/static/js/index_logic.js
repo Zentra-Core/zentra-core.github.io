@@ -214,6 +214,9 @@ function populateUI() {
     setCheck('sys-flask-debug', sys.flask_debug ?? false);
     setVal('sys-language', c.language || 'en');
 
+    const sysNet = (c.plugins || {}).SYS_NET || {};
+    setVal('sys-proxy-url', sysNet.proxy_url || '');
+
     const cog = c.cognition || {};
     setCheck('cog-memory-enabled', cog.memory_enabled ?? true);
     setCheck('cog-episodic', cog.episodic_memory ?? true);
@@ -357,6 +360,12 @@ function buildPayload() {
     out.plugins[tag] = out.plugins[tag] || {};
     out.plugins[tag].enabled = cb.checked;
   });
+
+  const proxyEl = document.getElementById('sys-proxy-url');
+  if (proxyEl) {
+    out.plugins['SYS_NET'] = out.plugins['SYS_NET'] || {};
+    out.plugins['SYS_NET'].proxy_url = proxyEl.value.trim();
+  }
 
   } catch (err) { console.error("buildPayload err:", err); }
 
