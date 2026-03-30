@@ -1,0 +1,20 @@
+<!-- PERSONA PANEL -->
+<div id="tab-ia" class="panel">
+  <div class="card">
+    <div class="card-title">{{ t('webui_conf_persona_title') }}</div>
+    <div class="field"><label>{{ t('webui_conf_persona') }}</label><select id="ia-personality"></select></div>
+  </div>
+  <div class="card">
+    <div class="card-title">{{ t('label_special_instructions') }}</div>
+    <div class="field">
+      <textarea id="ia-instructions" rows="4" placeholder="Es: Sii sempre molto conciso ed evita gli asterischi..."></textarea>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-info">{{ t('label_save_special_instructions') }}</div>
+      <label class="switch"><input type="checkbox" id="ia-save-instructions"><span class="slider"></span></label>
+    </div>
+    <div style="margin-top: 12px; text-align: right;">
+      <button class="btn btn-secondary" onclick="document.getElementById('ia-instructions').value='';">{{ t('label_clear_special_instructions') }}</button>
+    </div>
+  </div>
+</div>

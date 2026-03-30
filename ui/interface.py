@@ -123,11 +123,11 @@ def show_complete_ui(config, voice_status, listening_status, system_status="READ
     comandi = (
         f" {translator.t('menu_help')} | {translator.t('menu_models')} | "
         f"{translator.t('menu_persona')} | {translator.t('menu_mic')} | "
-        f"{translator.t('menu_voice')} | {translator.t('menu_reboot')} | "
-        f"{translator.t('menu_config')} | PTT (F8) | {translator.t('menu_exit')} "
+        f"{translator.t('menu_refresh')} | {translator.t('menu_voice')} | "
+        f"{translator.t('menu_config')} | PTT (F8) | {translator.t('menu_reboot')} "
     )
     if len(ansi_escape.sub('', comandi)) > L:
-        comandi = " F1..F7: Menu | F8: PTT | ESC: Exit "
+        comandi = " F1..F4: Menu | F5: Ref | F6: Voice | F8: PTT | F9: Reb "
     print(f"{Style.DIM}{comandi.center(L)}{Style.RESET_ALL}")
     
     # --- ROW 3: STATUS BAR (BLUE) ---
@@ -414,10 +414,7 @@ def read_keyboard_input(prefix, current_input):
             if special_key == b'@': return "F6", current_input
             if special_key == b'A': return "F7", current_input
             if special_key == b'B': return "F8", current_input
-            # if special_key == b'C': return "F9", current_input
-            # if special_key == b'D': return "F10", current_input
-            # if special_key == b'E': return "F11", current_input
-            # if special_key == b'F': return "F12", current_input
+            if special_key == b'C': return "F9", current_input
             return None, current_input
 
         if ch_raw == b'\x1b':  # ESC

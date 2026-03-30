@@ -15,7 +15,7 @@
     "noise_scale": 0.817,
     "noise_w": 0.9,
     "sentence_silence": 0.1,
-    "listening_status": false,
+    "listening_status": true,
     "energy_threshold": 450,
     "silence_timeout": 5,
     "phrase_limit": 15,

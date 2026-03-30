@@ -19,7 +19,20 @@ class StateManager:
         self._last_voice_stop = 0
         self._push_to_talk = False
         self._ptt_hotkey = "ctrl+shift"
+        self._event_queue = []
         self._lock = threading.Lock()
+
+    def add_event(self, event_type, data=None):
+        """Adds an event to the queue for the WebUI to consume."""
+        with self._lock:
+            self._event_queue.append({"type": event_type, "data": data})
+
+    def pop_events(self):
+        """Returns and clears all pending events."""
+        with self._lock:
+            events = list(self._event_queue)
+            self._event_queue.clear()
+            return events
 
     # Thread-safe properties
     @property

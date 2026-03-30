@@ -2,7 +2,7 @@
     "image_gen": {
         "enabled": true,
         "provider": "airforce",
-        "model": "imagen-3.0-generate-002",
+        "model": "flux",
         "width": 1024,
         "height": 1024,
         "nologo": true,

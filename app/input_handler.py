@@ -28,7 +28,7 @@ class InputHandler:
             return self._process_text_input(input_utente, prefix)
         elif evento == "CLEAR":
             return "CLEAR", ""
-        elif evento in ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"]:
+        elif evento in ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9"]:
             return evento, input_utente
         elif evento == "ESC":
             return self._handle_esc(prefix)
@@ -51,6 +51,7 @@ class InputHandler:
         
         # Indicates we are processing voice input
         voice.stop_voice() # Stop any ongoing old speech
+        self.state.add_event("voice_detected", {"text": text_v})
         self._execute_exchange(text_v, prefix, is_voice=True)
 
     def _process_text_input(self, testo, prefisso):
@@ -117,11 +118,29 @@ class InputHandler:
             except Exception as e:
                 error[0] = e
 
-        thread = threading.Thread(target=execute)
+        thread = threading.Thread(target=execute, daemon=True)
         thread.start()
 
+        # Signal processing start to WebUI
+        self.state.add_event("processing_start")
+
+        # Max seconds to wait for the LLM before auto-cancelling
+        llm_timeout = self.config.get('ai', 'llm_timeout_seconds', default=90)
+        deadline = time.time() + llm_timeout
+
         while thread.is_alive():
+            # Check ESC from console keyboard
             if msvcrt.kbhit() and msvcrt.getch() == b'\x1b':
+                stop_event.set()
+                break
+            # Check stop request from WebUI (/api/system/stop)
+            if getattr(self.state, "webui_stop_requested", False):
+                self.state.webui_stop_requested = False
+                stop_event.set()
+                break
+            # Auto-timeout: avoid blocking forever
+            if time.time() > deadline:
+                logger.warning("[INPUT] LLM timeout — automatic cancellation.")
                 stop_event.set()
                 break
             time.sleep(0.1)
@@ -133,17 +152,21 @@ class InputHandler:
             while msvcrt.kbhit():
                 msvcrt.getch()
             print(f"\n\033[93m[SYSTEM] {translator.t('request_cancelled')}\033[0m")
+            # Notify WebUI of cancellation so it un-hangs!
+            self.state.add_event("system_response", {"user": text, "ai": "❌ Operazione annullata."})
+            
             self.state.system_status = translator.t("ready")
             self.state.system_processing = False
             sys.stdout.write(prefix)
             sys.stdout.flush()
             return
-
+        
         thread.join()
         interface.stop_thinking()
 
         if error[0]:
             logger.error(f"[INPUT] Error: {error[0]}")
+            self.state.add_event("system_response", {"user": text, "ai": f"❌ Errore durante l'elaborazione: {error[0]}"})
         else:
             video_response, clean_voice_text = result
             # Show response
@@ -152,6 +175,9 @@ class InputHandler:
             # Save to memory
             brain_interface.save_message("user", text)
             brain_interface.save_message("assistant", video_response)
+
+            # Broadcast the response to the WebUI (so it renders the text if the Console processed it)
+            self.state.add_event("system_response", {"user": text, "ai": video_response})
 
             if self.state.voice_status and clean_voice_text and self.state.tts_destination == 'system':
                 self.state.system_status = translator.t("speaking")
@@ -178,6 +204,17 @@ class InputHandler:
                             )
                 
                 threading.Thread(target=_speak_task, daemon=True).start()
+            
+            elif self.state.voice_status and clean_voice_text and self.state.tts_destination == 'web':
+                # Generate audio file but don't play locally, just notify WebUI
+                from core.audio.device_manager import get_audio_config
+                from plugins.web_ui.routes_chat import generate_voice_file
+                try:
+                    path = generate_voice_file(clean_voice_text, get_audio_config())
+                    if path:
+                        self.state.add_event("audio_ready")
+                except Exception as e:
+                    logger.debug(f"[INPUT] Web audio generation failed: {e}")
                 # At the end of voice, returns to READY (already handled below)
 
         self.state.system_status = translator.t("ready")

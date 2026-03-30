@@ -13,20 +13,19 @@ log = logging.getLogger("ZentraWebUIServer")
 from app.state_manager import StateManager
 from app.threads import AscoltoThread
 
-_global_server_instance = None
+import sys
 _server_lock = threading.Lock()
-_state_manager = None   # Injected by application.py after startup
-
 
 def set_state_manager(sm) -> None:
     """Inject the live StateManager so audio-toggle routes can use it."""
-    global _state_manager
-    _state_manager = sm
+    # We use sys to share the state manager because this module is often double-imported
+    # (once as __main__ and once as plugins.web_ui.server).
+    sys.zentra_state_manager = sm
 
 
 def get_state_manager():
     """Returns current state_manager (may be None before injection)."""
-    return _state_manager
+    return getattr(sys, "zentra_state_manager", None)
 
 
 class ZentraWebUIServer:
@@ -83,7 +82,8 @@ class ZentraWebUIServer:
                     f"http://127.0.0.1:{self.port}/zentra/config/ui"
                 )
                 # We disable reloader to avoid starting Zentra threads twice
-                app.run(host="127.0.0.1", port=self.port, debug=debug_on, use_reloader=False)
+                # Bind to 0.0.0.0 to handle localhost/127.0.0.1/::1 issues on Windows
+                app.run(host="0.0.0.0", port=self.port, debug=debug_on, use_reloader=False)
             except Exception as e:
                 self.logger.error(f"[WebUI] Flask exception: {e}")
 
