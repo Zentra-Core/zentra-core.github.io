@@ -38,9 +38,15 @@
     loading: "{{ t('webui_chat_loading') }}"
   };
 </script>
-<script src="/static/js/chat_logic.js"></script>
-<script src="/static/js/chat_message_actions.js"></script>
-<script src="/static/js/chat_input_toolbar.js"></script>
-<script src="/static/js/chat_image_viewer.js"></script>
+<script>
+  // Expose the global history to window so the renderer can read it
+  window.historyList = [];
+</script>
+<script src="/static/js/chat_renderer.js?v=2"></script>
+<script src="/static/js/agent/agent_traces.js?v=4"></script>
+<script src="/static/js/chat_logic.js?v=4"></script>
+<script src="/static/js/chat_message_actions.js?v=2"></script>
+<script src="/static/js/chat_input_toolbar.js?v=2"></script>
+<script src="/static/js/chat_image_viewer.js?v=2"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@ let currentTTSOn  = false;
 let currentPTTOn  = false;
 let currentSTTSource = 'system';
 let currentTTSDest   = 'web';
-let currentAudio     = null;
+// Let currentAudio be handled globally by chat_renderer.js
 
 const I18N = window.I18N || {};
 
@@ -178,48 +178,7 @@ async function setAudioRouting(key, val) {
 
 // ── Chat logic ────────────────────────────────────────────────────────────────
 
-function addBubble(role, text, id) {
-  const isUser = role === 'user';
-  const msg = document.createElement('div');
-  msg.className = `msg ${isUser?'user':'ai'}`;
-  if(id) msg.id = id;
-  const avatar = document.createElement('div');
-  avatar.className = 'msg-avatar';
-  if (isUser) {
-    avatar.textContent = '👤';
-  } else {
-    avatar.innerHTML = `<img src="/assets/Zentra_Core_Logo_NBG.png" style="width:24px; height:24px; filter:drop-shadow(0 0 5px rgba(108,140,255,0.4));">`;
-  }
-  const bubble = document.createElement('div');
-  bubble.className = 'msg-bubble';
-  if(text) bubble.innerHTML = renderMarkdown(text);
-  msg.appendChild(avatar);
-  msg.appendChild(bubble);
-  if (chatArea) {
-      chatArea.appendChild(msg);
-      chatArea.scrollTop = chatArea.scrollHeight;
-  }
-  
-  const hIdx = history ? history.length : -1;
-  if (typeof window.attachMessageActions === 'function') {
-    window.attachMessageActions(msg, isUser ? 'user' : 'ai', hIdx);
-  }
-  return { msg, bubble };
-}
-
-function renderMarkdown(text) {
-  let html = text
-    .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/\n/g, '<br>');
-    
-  if (typeof window.processAiImages === 'function') {
-    html = window.processAiImages(html);
-  }
-  return html;
-}
+// (DOM rendering moved to chat_renderer.js)
 
 async function sendMessage() {
   const text = userInput ? userInput.value.trim() : '';
@@ -271,7 +230,10 @@ async function sendMessage() {
     const evtSrc = new EventSource(`/api/stream/${data.session_id}`);
     evtSrc.onmessage = (e) => {
       const ev = JSON.parse(e.data);
-      if(ev.type==='token') {
+      if(ev.type==='agent_trace') {
+        // Pass the AI .msg wrapper as anchor so the trace is INSERTED BEFORE IT
+        if (window.AgentUI) window.AgentUI.handleEvent(ev, aiBubble.closest('.msg') || aiBubble.parentElement);
+      } else if(ev.type==='token') {
         aiText += ev.text;
         aiBubble.innerHTML = renderMarkdown(aiText);
         aiBubble.appendChild(cursor);
@@ -283,6 +245,7 @@ async function sendMessage() {
         if (window._stopTimeout) clearTimeout(window._stopTimeout);
         window._stopTimeout = setTimeout(() => showStopVoiceBtn(false), 60000);
       } else if(ev.type==='done'||ev.type==='error') {
+        if (window.AgentUI) window.AgentUI.finalize();
         cursor.remove();
         aiBubble.innerHTML = renderMarkdown(aiText||(ev.type==='error'?'❌ '+ev.text:''));
         evtSrc.close();
@@ -327,7 +290,10 @@ window.sendInternalMessage = async function(text) {
     const evtSrc = new EventSource(`/api/stream/${data.session_id}`);
     evtSrc.onmessage = (e) => {
       const ev = JSON.parse(e.data);
-      if(ev.type==='token') {
+      if(ev.type==='agent_trace') {
+        // Pass the AI .msg wrapper as anchor so the trace is INSERTED BEFORE IT
+        if (window.AgentUI) window.AgentUI.handleEvent(ev, aiBubble.closest('.msg') || aiBubble.parentElement);
+      } else if(ev.type==='token') {
         aiText += ev.text;
         aiBubble.innerHTML = renderMarkdown(aiText);
         aiBubble.appendChild(cursor);
@@ -339,6 +305,7 @@ window.sendInternalMessage = async function(text) {
         if (window._stopTimeout) clearTimeout(window._stopTimeout);
         window._stopTimeout = setTimeout(() => showStopVoiceBtn(false), 60000);
       } else if(ev.type==='done'||ev.type==='error') {
+        if (window.AgentUI) window.AgentUI.finalize();
         cursor.remove();
         aiBubble.innerHTML = renderMarkdown(aiText||(ev.type==='error'?'❌ '+ev.text:''));
         evtSrc.close();
@@ -359,55 +326,13 @@ window.sendInternalMessage = async function(text) {
   }
 };
 
-async function tryLoadAudio(bubble) {
-  const url = '/api/audio?t=' + Date.now();
-  console.log("[Audio] Creating element for URL:", url);
-  
-  const badge = document.createElement('div');
-  badge.className='audio-badge';
-  badge.innerHTML = '🔊 ';
-  
-  const audio = document.createElement('audio');
-  audio.controls = true;
-  audio.src = url;
-  currentAudio = audio;
-  badge.appendChild(audio);
-  bubble.appendChild(badge);
-  showStopVoiceBtn(true);
-  
-  audio.oncanplaythrough = () => {
-    console.log("[Audio] Can play through, starting...");
-    audio.play().catch(err => {
-      console.warn("[Audio] Autoplay blocked:", err);
-      const hint = document.createElement('span');
-      hint.style.fontSize = '10px';
-      hint.style.color = 'var(--accent)';
-      hint.textContent = ' (Clicca Play)';
-      badge.appendChild(hint);
-    });
-  };
-
-  audio.onended  = () => { currentAudio = null; showStopVoiceBtn(false); };
-  audio.onerror = () => {
-    console.error("[Audio] Element error code:", audio.error ? audio.error.code : 'unknown');
-    currentAudio = null; showStopVoiceBtn(false);
-  };
-}
-
-function showStopVoiceBtn(visible) {
-  const btn1 = document.getElementById('sidebar-stop-voice-btn');
-  const btn2 = document.getElementById('topbar-stop-voice-btn');
-  const display = visible ? 'inline-flex' : 'none';
-  if (btn1) btn1.style.display = display;
-  if (btn2) btn2.style.display = display;
-}
-
+// (Audio initialization UI logic moved to chat_renderer.js)
 async function stopVoice() {
   console.log("[Audio] stopVoice triggered");
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio.src = '';
-    currentAudio = null;
+  if (window.currentAudio) {
+    window.currentAudio.pause();
+    window.currentAudio.src = '';
+    window.currentAudio = null;
   }
   try { await fetch('/api/audio/stop', {method: 'POST'}); } catch(e) {}
   try { await fetch('/api/system/stop', {method: 'POST'}); } catch(e) {}
@@ -498,7 +423,10 @@ function initEvents() {
   const evtSrc = new EventSource('/api/events');
   evtSrc.onmessage = (e) => {
     const ev = JSON.parse(e.data);
-    if (ev.type === 'voice_detected' && ev.text) {
+    
+    if (ev.type === 'agent_trace') {
+      if (window.AgentUI) window.AgentUI.handleEvent(ev);
+    } else if (ev.type === 'voice_detected' && ev.text) {
       console.log("[Audio] Voice command received:", ev.text);
       hideWelcome();
       
@@ -526,6 +454,8 @@ function initEvents() {
       hideWelcome();
       
     } else if (ev.type === 'system_response') {
+      if (window.AgentUI) window.AgentUI.finalize();
+
       console.log("[Audio] Backend response received.", ev);
       let aiText = ev.ai || '';
       // Ensure something is always rendered even if aiText is empty

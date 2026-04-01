@@ -36,17 +36,36 @@ def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr, i
         return
 
     try:
-        # Use the shared config manager passed from the plugin server
-        risposta = brain.generate_response(user_message, external_config=cfg_mgr.config, images=images)
+        from core.agent.loop import AgentExecutor
+        from plugins.web_ui.server import get_state_manager
+        
+        # Instantiate AgentExecutor with shared config and live StateManager
+        sm = get_state_manager()
+        
+        # ── Session-Aware Trace Callback ─────────────────────────────────────
+        # Instead of relying on the global /api/events bus (which the browser
+        # may not be polling during inference), we inject traces DIRECTLY into
+        # the session-specific SSE queue that the browser is already reading.
+        def _session_trace(msg: str, level: str = "info"):
+            sess["queue"].put({
+                "type":    "agent_trace",
+                "level":   level,
+                "message": msg
+            })
+        # ─────────────────────────────────────────────────────────────────────
 
-        # Pass the raw response object to the processor so it can detect and execute tools
-        try:
-            from core.processing import processore
-            full_text, _ = processore.process(risposta, config=cfg_mgr.config)
-        except Exception as e:
-            _chat_log.error(f"[Chat] Processor error: {e}")
-            # Fallback to string if processor fails
-            full_text = str(risposta) if isinstance(risposta, str) else "(error during processing)"
+        agent = AgentExecutor(config=cfg_mgr.config, state_manager=sm, trace_callback=_session_trace)
+        
+        # ── SSE Connection Buffer ─────────────────────────────────────────────
+        # The browser receives session_id from POST /api/chat, then must open a
+        # SECOND request to GET /api/stream/<sid>. Without this pause, the first
+        # agent_trace events are put into the queue BEFORE the browser connects
+        # to the SSE stream, causing them to be lost silently.
+        time.sleep(0.4)
+        # ─────────────────────────────────────────────────────────────────────
+        
+        # The agent logic handles memory storage internally to avoid duplicates
+        full_text, _ = agent.run_agentic_loop(user_message, voice_status=False, images=images)
 
         for i in range(0, len(full_text), 40):
             sess["queue"].put({"type": "token", "text": full_text[i:i+40]})
@@ -54,16 +73,6 @@ def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr, i
 
         sess["history"].append({"role": "user",      "content": user_message})
         sess["history"].append({"role": "assistant",  "content": full_text})
-
-
-        # Save to persistent long-term memory
-        try:
-            from memory import brain_interface
-            brain_interface.save_message("user", user_message, config=cfg_mgr.config)
-            brain_interface.save_message("assistant", full_text, config=cfg_mgr.config)
-        except Exception as e:
-            _chat_log.error(f"[Chat] Memory save error: {e}")
-
 
         audio_status = _maybe_generate_tts(full_text, cfg_mgr)
         if audio_status == "web":
@@ -206,9 +215,12 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
 
     @app.route("/chat")
     def chat_ui():
-        from flask import render_template
+        from flask import render_template, make_response
         try:
-            return render_template("chat.html")
+            resp = make_response(render_template("chat.html"))
+            resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+            resp.headers["Pragma"] = "no-cache"
+            return resp
         except Exception as e:
             return f"<h1>chat.html non trovato</h1><p>{e}</p>", 500
 
@@ -242,6 +254,8 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
                 try:
                     # Shorter timeout to check sess["done"] frequently 
                     ev = sess["queue"].get(timeout=0.5)
+                    if ev.get("type") == "agent_trace":
+                        pass
                     yield "data: " + json.dumps(ev) + "\n\n"
                     if ev.get("type") == "error":
                         break
@@ -347,7 +361,7 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
             "file_count": len(files)
         })
 
-    @app.route("/static/js/<filename>")
+    @app.route("/static/js/<path:filename>")
     def serve_static_js(filename):
         from flask import send_from_directory
         js_dir = os.path.join(os.path.dirname(__file__), "static", "js")

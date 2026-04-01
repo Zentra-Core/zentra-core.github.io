@@ -7,6 +7,7 @@ import sys
 import re
 import os
 import json
+import time
 
 import importlib.util
 from core.llm import brain
@@ -61,20 +62,22 @@ def configure(new_config):
     logger.info("[PROCESSOR] Hardware configuration synchronized.")
 
 
-def process_exchange(user_text, voice_status):
-    """Manages the entire chain: AI -> Plugin -> Cleaning -> Response."""
-    logger.info(f"[PROCESSOR] Input received: '{user_text}'. Calling brain...")
+def process_exchange(user_text, voice_status, sm=None):
+    """Manages the entire chain: AI -> Plugin -> Cleaning -> Response.
+    NOW REFACTORED TO USE THE AGENTIC LOOP."""
+    logger.info(f"[PROCESSOR] Input received: '{user_text}'. Delegating to Agentic Loop.")
     
-    # 1. Generate response from AI
-    raw_response = brain.generate_response(user_text, external_config=current_config)
+    from core.agent.loop import AgentExecutor
     
-    # 2. Process tags and clean response
-    return process(raw_response, config=current_config, voice_status=voice_status)
+    executor = AgentExecutor(config=current_config, state_manager=sm)
+    video_response, clean_voice = executor.run_agentic_loop(user_text, voice_status=voice_status)
+    return video_response, clean_voice
 
 
-def process(raw_response, config=None, voice_status=False):
+def extract_and_execute_tools(raw_response, config=None):
     """
-    Processes a raw LLM response: executes tags/tools and cleans the text for video/voice.
+    Analyzes raw response, detects tools/tags, executes them, and returns results.
+    Returns: (tools_called: bool, tool_results: list, base_text: str)
     """
     global current_config
     if config:
@@ -83,7 +86,7 @@ def process(raw_response, config=None, voice_status=False):
     # 1. Ignore error messages from the Brain
     if isinstance(raw_response, str) and raw_response.startswith("ZENTRA:"):
         logger.debug("PROCESSOR", "Ignoring internal ZENTRA error message for tag processing")
-        return raw_response, ""
+        return False, [], raw_response
 
     # 1. Reasoning removal (<think> tags)
     if isinstance(raw_response, str):
@@ -97,18 +100,15 @@ def process(raw_response, config=None, voice_status=False):
     if not tool_calls and isinstance(raw_response, dict):
         tool_calls = raw_response.get('tool_calls')
     
-    # Check for legacy function_call (Gemini often uses this)
     single_call = getattr(raw_response, 'function_call', None)
     if not tool_calls and single_call:
-        # Normalize into a list format
-        tool_calls = [raw_response] # The object itself acts as the call container if it's a Message
+        tool_calls = [raw_response]
         
     is_tool_call_object = bool(tool_calls)
     
     if is_tool_call_object:
         logger.info("[PROCESSOR] Native Function Calling detected.")
         for call in tool_calls:
-            # Handle both list of calls and single message with function_call
             f_obj = getattr(call, 'function', None) or getattr(call, 'function_call', None)
             if not f_obj: continue
             
@@ -118,39 +118,41 @@ def process(raw_response, config=None, voice_status=False):
             if "__" in f_name:
                 tag, method = f_name.split("__", 1)
                 try:
-                    # Allow dict or string
                     args = f_args_raw if isinstance(f_args_raw, dict) else json.loads(f_args_raw)
-                    logger.debug("PROCESSOR", f"Tool call: {tag}.{method}({args})")
                 except Exception as e:
-                    logger.error("PROCESSOR", f"Error parsing arguments: {e}")
                     args = {}
-                tags_found.append((tag.lower(), args, "function_call", method))
+                tags_found.append((tag.lower(), args, "function_call", method, getattr(call, 'id', None)))
             else:
                 logger.debug("PROCESSOR", f"Unknown function format: {f_name}")
         
         original_response_text = getattr(raw_response, 'content', "") or ""
-        raw_response = original_response_text
+        base_text = original_response_text
     else:
         if not isinstance(raw_response, str):
             raw_response = getattr(raw_response, 'content', "") or ""
             
+        base_text = raw_response
         logger.debug("PROCESSOR", f"Processing text for tags: '{raw_response[:200]}...'")
         
-        # Legacy Tag parsing
         matches_standard = re.findall(r'\[(\w+):(.*?)\]', raw_response)
         for tag, action in matches_standard:
-            logger.info(f"[PROCESSOR] Standard tag: [{tag}:{action}]")
             tags_found.append((tag.lower(), action.strip(), "standard", None))
         
         matches_simple = re.findall(r'\[(\w+)\]', raw_response)
         for tag in matches_simple:
             if not any(t[0] == tag.lower() for t in tags_found):
-                logger.info(f"[PROCESSOR] Simple tag: [{tag}]")
                 tags_found.append((tag.lower(), "", "simple", None))
+
+    if not tags_found:
+        return False, [], base_text
                 
     # 3. Execution
     tool_results = []
-    for original_tag, action_or_args, call_type, method_name in tags_found:
+    for tag_info in tags_found:
+        # tag_info is (tag, args, type, method, optional_call_id)
+        original_tag, action_or_args, call_type, method_name = tag_info[:4]
+        call_id = tag_info[4] if len(tag_info) > 4 else f"call_{int(time.time())}"
+
         module_to_call = original_tag
         
         if original_tag == "tag" and not method_name and isinstance(action_or_args, str):
@@ -191,9 +193,10 @@ def process(raw_response, config=None, voice_status=False):
                     result = exec_method(action_or_args)
                     if result:
                         logger.info(f"[OUTPUT {module_to_call.upper()}]:\n{result}")
-                        tool_results.append(str(result))
+                        tool_results.append({"id": call_id, "output": str(result), "tag": module_to_call.upper()})
                 except Exception as e:
                     logger.error(f"[PROCESSOR] Legacy OOP error: {e}")
+                    tool_results.append({"id": call_id, "output": f"Error: {e}", "tag": module_to_call.upper()})
             
             elif hasattr(plugin_obj, "tools"):
                 # Handle both Native (method_name set) and Tag-based (extract from action_or_args)
@@ -217,9 +220,10 @@ def process(raw_response, config=None, voice_status=False):
                         result = method(**actual_args) if isinstance(actual_args, dict) else method(actual_args)
                         if result:
                             logger.info(f"[OUTPUT {module_to_call.upper()}]:\n{result}")
-                            tool_results.append(str(result))
+                            tool_results.append({"id": call_id, "output": str(result), "tag": module_to_call.upper()})
                     except Exception as e:
                         logger.error(f"[PROCESSOR] Tool error ({actual_method_name}): {e}")
+                        tool_results.append({"id": call_id, "output": f"Error: {e}", "tag": module_to_call.upper()})
                     
             elif hasattr(plugin_obj, "execute") and not method_name:
                 logger.info(f"[SYSTEM] {translator.t('executing_module', module=module_to_call.upper())}")
@@ -227,31 +231,22 @@ def process(raw_response, config=None, voice_status=False):
                     result = plugin_obj.execute(action_or_args)
                     if result:
                         logger.info(f"[OUTPUT {module_to_call.upper()}]: {result}")
-                        tool_results.append(str(result))
+                        tool_results.append({"id": call_id, "output": str(result), "tag": module_to_call.upper()})
                 except Exception as e:
                     logger.error(f"[PROCESSOR] Old Plugin error: {e}")
+                    tool_results.append({"id": call_id, "output": f"Error: {e}", "tag": module_to_call.upper()})
     
-    # 4. Cleaning
-    base_video = re.sub(r'\[.*?:.*?\]', '', raw_response).strip()
-    base_video = re.sub(r'\[.*?\]', '', base_video).strip() # Remove simple tags too
+    return True, tool_results, base_text
+
+def clean_final_output(base_text, tool_results, raw_response_obj, voice_status=False):
+    """Formats the final text for display and TTS after all loops are complete."""
+    # Extract tags (for UI rendering if legacy tags were used instead of native functions)
+    base_video = re.sub(r'\[.*?:.*?\]', '', base_text).strip()
+    base_video = re.sub(r'\[.*?\]', '', base_video).strip() 
     
     if not base_video:
-        if tags_found:
-            # If we only have tags, provide more detailed feedback
-            if isinstance(tags_found, list) and len(tags_found) > 0:
-                # tags_found elements are (tag, args, type[, method])
-                distinct_tags = []
-                for t in tags_found:
-                    tag_name = t[0].upper()
-                    method_name = t[3] if len(t) > 3 else None
-                    label = f"{tag_name}.{method_name}" if method_name else tag_name
-                    if label not in distinct_tags:
-                        distinct_tags.append(label)
-                
-                info_msg = ", ".join(distinct_tags)
-                base_video = f"✅ {translator.t('command_executed_info', info=info_msg)}"
-            else:
-                base_video = translator.t('command_executed')
+        if tool_results:
+            base_video = f"✅ {translator.t('command_executed_info', info='Tools Eseguiti')}"
         else:
             base_video = translator.t('model_no_response_error')
     
@@ -264,7 +259,8 @@ def process(raw_response, config=None, voice_status=False):
         
     if tool_results:
         # Append raw plugin results explicitly to the GUI chat window (video_response)
-        video_response += "\n\n" + "\n\n".join(tool_results)
+        video_response += "\n\n" + "\n\n".join([r['output'] for r in tool_results])
+
         
     return video_response, clean_voice_text
 

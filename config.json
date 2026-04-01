@@ -210,6 +210,10 @@
             "auto_open_browser": false,
             "enabled": true,
             "port": 7070
+        },
+        "EXECUTOR": {
+            "enabled": true,
+            "timeout_seconds": 10
         }
     },
     "processor": {

@@ -22,11 +22,11 @@ for _h in _litellm_logger.handlers[:]:
 # Ensure LITELLM_LOG doesn't force verbose stdout output
 os.environ["LITELLM_LOG"] = ""
 
-def generate(system_prompt, user_message, config_or_subconfig, llm_config=None, tools=None, stream=False, images=None):
+def generate(system_prompt, user_message, config_or_subconfig, llm_config=None, tools=None, stream=False, images=None, extra_messages=None):
     """
     Genera una risposta usando LiteLLM.
     - images: optional list of dicts {data: bytes, mime_type: str, name: str}
-      When provided, the appropriate VisionAdapter builds the multimodal messages.
+    - extra_messages: optional list of dict objects to insert between system and user (for Agentic Loop).
     """
     
     # 1. Backend and Model Identification
@@ -70,10 +70,14 @@ def generate(system_prompt, user_message, config_or_subconfig, llm_config=None, 
 
     # ── Text-only path ────────────────────────────────────────────
     if not images:
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message}
-        ]
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        # OBIETTIVO AGENTE: Il messaggio utente deve precedere le chiamate tool
+        messages.append({"role": "user", "content": user_message})
+        
+        # Inserimento messaggi extra (Agentic Loop: assistant tool-calls + tool results)
+        if extra_messages:
+            messages.extend(extra_messages)
 
     params = {
         "model": model_name,
@@ -175,7 +179,14 @@ def generate(system_prompt, user_message, config_or_subconfig, llm_config=None, 
     # LOG MANUALE PRE-CHIAMATA
     if debug_enabled:
         zlog_info("LiteLLM", f"Debug Activated for: {model_name}")
-        zlog_debug("LiteLLM", f"REQUEST_PARAMS: {json.dumps({k:v for k,v in params.items() if k not in ['api_key', 'tools']}, indent=2)}")
+        try:
+            # Avoid direct json.dumps on raw messages which might contain non-serializable objects
+            # We log only non-sensitive and small metadata here
+            safe_params = {k:v for k,v in params.items() if k not in ['api_key', 'tools', 'messages']}
+            zlog_debug("LiteLLM", f"REQUEST_PARAMS (Metadata): {json.dumps(safe_params, indent=2)}")
+        except Exception as sle:
+            zlog_debug("LiteLLM", f"REQUEST_PARAMS: [Debug Log Error: {sle}]")
+
 
     try:
         response = litellm.completion(**params)
