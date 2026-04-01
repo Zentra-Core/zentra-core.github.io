@@ -13,20 +13,19 @@ log = logging.getLogger("ZentraWebUIServer")
 from app.state_manager import StateManager
 from app.threads import AscoltoThread
 
-_global_server_instance = None
+import sys
 _server_lock = threading.Lock()
-_state_manager = None   # Injected by application.py after startup
-
 
 def set_state_manager(sm) -> None:
     """Inject the live StateManager so audio-toggle routes can use it."""
-    global _state_manager
-    _state_manager = sm
+    # We use sys to share the state manager because this module is often double-imported
+    # (once as __main__ and once as plugins.web_ui.server).
+    sys.zentra_state_manager = sm
 
 
 def get_state_manager():
     """Returns current state_manager (may be None before injection)."""
-    return _state_manager
+    return getattr(sys, "zentra_state_manager", None)
 
 
 class ZentraWebUIServer:
@@ -83,7 +82,8 @@ class ZentraWebUIServer:
                     f"http://127.0.0.1:{self.port}/zentra/config/ui"
                 )
                 # We disable reloader to avoid starting Zentra threads twice
-                app.run(host="127.0.0.1", port=self.port, debug=debug_on, use_reloader=False)
+                # Bind to 0.0.0.0 to handle localhost/127.0.0.1/::1 issues on Windows
+                app.run(host="0.0.0.0", port=self.port, debug=debug_on, use_reloader=False)
             except Exception as e:
                 self.logger.error(f"[WebUI] Flask exception: {e}")
 
@@ -165,7 +165,7 @@ if __name__ == "__main__":
     sm = StateManager(
         initial_voice_status=acfg.get('voice_status', True),
         initial_listening_status=acfg.get('listening_status', True),
-        initial_audio_mode=cfg.get('audio_mode', default='auto')
+        initial_audio_mode=acfg.get('audio_mode', 'auto')
     )
     sm.push_to_talk    = acfg.get('push_to_talk', False)
     sm.ptt_hotkey      = acfg.get('ptt_hotkey', 'ctrl+shift')
@@ -177,6 +177,20 @@ if __name__ == "__main__":
     logger.info("[WEB] Starting standalone audio engine...")
     audio_th = AscoltoThread(sm)
     audio_th.start()
+
+    def standalone_voice_poller():
+        """Polls for detected voice commands in standalone mode and pushes them to WebUI clients."""
+        while True:
+            if sm and sm.detected_voice_command:
+                cmd = sm.detected_voice_command
+                sm.detected_voice_command = None
+                logger.info(f"[WEB] Dispatched standalone voice command: '{cmd}'")
+                sm.add_event("voice_detected", {"text": cmd, "standalone": True})
+            import time
+            time.sleep(0.2)
+
+    import threading
+    threading.Thread(target=standalone_voice_poller, daemon=True).start()
 
     def is_webui_already_open(root_dir):
         """Check if a WebUI tab is already active via heartbeat file."""

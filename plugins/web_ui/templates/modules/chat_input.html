@@ -1,0 +1,11 @@
+<div id="input-bar">
+  {% include 'modules/chat_input_toolbar.html' %}
+  <div class="input-wrap">
+    <textarea id="user-input" rows="1" placeholder="{{ t('webui_chat_placeholder') }}" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <div class="input-actions">
+      <button class="action-btn" title="{{ t('webui_chat_btn_clear') }}" onclick="clearChat()">🗑</button>
+      <button class="action-btn" id="send-btn" title="{{ t('webui_chat_btn_send') }}" onclick="sendMessage()">▶</button>
+    </div>
+  </div>
+  <div class="input-hint">{{ t('webui_chat_hint') }}</div>
+</div>

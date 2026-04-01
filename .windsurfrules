@@ -1,0 +1,15 @@
+# PROTOCOLLO ZERO - ZENTRA CORE
+
+> **CRITICAL: You MUST read and follow these instructions before making ANY changes to the codebase.**
+
+Ogni sessione di lavoro, conversazione o richiesta di modifica **DEVE** iniziare con l'esecuzione del **PROTOCOLLO ZERO**.
+
+## STEPS DEL PROTOCOLLO ZERO:
+1. **LEGGERE `/docs_ai/AI_INSTRUCTIONS.md`**: Contiene le istruzioni operative e le regole di workflow.
+2. **LEGGERE `/docs_ai/SYSTEM_CAPABILITIES.json`**: Contiene la mappa esatta di TUTTE le funzionalità reali del sistema. Non inventare o presumere funzionalità assenti da questo file.
+3. **LEGGERE `/docs_ai/MASTER_CONTEXT.md`**: Regole d'oro architetturali (Divieto di rimozione funzioni, Fonte di Verità).
+4. **LEGGERE `/docs_ai/DEVELOPMENT_RULES.md`**: Regole tecniche di sviluppo (tutto il codice e i commenti devono essere in INGLESE).
+
+Non basarti MAI sulla memoria di chat precedenti per conoscere lo stato del sistema. La "Verità" risiede ESCLUSIVAMENTE nella cartella `/docs_ai/`.
+
+All'avvio di una conversazione, conferma all'utente: *"Protocollo Zero eseguito. Stato sistema analizzato."* e procedi con l'analisi.

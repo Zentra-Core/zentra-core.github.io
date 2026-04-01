@@ -3,8 +3,9 @@ title ZENTRA — Native Web Server (Watchdog)
 color 0A
 
 echo.
+set /p ZENTRA_VERSION=<core\version
 echo  ======================================
-echo   ZENTRA NATIVE WEB INTERFACE
+echo   ZENTRA NATIVE WEB INTERFACE v%ZENTRA_VERSION%
 echo  ======================================
 echo.
 

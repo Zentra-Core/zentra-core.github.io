@@ -66,6 +66,26 @@ console_handler.setLevel(logging.INFO)
 console_formatter = ColorFormatter('%(asctime)s [%(levelname)s] %(message)s')
 console_handler.setFormatter(console_formatter)
 
+# Filter for Console output based on preference
+class RejectAllFilter(logging.Filter):
+    """Filter that rejects all records. Used to silence console output when external windows are active."""
+    def filter(self, record):
+        return False
+
+class ConsoleTypeFilter(logging.Filter):
+    """Filter for Console output types (info, debug, both)."""
+    def __init__(self, message_types):
+        super().__init__()
+        self.message_types = message_types
+
+    def filter(self, record):
+        if self.message_types == 'info':
+            return record.levelno >= logging.INFO
+        elif self.message_types == 'debug':
+            return record.levelno == logging.DEBUG
+        else: # 'both'
+            return True
+
 # Initial setup: just files for now, until init_logger is called
 if not logger.hasHandlers():
     logger.addHandler(info_file_handler)
@@ -121,23 +141,16 @@ def init_logger(config, allow_external_windows=True):
     logger.addHandler(info_file_handler)
     logger.addHandler(debug_file_handler)
 
-    # Filter for Console output based on preference
-    class ConsoleTypeFilter(logging.Filter):
-        def filter(self, record):
-            if message_types == 'info':
-                return record.levelno >= logging.INFO
-            elif message_types == 'debug':
-                return record.levelno == logging.DEBUG
-            else: # 'both'
-                return True
-                
-    console_handler.addFilter(ConsoleTypeFilter())
+    # Remove all existing filters from console_handler before re-adding
+    for f in console_handler.filters[:]:
+        console_handler.removeFilter(f)
+
+    # Re-add filters based on current config
+    console_handler.addFilter(ConsoleTypeFilter(message_types))
     
     destination_lower = destination.lower().strip()
     
-    if destination_lower == 'console' or destination_lower == 'file_only':
-        class RejectAllFilter(logging.Filter):
-            def filter(self, record): return False
+    if (destination_lower == 'console' or destination_lower == 'file_only'):
         console_handler.addFilter(RejectAllFilter())
         
     if destination_lower == 'console':
@@ -154,16 +167,17 @@ def init_logger(config, allow_external_windows=True):
         close_debug_log()
             
         if message_types == 'info' or message_types == 'both':
-            # Finestra Activity Log
             ps_script_info = (
                 "$host.ui.RawUI.WindowTitle = 'Zentra Core - Activity Log'; "
+                "Write-Host '=== ACTIVITY LOG CONSOLE ACTIVE ===' -ForegroundColor White; "
                 f"Get-Content -Path '{info_filename}' -Wait -Tail 20 | ForEach-Object {{ "
                 "if ($_ -match '\\[ERROR\\]') { Write-Host $_ -ForegroundColor Red } "
                 "elseif ($_ -match '\\[WARNING\\]') { Write-Host $_ -ForegroundColor Yellow } "
                 "else { Write-Host $_ -ForegroundColor White } "
                 "}"
             )
-            subprocess.Popen(f'start "" /min powershell -WindowStyle Minimized -NoExit -Command "{ps_script_info}"', shell=True)
+            # Remove /min and -WindowStyle Minimized to make windows visible as requested
+            subprocess.Popen(f'start "" powershell -NoExit -Command "{ps_script_info}"', shell=True)
             
         if message_types == 'debug' or message_types == 'both':
             # Finestra Technical Debug
@@ -203,8 +217,8 @@ def open_debug_log():
     )
     
     try:
-        # Use /min and -WindowStyle Minimized to keep it in background
-        subprocess.Popen(f'start "" /min powershell -WindowStyle Minimized -NoExit -Command "{ps_script_debug}"', shell=True)
+        # Remove /min and -WindowStyle Minimized to make windows visible
+        subprocess.Popen(f'start "" powershell -NoExit -Command "{ps_script_debug}"', shell=True)
         return True
     except:
         return False

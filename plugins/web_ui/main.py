@@ -73,6 +73,11 @@ class WebUIPlugin:
         self._cfg_mgr = cfg_mgr
         self._auto_open = auto_open
 
+    def set_state_manager(self, sm):
+        """Injects the live StateManager from the main application."""
+        from .server import set_state_manager
+        set_state_manager(sm)
+
     def _ensure_server(self):
         """Lazy starts the server only when the plugin is actually interacted with."""
         if not self._server_started:

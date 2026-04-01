@@ -1,7 +1,7 @@
 # 📖 OPERATING MANUAL - Zentra Core
 
 *System documentation for the Administrator (Admin).*
-**Version:** 0.9.7 (Stable WebUI & I18N)
+**Version:** 0.9.8 (Centralized Sync & Root Cleanup)
 
 ---
 
@@ -46,17 +46,18 @@ Zentra's terminal interface is built on an anchored architecture (`DECSTBM Scrol
 
 ## ⚙️ 3. Dynamic O-T-F (On-The-Fly) Configuration
 
-## 💻 Native WebUI (v0.9.7)
-Zentra 0.9.7 features a powerful native web interface accessible at `http://localhost:5000` (by default).
+## 💻 Native WebUI (v0.9.8)
+Zentra 0.9.8 features a powerful native web interface accessible at `http://localhost:7070` (by default).
 - **Real-time Chat**: Experience the AI stream directly in the browser.
 - **Config Dashboard**: Change system settings via a modern GUI with instant synchronization to the core.
 - **Audio Sync**: WebUI audio state is automatically synced with the terminal (F4/F5 status).
+- **Dynamic Personalities**: The WebUI now automatically reflects any new `.txt` files added to the `personality/` folder without manual entries in `config.json`.
 
 Zentra provides Function Keys (F1-F7) to interact with and reparameterize `config.json` live, with permanent memory.
 
 * **[ F1 ] ACTION MANUAL (Help):** Calls the "root" protocols exposed by Plugins, showing free commands (e.g., `list:`, `cmd:`, `open:`).
 * **[ F2 ] CHANGE AI MODEL:** Quickly select the neural network model (Llama, Gemma, Cloud, etc.) from the list indexed by the currently connected backend (Ollama/Kobold/Cloud).
-* **[ F3 ] LOAD SOUL / PERSONALITY:** Changes the tone and system awareness by reading new text contexts (in `/personality/*.txt`).
+* **[ F3 ] LOAD SOUL / PERSONALITY:** Changes the tone and system awareness. Zentra now automatically scans the `/personality/*.txt` folder at every launch and menu access.
 * **[ F4 ] TOGGLE LISTENING (MIC):** Temporarily mutes acoustic reception (On/Off).
 * **[ F5 ] TOGGLE VOICE (TTS):** Enables or mutes the response voice synthesis. The AI will continue to process only via visual chat.
 
@@ -81,7 +82,7 @@ All plugins respond to unified interfaces that export `shell commands` and updat
 
 ---
 
-## 👁️ 5. Vision & Multimodal Interaction (v0.9.7)
+## 👁️ 5. Vision & Multimodal Interaction (v0.9.8)
 
 Zentra 0.9.7 introduces the **Vision Support System**, allowing the AI to "see" and analyze visual data.
 - **Image Upload**: Drag & drop files directly into the web chat or paste images from your clipboard (**Ctrl+V**).
@@ -97,7 +98,7 @@ Zentra 0.9.7 introduces the **Vision Support System**, allowing the AI to "see" 
 
 ---
 
-## 🎨 7. Image Generation (v0.9.7)
+## 🎨 7. Image Generation (v0.9.8)
 
 Zentra can create visual content using the `IMAGE_GEN` plugin.
 - **How to use**: Simply ask Zentra to "Generate an image of..." or "Draw a...".
@@ -113,4 +114,4 @@ Zentra can create visual content using the `IMAGE_GEN` plugin.
 3. **Audio Trigger Loop:** Adjust the `Energy Threshold` parameter in **F7 → Listening** to calibrate ambient background noise that triggers Zentra into "THINKING" mode without any real input.
 
 ---
-*End of documentation report v0.9.7.*
+*End of documentation report v0.9.8.*

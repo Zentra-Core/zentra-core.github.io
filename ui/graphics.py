@@ -18,6 +18,9 @@ COLORS = {
     "BRIGHT": Style.BRIGHT
 }
 
+# Terminal Constants
+STILE_INPUT = f"\n{Fore.RED}# {Style.RESET_ALL}"
+
 def create_bar(percentage, width=20, style="cyber"):
     """
     Generates a textual progress bar.

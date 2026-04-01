@@ -1,4 +1,4 @@
-## 1. System Architecture (v0.9.7)
+## 1. System Architecture (v0.9.8)
 Zentra Core is built on a **Modular Object-Oriented Architecture** designed for high performance, local first-AI, and extensibility.
 
 ### Design Principles:
@@ -8,12 +8,13 @@ Zentra Core is built on a **Modular Object-Oriented Architecture** designed for 
 - **Multimodal Ready**: Version 0.9.7 introduces native vision support via provider-specific adapters.
 - **Runtime Alpha Status**: The project is currently in an early development phase. This means the system is subject to frequent changes, debugging, and is not yet considered a stable "production-ready" release.
 - **Single-Instance Protection**: To prevent data corruption and resource conflicts, Zentra uses a file-based locking mechanism (`core/system/instance_lock.py`) to ensure only one instance of the core and web interface runs at a time.
+- **Centralized Configuration**: Version 0.9.8 introduces a unified `ConfigManager` that acts as the single source of truth for all system parameters, including dynamic discovery of personalities and plugins.
 
 ---
 
 ## 2. The Execution Pipeline (Data Flow)
 1. **Input Stage**: `InputHandler` captures text (keyboard) or processes audio via `listening.py` (STT).
-2. **Context Enrichment**: `brain.py` gathers system prompts, personality files, and retrieves relevant history from `memory/`.
+2. **Context Enrichment**: `personality_manager.py` ensures the configuration is synced with the filesystem. `brain.py` then gathers system prompts and retrieves relevant history from `memory/`.
 3. **Vision Processing** (v0.9.7): If images are attached, `client.py` selects the correct **VisionAdapter** (Gemini, OpenAI, or Ollama) to build the multimodal payload.
 4. **Model Resolution**: `LLMManager` determines the best model based on the active backend and specific plugin requirements.
 5. **Inference**: `LiteLLM` unifies the request and calls the local/cloud provider.
@@ -28,7 +29,7 @@ Zentra Core is built on a **Modular Object-Oriented Architecture** designed for 
 
 ### 📁 app/ (Application Layer)
 - **`application.py`**: The main orchestrator. Initializes the engine and handles the main TUI loop.
-- **`config.py` (`ConfigManager`)**: Handles thread-safe atomic reading and writing of `config.json`.
+- **`config.py` (`ConfigManager`)**: Handles thread-safe atomic reading and writing of `config.json`. Now includes `sync_available_personalities()` for filesystem discovery.
 - **`state_manager.py`**: A synchronized object for sharing runtime variables (e.g., `model_active`, `is_listening`).
 - **`model_manager.py`**: Handles dynamic model fetching from APIs (Ollama/Groq/OpenAI) and user selection (F2).
 

@@ -16,6 +16,13 @@ except ImportError:
     keyboard = None
 
 
+# Global persistent recognizer to maintain threshold learning
+_recognizer = sr.Recognizer()
+_recognizer.dynamic_energy_threshold = True
+_recognizer.energy_threshold = 450
+_is_calibrated = False
+
+
 def _get_mic_device_index():
     """Returns the microphone device index from config_audio.json, or None for system default."""
     try:
@@ -26,6 +33,8 @@ def _get_mic_device_index():
 
 
 def listen(state=None):
+    global _is_calibrated, _recognizer
+
     # Redundant check: if system is speaking, don't listen at all
     if (state and state.system_speaking) or voice.is_speaking:
         return ""
@@ -39,42 +48,48 @@ def listen(state=None):
     # Resolve microphone device index
     device_index = _get_mic_device_index()
 
-    r = sr.Recognizer()
-    r.energy_threshold = conf.get("energy_threshold", 450)
-    r.dynamic_energy_threshold = False
+    # Update recognizer settings from config if needed
+    _recognizer.energy_threshold = conf.get("energy_threshold", 450)
 
     # Open Microphone with explicit device index if available
     mic_kwargs = {}
     if device_index is not None:
         mic_kwargs["device_index"] = device_index
 
-    with sr.Microphone(**mic_kwargs) as source:
-        # Small delay to avoid hearing the echo of the system's own voice
-        if (state and state.system_speaking) or voice.is_speaking:
-            return ""
+    try:
+        with sr.Microphone(**mic_kwargs) as source:
+            # Calibrate once per session or on first run
+            if not _is_calibrated:
+                logger.debug("LISTEN", "First run: calibrating for ambient noise (0.5s)...")
+                _recognizer.adjust_for_ambient_noise(source, duration=0.5)
+                _is_calibrated = True
 
-        try:
+            # Small delay to avoid hearing the echo of the system's own voice
+            if (state and state.system_speaking) or voice.is_speaking:
+                return ""
+
             is_ptt = state.push_to_talk if state else conf.get("push_to_talk", False)
 
             if not is_ptt or not keyboard:
-                # Continuous listening mode
-                r.adjust_for_ambient_noise(source, duration=0.2)
-                audio = r.listen(
-                    source,
-                    timeout=conf.get("silence_timeout", 5),
-                    phrase_time_limit=conf.get("phrase_limit", 15)
-                )
+                # Continuous listening mode: NO repetitive calibration here
+                logger.debug("LISTEN", f"Continuous listening active (Threshold: {int(_recognizer.energy_threshold)})...")
+                try:
+                    audio = _recognizer.listen(
+                        source,
+                        timeout=conf.get("silence_timeout", 5),
+                        phrase_time_limit=conf.get("phrase_limit", 15)
+                    )
+                    logger.debug("LISTEN", "Phrase captured. Processing...")
+                except sr.WaitTimeoutError:
+                    return ""
             else:
                 hotkey = state.ptt_hotkey if state else conf.get("ptt_hotkey", "ctrl+shift")
                 # Push-To-Talk mode: wait for hotkey press
                 while not keyboard.is_pressed(hotkey):
-                    try:
-                        source.stream.read(source.CHUNK)
-                    except Exception:
-                        pass
+                    time.sleep(0.05)
                     if (state and state.system_speaking) or voice.is_speaking:
                         return ""
-                    if state and not state.listening_status:
+                    if state and (not state.listening_status or not state.push_to_talk):
                         return ""
 
                 logger.info("VOICE", f"[PTT] Recording... Hold '{hotkey}'")
@@ -84,8 +99,11 @@ def listen(state=None):
                     try:
                         buffer = source.stream.read(source.CHUNK)
                         audio_data.extend(buffer)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.error(f"[LISTEN] Error: {e}")
+                        return ""
+                    if state and not state.listening_status:
+                        break
 
                 if len(audio_data) < 4000:  # Too short to be a phrase
                     logger.info("VOICE", "[PTT] Transcription cancelled: audio too short.")
@@ -98,8 +116,10 @@ def listen(state=None):
             if (state and state.system_speaking) or voice.is_speaking:
                 return ""
 
-            text = r.recognize_google(audio, language="it-IT", show_all=False)
+            text = _recognizer.recognize_google(audio, language="it-IT", show_all=False)
             return text.lower()
 
-        except Exception:
-            return ""
+    except Exception as e:
+        if "device" not in str(e).lower():
+            logger.error(f"[LISTEN] Recognition error: {e}")
+        return ""
