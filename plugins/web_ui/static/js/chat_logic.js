@@ -1,4 +1,25 @@
 let history = [], isStreaming = false;
+let autoScroll = true;
+
+// --- AUDIO FEEDBACK SYNT ---
+let _audioCtx = null;
+function playSynthBeep(freq, duration=0.1) {
+  try {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = _audioCtx.createOscillator();
+    const gain = _audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(_audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, _audioCtx.currentTime);
+    gain.gain.setValueAtTime(0, _audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.08, _audioCtx.currentTime + 0.01);
+    gain.gain.linearRampToValueAtTime(0, _audioCtx.currentTime + duration);
+    osc.start();
+    osc.stop(_audioCtx.currentTime + duration);
+  } catch(e) { console.error("PTT Audio Error:", e); }
+}
+
 let currentMicOn  = false;
 let currentTTSOn  = false;
 let currentPTTOn  = false;
@@ -426,6 +447,15 @@ function initEvents() {
     
     if (ev.type === 'agent_trace') {
       if (window.AgentUI) window.AgentUI.handleEvent(ev);
+    } else if (ev.type === 'ptt_status') {
+      const pttInd = document.getElementById('ptt-indicator');
+      if (ev.active) {
+          if (pttInd) pttInd.classList.add('active');
+          playSynthBeep(880, 0.08); // High tone for START
+      } else {
+          if (pttInd) pttInd.classList.remove('active');
+          playSynthBeep(440, 0.12); // Low tone for END
+      }
     } else if (ev.type === 'voice_detected' && ev.text) {
       console.log("[Audio] Voice command received:", ev.text);
       hideWelcome();
