@@ -68,16 +68,16 @@
     },
     {
       "id": "EXECUTOR_plugin",
-      "description": "Direct execution of shell commands through the AI brain.",
-      "risk": "high",
+      "description": "Safe Python code execution environment (Zentra AST Code Jail). Can execute algorithmic tasks, math, data processing. Blocks dangerous imports (os, sys, etc).",
+      "risk": "medium",
       "available_in": ["ai", "plugin"],
       "implementation": {
         "core_files": ["plugins/executor/main.py"],
-        "entry_points": ["AI Plugin Call (Class-based)"],
-        "config_keys": ["plugins.EXECUTOR.enabled", "plugins.EXECUTOR.auto_execute"]
+        "entry_points": ["AI Plugin Call (Class-based) -> run_python_code"],
+        "config_keys": ["plugins.EXECUTOR.enabled", "plugins.EXECUTOR.timeout_seconds"]
       },
-      "verification_step": "Ask AI to run 'echo TEST', verify 'TEST' is logged or spoken.",
-      "notes": "Requires user oversight. Full terminal access."
+      "verification_step": "Ask AI to print 'Hello Sandbox', check workspace/sandbox/ai_last_script.py",
+      "notes": "Native strict AST Sandbox. No external tools like Docker required."
     },
     {
       "id": "DOMOTICA_plugin",
