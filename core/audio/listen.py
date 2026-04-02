@@ -92,6 +92,10 @@ def listen(state=None):
                     if state and (not state.listening_status or not state.push_to_talk):
                         return ""
 
+                # Signal PTT START to WebUI
+                if state:
+                    state.add_event("ptt_status", {"active": True})
+
                 logger.info("VOICE", f"[PTT] Recording... Hold '{hotkey}'")
 
                 audio_data = bytearray()
@@ -101,9 +105,16 @@ def listen(state=None):
                         audio_data.extend(buffer)
                     except Exception as e:
                         logger.error(f"[LISTEN] Error: {e}")
+                        # Signal PTT END on error too
+                        if state:
+                            state.add_event("ptt_status", {"active": False})
                         return ""
                     if state and not state.listening_status:
                         break
+
+                # Signal PTT END to WebUI
+                if state:
+                    state.add_event("ptt_status", {"active": False})
 
                 if len(audio_data) < 4000:  # Too short to be a phrase
                     logger.info("VOICE", "[PTT] Transcription cancelled: audio too short.")

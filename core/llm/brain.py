@@ -68,7 +68,7 @@ def generate_self_awareness(personality_name):
         logger.debug("BRAIN", f"Self-awareness error: {e}")
         return ""
 
-def generate_response(user_text, external_config=None, tag=None, images=None):
+def generate_response(user_text, external_config=None, tag=None, images=None, agent_context=None, save_history=True):
     logger.debug("BRAIN", f"=== START generate_response ===")
     logger.debug("BRAIN", f"User text: '{user_text}'")
     logger.debug("BRAIN", f"external_config provided: {external_config is not None}")
@@ -226,6 +226,7 @@ def generate_response(user_text, external_config=None, tag=None, images=None):
         f"{tag_instructions}"
         f"{special_instructions_block}"
     )
+
     
     logger.debug("BRAIN", f"System prompt created: {len(system_prompt)} characters")
     
@@ -261,17 +262,17 @@ def generate_response(user_text, external_config=None, tag=None, images=None):
     logger.debug("BRAIN", f"LiteLLM call ({backend_config['backend_type']}) with model: {backend_config['model']}")
     
     # Single call to the unified client
-    response = client.generate(system_prompt, user_text, backend_config, config.get('llm', {}), tools=tools, images=images)
+    response = client.generate(system_prompt, user_text, backend_config, config.get('llm', {}), tools=tools, images=images, extra_messages=agent_context)
     
     # 5. Save to memory (respecting cognition config)
     logger.debug("BRAIN", "Saving to memory...")
     
     # Filter error messages (don't save them to history to avoid loops/bloat)
     is_error = False
-    if isinstance(response, str) and (response.startswith("ZENTRA: ⚠️") or "Error" in response):
+    if isinstance(response, str) and (response.startswith("⚠️") or "Error" in response):
         is_error = True
     
-    if not is_error:
+    if not is_error and save_history:
         brain_interface.save_message("user", user_text, config=config)
         
         # Structured response management (String or Message with tool_calls)
@@ -283,6 +284,8 @@ def generate_response(user_text, external_config=None, tag=None, images=None):
             logger.debug("BRAIN", "Response is a tool call object.")
             tool_names = [call.function.name for call in getattr(response, 'tool_calls', [])]
             brain_interface.save_message("assistant", f"*(Tool call: {', '.join(tool_names)})*", config=config)
+    elif not save_history:
+        logger.debug("BRAIN", "save_history is False; skipping history persistence for this Agentic Loop turn.")
     else:
         logger.debug("BRAIN", "AI response is an error; skipping history persistence.")
     

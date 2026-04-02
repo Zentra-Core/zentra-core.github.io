@@ -21,11 +21,11 @@
         "is_class_based": true
     },
     "EXECUTOR": {
-        "description": "Direct terminal command execution.",
+        "description": "Safe Python execution (AST Sandbox).",
         "commands": {
-            "execute_shell": "Executes a shell command in the system terminal and returns the output (max 500 characters)."
+            "run_python_code": "Executes a block of Python code safely after strict Static Analysis."
         },
-        "status": "plugin_executor_status_ready",
+        "status": "ONLINE (Code Jail Active)",
         "example": "",
         "is_class_based": true
     },
