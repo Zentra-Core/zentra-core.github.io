@@ -86,7 +86,6 @@ def check_ollama():
         return r.status_code == 200
     except:
         return False
-
 def show_complete_ui(config, voice_status, listening_status, system_status="READY", ptt_status=False):
     """ Draws the complete interface: Blue Bar (Status), Hardware Bar (placeholder) and Footer.
         The hardware bar will be updated in real-time by ui_updater.
@@ -94,7 +93,6 @@ def show_complete_ui(config, voice_status, listening_status, system_status="READ
     setup_console()
     
     # MODIFIED: Reads model from active backend with automatic fallback
-def show_complete_ui(config, voice_status, listening_status, system_status="READY", model="gemini/gemini-flash-lite-latest", ptt_status=False):
     """
     Clears the screen and prints the header (Rows 1-4) in the console buffer.
     Indices: R1=Menu, R2=Status, R3=Hardware.

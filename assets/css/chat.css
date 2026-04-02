@@ -154,3 +154,48 @@ body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px;
 .input-hint { text-align:center; font-size:11px; color:var(--muted); margin-top:8px; }
 
 @media(max-width: 700px) { #sidebar { display:none; } }
+
+/* PTT INDICATOR */
+#ptt-indicator {
+  position: fixed;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(248, 113, 113, 0.95);
+  color: white;
+  padding: 8px 20px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 25px rgba(248, 113, 113, 0.4), 0 0 0 1px rgba(255,255,255,0.1);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 1000;
+  backdrop-filter: blur(8px);
+  letter-spacing: 1px;
+  pointer-events: none;
+}
+
+#ptt-indicator.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.rec-dot {
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 8px white;
+  animation: rec-blink 1s infinite;
+}
+
+@keyframes rec-blink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.8); }
+}

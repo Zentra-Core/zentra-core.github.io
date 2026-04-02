@@ -22,11 +22,11 @@ for _h in _litellm_logger.handlers[:]:
 # Ensure LITELLM_LOG doesn't force verbose stdout output
 os.environ["LITELLM_LOG"] = ""
 
-def generate(system_prompt, user_message, config_or_subconfig, llm_config=None, tools=None, stream=False, images=None):
+def generate(system_prompt, user_message, config_or_subconfig, llm_config=None, tools=None, stream=False, images=None, extra_messages=None):
     """
     Genera una risposta usando LiteLLM.
     - images: optional list of dicts {data: bytes, mime_type: str, name: str}
-      When provided, the appropriate VisionAdapter builds the multimodal messages.
+    - extra_messages: optional list of dict objects to insert between system and user (for Agentic Loop).
     """
     
     # 1. Backend and Model Identification
@@ -70,10 +70,14 @@ def generate(system_prompt, user_message, config_or_subconfig, llm_config=None, 
 
     # ── Text-only path ────────────────────────────────────────────
     if not images:
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message}
-        ]
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        # OBIETTIVO AGENTE: Il messaggio utente deve precedere le chiamate tool
+        messages.append({"role": "user", "content": user_message})
+        
+        # Inserimento messaggi extra (Agentic Loop: assistant tool-calls + tool results)
+        if extra_messages:
+            messages.extend(extra_messages)
 
     params = {
         "model": model_name,
@@ -175,7 +179,14 @@ def generate(system_prompt, user_message, config_or_subconfig, llm_config=None, 
     # LOG MANUALE PRE-CHIAMATA
     if debug_enabled:
         zlog_info("LiteLLM", f"Debug Activated for: {model_name}")
-        zlog_debug("LiteLLM", f"REQUEST_PARAMS: {json.dumps({k:v for k,v in params.items() if k not in ['api_key', 'tools']}, indent=2)}")
+        try:
+            # Avoid direct json.dumps on raw messages which might contain non-serializable objects
+            # We log only non-sensitive and small metadata here
+            safe_params = {k:v for k,v in params.items() if k not in ['api_key', 'tools', 'messages']}
+            zlog_debug("LiteLLM", f"REQUEST_PARAMS (Metadata): {json.dumps(safe_params, indent=2)}")
+        except Exception as sle:
+            zlog_debug("LiteLLM", f"REQUEST_PARAMS: [Debug Log Error: {sle}]")
+
 
     try:
         response = litellm.completion(**params)
@@ -196,18 +207,23 @@ def generate(system_prompt, user_message, config_or_subconfig, llm_config=None, 
             # Serializziamo solo il contenuto utile per non intasare troppo il log se enorme
             zlog_debug("LiteLLM", f"RESPONSE_OBJECT: {str(response)[:2000]}")
             
-        return msg.content.strip() if msg.content else ""
+        if not msg.content:
+            return ""
+        content = msg.content.strip()
+        import re
+        content = re.sub(r'^(ZENTRA|Zentra|zentra)\s*:\s*', '', content, flags=re.IGNORECASE)
+        return content
     except Exception as e:
         error_msg = str(e)
         zlog_error(f"LiteLLM: Error: {error_msg}")
         
         if "400" in error_msg:
-            return f"ZENTRA: ⚠️ Errore 400: Parametri non validi per '{model_name}'."
+            return f"⚠️ Errore 400: Parametri non validi per '{model_name}'."
         if "404" in error_msg:
-            return f"ZENTRA: ⚠️ Errore 404: Il modello '{model_name}' non è stato trovato o l'endpoint è errato."
+            return f"⚠️ Errore 404: Il modello '{model_name}' non è stato trovato o l'endpoint è errato."
         if "429" in error_msg:
-            return f"ZENTRA: ⚠️ Quota Esaurita (Errore 429). Troppe richieste o credito terminato. Riprova tra 60 secondi."
+            return f"⚠️ Quota Esaurita (Errore 429). Troppe richieste o credito terminato. Riprova tra 60 secondi."
         if "503" in error_msg or "ServiceUnavailableError" in error_msg:
-            return f"ZENTRA: ⚠️ Server AI Sovraccarico (Errore 503). Il provider {provider} è momentaneamente non disponibile. Riprova tra poco."
+            return f"⚠️ Server AI Sovraccarico (Errore 503). Il provider {provider} è momentaneamente non disponibile. Riprova tra poco."
             
-        return f"ZENTRA: ⚠️ Errore LLM imprevisto: {error_msg[:100]}..."
+        return f"⚠️ Errore LLM imprevisto: {error_msg[:100]}..."

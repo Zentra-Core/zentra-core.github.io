@@ -111,7 +111,7 @@ class InputHandler:
         def execute():
             try:
                 video_response, clean_voice_text = processore.process_exchange(
-                    text, voice_status=self.state.voice_status
+                    text, voice_status=self.state.voice_status, sm=self.state
                 )
                 result[0] = video_response
                 result[1] = clean_voice_text
