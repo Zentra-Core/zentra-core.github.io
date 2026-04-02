@@ -131,7 +131,7 @@ Zentra può eseguire comandi a livello di sistema e controllare il tuo ambiente.
 ---
 
 ## 📜 Licenza
-Licenza MIT (rilascio iniziale)
+Licenza GPL-3.0
 
 ---
 

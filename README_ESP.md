@@ -131,7 +131,7 @@ Zentra puede ejecutar comandos a nivel de sistema y controlar tu entorno. Úsalo
 ---
 
 ## 📜 Licencia
-Licencia MIT (lanzamiento inicial)
+Licencia GPL-3.0
 
 ---
 

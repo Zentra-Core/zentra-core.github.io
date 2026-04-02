@@ -131,7 +131,7 @@ Zentra can execute system-level commands and control your environment. Use respo
 ---
 
 ## 📜 License
-MIT License (initial release)
+GPL-3.0 License
 
 ---
 
