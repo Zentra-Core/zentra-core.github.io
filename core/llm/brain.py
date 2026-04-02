@@ -269,7 +269,7 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
     
     # Filter error messages (don't save them to history to avoid loops/bloat)
     is_error = False
-    if isinstance(response, str) and (response.startswith("ZENTRA: ⚠️") or "Error" in response):
+    if isinstance(response, str) and (response.startswith("⚠️") or "Error" in response):
         is_error = True
     
     if not is_error and save_history:

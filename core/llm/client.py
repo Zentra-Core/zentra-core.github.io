@@ -207,18 +207,23 @@ def generate(system_prompt, user_message, config_or_subconfig, llm_config=None, 
             # Serializziamo solo il contenuto utile per non intasare troppo il log se enorme
             zlog_debug("LiteLLM", f"RESPONSE_OBJECT: {str(response)[:2000]}")
             
-        return msg.content.strip() if msg.content else ""
+        if not msg.content:
+            return ""
+        content = msg.content.strip()
+        import re
+        content = re.sub(r'^(ZENTRA|Zentra|zentra)\s*:\s*', '', content, flags=re.IGNORECASE)
+        return content
     except Exception as e:
         error_msg = str(e)
         zlog_error(f"LiteLLM: Error: {error_msg}")
         
         if "400" in error_msg:
-            return f"ZENTRA: ⚠️ Errore 400: Parametri non validi per '{model_name}'."
+            return f"⚠️ Errore 400: Parametri non validi per '{model_name}'."
         if "404" in error_msg:
-            return f"ZENTRA: ⚠️ Errore 404: Il modello '{model_name}' non è stato trovato o l'endpoint è errato."
+            return f"⚠️ Errore 404: Il modello '{model_name}' non è stato trovato o l'endpoint è errato."
         if "429" in error_msg:
-            return f"ZENTRA: ⚠️ Quota Esaurita (Errore 429). Troppe richieste o credito terminato. Riprova tra 60 secondi."
+            return f"⚠️ Quota Esaurita (Errore 429). Troppe richieste o credito terminato. Riprova tra 60 secondi."
         if "503" in error_msg or "ServiceUnavailableError" in error_msg:
-            return f"ZENTRA: ⚠️ Server AI Sovraccarico (Errore 503). Il provider {provider} è momentaneamente non disponibile. Riprova tra poco."
+            return f"⚠️ Server AI Sovraccarico (Errore 503). Il provider {provider} è momentaneamente non disponibile. Riprova tra poco."
             
-        return f"ZENTRA: ⚠️ Errore LLM imprevisto: {error_msg[:100]}..."
+        return f"⚠️ Errore LLM imprevisto: {error_msg[:100]}..."

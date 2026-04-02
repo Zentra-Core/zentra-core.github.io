@@ -84,7 +84,7 @@ def extract_and_execute_tools(raw_response, config=None):
         current_config = config
 
     # 1. Ignore error messages from the Brain
-    if isinstance(raw_response, str) and raw_response.startswith("ZENTRA:"):
+    if isinstance(raw_response, str) and raw_response.startswith("⚠️"):
         logger.debug("PROCESSOR", "Ignoring internal ZENTRA error message for tag processing")
         return False, [], raw_response
 
