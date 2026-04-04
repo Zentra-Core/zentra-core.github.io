@@ -1,7 +1,7 @@
 # 📖 MANUALE OPERATIVO - Zentra Core
 
 *Documentazione di sistema per l'Amministratore (Admin).*
-**Versione:** 0.9.9 (Sincro Centralizzata & Pulizia Root)
+**Versione:** 0.12.0 (Zentra Drive & WebUI Autonoma)
 
 ---
 
@@ -105,7 +105,25 @@ Zentra 0.9.9 include una potente interfaccia web nativa accessibile a `http://lo
 
 ---
 
-## 🛡️ 8. Sicurezza e Risoluzione Problemi
+## 🗂️ 8. Zentra Drive (File Manager HTTP)
+
+Zentra 0.12.0 integra un file manager nativo e protetto, accessibile alla rotta `http://localhost:7070/drive` (oppure cliccando l'apposito link nella Navbar del Pannello di Configurazione).
+
+### Funzionalità Principali
+- **Layout a Doppio Pannello**: Albero di navigazione a sinistra (per espandere le cartelle) e lista dettagliata a destra (nome, dimensione, data di modifica).
+- **Protezione Path Traversal**: Livello di sicurezza back-end che impedisce agli utenti di navigare al di sopra o fuori dalla `Root Directory` impostata.
+- **Supporto Drag & Drop**: Caricamento semplificato trascinando i file direttamente nella "Dropzone".
+- **Upload Streaming Multiplo**: In grado di caricare file di grosse dimensioni scavalcando i limiti RAM standard, mostrando una barra di progresso in tempo reale che indica esplicitamente la cartella di destinazione.
+
+### Configurazione
+Il Modulo Drive è configurabile tramite il Pannello WebUI (Scheda **Drive**):
+- **Root Directory**: Il percorso base (Es. `C:\Users\Admin`). Lasciato vuoto punterà alla Home dell'utente di sistema corrente.
+- **Dimensione Max Upload**: Imposta il limite (in MB) accettato dal server.
+- **Estensioni Consentite**: Campo csv per blindare gli upload a specifiche estensioni (es. solo `pdf, jpg`). Se vuoto, nessuna restrizione viene applicata.
+
+---
+
+## 🛡️ 9. Sicurezza e Risoluzione Problemi
 
 1. **Bug dell'interferenza grafica (Dashboard):** L'engine di Zentra unisce asincronamente i thread UI. Ogni compenetrazione di testi è risolta dal blocco totale `(Thread Join)` ad inizio chiamata del menu F7.
 2. **Logs:** I Log di Zentra si conservano nella directory `/logs`. Da Config F7 è possibile nascondere il report log dalla chat per favorire leggibilità di testo.
@@ -113,7 +131,7 @@ Zentra 0.9.9 include una potente interfaccia web nativa accessibile a `http://lo
 
 ---
 
-## 🤖 9. Agente Autonomo e Sandbox (Code Jail)
+## 🤖 10. Agente Autonomo e Sandbox (Code Jail)
 
 Dalla versione 0.9.9 Zentra integra un **Loop Cognitivo (Agentic Loop)**. Questo trasforma il sistema da un semplice chatbot a un agente capace di ragionamento complesso su più step (Chain of Thought).
 
@@ -121,4 +139,4 @@ Dalla versione 0.9.9 Zentra integra un **Loop Cognitivo (Agentic Loop)**. Questo
 - **Zentra Code Jail (Sandbox)**: Zentra può scrivere frammenti di codice Python al volo ed eseguirli (nella cartella sicura `/workspace/sandbox/`) per risolvere calcoli aritmetici lunghi, costruire algoritmi o manipolare dati complessi con precisione assoluta. Una speciale macchina AST di sicurezza interviene prima dell'esecuzione: se l'IA prova a usare comandi di sistema pericolosi, l'azione viene bloccata all'istante, mantenendo il computer sempre protetto.
 
 ---
-*Fine del rapporto documentale v0.9.9.*
+*Fine del rapporto documentale v0.12.0.*

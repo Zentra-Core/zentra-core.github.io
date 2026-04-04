@@ -1,7 +1,7 @@
 # 📖 OPERATING MANUAL - Zentra Core
 
 *System documentation for the Administrator (Admin).*
-**Version:** 0.9.9 (Centralized Sync & Root Cleanup)
+**Version:** 0.12.0 (Zentra Drive & Standalone WebUI)
 
 ---
 
@@ -107,11 +107,29 @@ Zentra can create visual content using the `IMAGE_GEN` plugin.
 
 ---
 
-## 🛡️ 8. Security and Troubleshooting
+## 🗂️ 8. Zentra Drive (HTTP File Manager)
+
+Zentra 0.12.0 integrates a native and secure file manager, accessible at `http://localhost:7070/drive` (or by clicking the Drive link in the Config Panel Navbar).
+
+### Key Features
+- **Dual-Panel Layout**: Left navigation tree (for expanding directories) and detailed list on the right (name, size, modified date).
+- **Path Traversal Protection**: Backend security layer that strictly prevents users from navigating above or outside the configured `Root Directory`.
+- **Drag & Drop Support**: Simplified file uploading by dragging files directly into the "Dropzone".
+- **Streaming Multi-Upload**: Capable of handling large file uploads bypassing standard RAM limits, showing a real-time progress bar that explicitly indicates the target directory.
+
+### Configuration
+The Drive Module can be configured via the WebUI Panel (**Drive** tab):
+- **Root Directory**: The base path (e.g., `C:\Users\Admin`). If left empty, it defaults to the current system user's Home directory.
+- **Max Upload Size**: Sets the server's acceptance limit (in MB).
+- **Allowed Extensions**: CSV field to restrict uploads to specific formats (e.g., `pdf, jpg`). If empty, no restrictions apply.
+
+---
+
+## 🛡️ 9. Security and Troubleshooting
 
 1. **Graphic Interference Bug (Dashboard):** Zentra's engine asynchronously joins UI threads. Any text overlap is resolved by the total block `(Thread Join)` at the start of the F7 menu call.
 2. **Logs:** Zentra logs are kept in the `/logs` directory. From F7 Config, it's possible to hide log reports from the chat to favor text readability (exclusive visual routing to parallel log `Console` or `File Only` recommended).
 3. **Audio Trigger Loop:** Adjust the `Energy Threshold` parameter in **F7 → Listening** to calibrate ambient background noise that triggers Zentra into "THINKING" mode without any real input.
 
 ---
-*End of documentation report v0.9.9.*
+*End of documentation report v0.12.0.*

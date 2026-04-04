@@ -38,6 +38,7 @@ Now fully migrated to a **stable Native Plugin architecture**, Zentra 0.12.0 off
 * 🎙️ **Integrated Voice Chat** — Native Chat UI with Piper TTS integration and automatic audio playback.
 * 🔌 **Plugin Macro Buttons** — Sidebar plugin list now features clickable macros to inject specialized commands instantly.
 * 💾 **Persistent Memory** — SQLite-based long-term memory with shared context across WebUI and Terminal.
+* 🗂️ **Zentra Drive (File Manager)** — Native HTTP file manager integrated into the WebUI to upload, download, and organize your system files through a seamless dual-panel interface.
 * 🚀 **Standalone Launcher** — Dedicated `run_zentra_web.bat` to start the Web server independently.
 
 ---
