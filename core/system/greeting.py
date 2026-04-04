@@ -5,8 +5,8 @@ from core.logging import logger
 GREETINGS_FILE = os.path.join("assets", "voice_greetings.json")
 
 DEFAULT_GREETINGS = {
-    "en": "Hello, I am Zentra.",
-    "it": "Sistemi operativi Zentra, Avviati.",
+    "en": "Zentra. That's me!",
+    "it": "Zentra. Molto piacere!",
     "es": "Hola, soy Zentra.",
     "fr": "Bonjour, je suis Zentra.",
     "de": "Hallo, ich bin Zentra.",
