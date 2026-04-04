@@ -1,4 +1,4 @@
-## 1. System Architecture (v0.9.9)
+## 1. System Architecture (v0.10.1)
 Zentra Core is built on a **Modular Object-Oriented Architecture** designed for high performance, local first-AI, and extensibility.
 
 ### Design Principles:
@@ -8,7 +8,7 @@ Zentra Core is built on a **Modular Object-Oriented Architecture** designed for 
 - **Multimodal Ready**: Version 0.9.9 introduces native vision support via provider-specific adapters.
 - **Runtime Alpha Status**: The project is currently in an early development phase. This means the system is subject to frequent changes, debugging, and is not yet considered a stable "production-ready" release.
 - **Single-Instance Protection**: To prevent data corruption and resource conflicts, Zentra uses a file-based locking mechanism (`core/system/instance_lock.py`) to ensure only one instance of the core and web interface runs at a time.
-- **Centralized Configuration**: Version 0.9.9 introduces a unified `ConfigManager` that acts as the single source of truth for all system parameters, including dynamic discovery of personalities and plugins.
+- **Centralized Configuration**: Version 0.10.1 abandons legacy JSON for a robust **Pydantic v2 + YAML** ConfigManager (`config/system.yaml`), ensuring strong schema validation natively.
 
 ---
 
@@ -29,7 +29,7 @@ Zentra Core is built on a **Modular Object-Oriented Architecture** designed for 
 
 ### 📁 app/ (Application Layer)
 - **`application.py`**: The main orchestrator. Initializes the engine and handles the main TUI loop.
-- **`config.py` (`ConfigManager`)**: Handles thread-safe atomic reading and writing of `config.json`. Now includes `sync_available_personalities()` for filesystem discovery.
+- **`config.py` (`ConfigManager`)**: Handles thread-safe atomic reading and writing of YAML configuration files using Pydantic Validation schemas in `/config/schemas`.
 - **`state_manager.py`**: A synchronized object for sharing runtime variables (e.g., `model_active`, `is_listening`).
 - **`model_manager.py`**: Handles dynamic model fetching from APIs (Ollama/Groq/OpenAI) and user selection (F2).
 
@@ -45,7 +45,7 @@ Zentra Core is built on a **Modular Object-Oriented Architecture** designed for 
 ## 4. Key Infrastructure Features
 
 ### LLM Dynamic Routing
-Zentra Core features a built-in routing system. Instead of hardcoding models, plugins can request a "capability tag". The `LLMManager` looks up the best match in `config.json` under the `plugins` section or uses the global default backend. This prevents code repetition when switching models.
+Zentra Core features a built-in routing system. Instead of hardcoding models, plugins can request a "capability tag". The `LLMManager` looks up the best match in `system.yaml` under the `plugins` section or uses the global default backend. This prevents code repetition when switching models.
 
 ### Hardware-Aware Dashboard
 The `plugins/dashboard` module uses a background thread (`ui_updater.py`) to bypass the standard scroll buffer and write directly to the top of the terminal, providing a real-time HUD without flickering.

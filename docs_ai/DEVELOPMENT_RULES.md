@@ -24,9 +24,10 @@ Zentra non è più un bridge, ma un ecosistema nativo.
 - Ogni rotta Flask deve includere un blocco `try/except` che restituisca un errore loggato correttamente.
 - Non far mai crashare il server principale per un errore in un plugin.
 
-### 6. Configurazione Persistente
-- Le modifiche alla configurazione devono passare per il `ConfigManager` per garantire il salvataggio in `config.json`.
-- Ogni modifica ai parametri deve riflettersi immediatamente nell'interfaccia web.
+### 6. Configurazione Persistente (YAML + Pydantic)
+- Il sistema ha deprecato `config.json` a favore di schemi **Pydantic v2** serializzati in `.yaml` all'interno della cartella `/config/`.
+- Le modifiche alla configurazione devono sempre passare per il `ConfigManager`, che si occuperà in automatico della validazione dei tipi e del salvataggio nel giusto file YAML (`system.yaml`, `audio.yaml`, ecc.).
+- Nessuna modifica raw va fatta al JSON storico.
 
 ---
 

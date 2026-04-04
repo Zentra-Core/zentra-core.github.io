@@ -21,22 +21,27 @@ class AgentExecutor:
         
         # Load dedicated agent configuration
         self.agent_config = {"enabled": True, "max_iterations": 5, "verbose_traces": True}
-        config_path = os.path.join(os.path.dirname(__file__), "config_agent.json")
         try:
-            if os.path.exists(config_path):
-                import json
-                with open(config_path, "r", encoding="utf-8") as f:
-                    file_conf = json.load(f)
-                    self.agent_config.update(file_conf)
+            from config.yaml_utils import load_yaml
+            from config.schemas.agent_schema import AgentConfig
+            _agent_cfg_path = os.path.normpath(
+                os.path.join(os.path.dirname(__file__), "..", "..", "config", "agent.yaml")
+            )
+            agent_model = load_yaml(_agent_cfg_path, AgentConfig)
+            self.agent_config = agent_model.model_dump()
         except Exception as e:
-            logger.error(f"[AGENT] Error loading config_agent.json: {e}")
-            
+            logger.error(f"[AGENT] Error loading agent.yaml: {e}")
+
         self.max_iterations = max_iterations if max_iterations is not None else self.agent_config.get("max_iterations", 5)
         self.is_enabled = self.agent_config.get("enabled", True)
         
     def _emit(self, msg: str, level: str = "info"):
         """Routes a trace to both the terminal tracer and the optional session callback."""
-        AgentTracer.emit(self.state_manager, msg, level=level)
+        # If trace_callback is present, we are in a /api/stream session.
+        # Sending it to state_manager too would duplicate the trace via /api/events.
+        sm_for_trace = self.state_manager if not self.trace_callback else None
+        AgentTracer.emit(sm_for_trace, msg, level=level)
+        
         if self.trace_callback:
             try:
                 self.trace_callback(msg, level)
@@ -49,7 +54,7 @@ class AgentExecutor:
         Calls the LLM, checks if tools are requested, executes them, feeds the result back.
         Repeats until the LLM returns plain text without tools or hits max iterations.
         """
-        self._emit(translator.t("agent_analyzing_request", request=user_text[:30]), level="info")
+        self._emit(f"Analyzing request: '{user_text[:30]}...'", level="info")
         
         if not self.is_enabled:
             logger.info("[AGENT] Agentic Loop is disabled in config. Running single iteration.")
@@ -67,7 +72,7 @@ class AgentExecutor:
             save_hist = (iteration == 1)
             
             # 1. Call the Brain
-            self._emit(f"Sto pensando (Loop {iteration})...", level="info")
+            self._emit(f"Thinking (Loop {iteration})...", level="info")
             raw_response = brain.generate_response(
                 user_text, 
                 external_config=self.config, 
@@ -81,7 +86,7 @@ class AgentExecutor:
             
             if not tools_called:
                 # BREAK CONDITION: The LLM didn't call any tools, so it produced the final response.
-                self._emit("Risposta formulata.", level="success")
+                self._emit("Response formulated.", level="success")
                 
                 # IMPORTANT: If it took loops, we must save the FINAL response to history manually.
                 if iteration > 1:
@@ -111,7 +116,7 @@ class AgentExecutor:
 
                 # B) Execute tool and add 'tool' results to context
                 for res in tool_results:
-                    self._emit(f"Risultato ottenuto dallo strumento: {res.get('tag')}", level="tool")
+                    self._emit(f"Tool execution result: {res.get('tag')}", level="tool")
                     
                     # Native Tool Message
                     agent_context.append({
@@ -121,9 +126,9 @@ class AgentExecutor:
                         "content": res.get("output")
                     })
                     
-                self._emit("Analizzo i risultati degli strumenti...", level="info")
+                self._emit("Analyzing tool results...", level="info")
                 
                 if iteration == self.max_iterations:
-                    self._emit("Raggiunto limite massimo di pensiero.", level="error")
-                    video_response, clean_voice = processore.clean_final_output("Ho raggiunto il limite di elaborazione. " + extracted_text, tool_results, raw_response, voice_status)
+                    self._emit("Maximum thought limit reached.", level="error")
+                    video_response, clean_voice = processore.clean_final_output("I have reached the processing limit. " + extracted_text, tool_results, raw_response, voice_status)
                     return video_response, clean_voice

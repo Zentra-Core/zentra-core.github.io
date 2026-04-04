@@ -3,7 +3,7 @@
   <img src="https://raw.githubusercontent.com/Zentra-Core/zentra-core.github.io/main/assets/Zentra_Core_Logo.jpg" width="400" alt="Logo de Zentra">
 </p>
 
-# Zentra Core - Versión 0.9.9 (Runtime Alpha)
+# Zentra Core - Versión 0.10.1 (Runtime Alpha)
 Idiomas: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP.md)
 
 # 🤖 Zentra Core
@@ -18,20 +18,22 @@ Idiomas: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ES
 **Zentra Core** es una plataforma de asistencia de IA "local-first" que se ejecuta íntegramente en tu propia máquina.
 Combina LLMs locales, interacción por voz, automatización del sistema y una arquitectura de plugins modulares para crear un compañero digital totalmente personalizable.
 
-Ahora completamente migrado a una **arquitectura estable de Plugins Nativos**, Zentra 0.9.9 ofrece una interfaz Web dedicada (Chat + Config) e internacionalización completa. Gracias a **LiteLLM**, soporta Ollama, KoboldCpp y los principales proveedores de la nube con streaming en tiempo real y TTS local.
+Ahora completamente migrado a una **arquitectura estable de Plugins Nativos**, Zentra 0.10.1 ofrece una interfaz Web dedicada (Chat + Config) e internacionalización completa. Gracias a **LiteLLM**, soporta Ollama, KoboldCpp y los principales proveedores de la nube con streaming en tiempo real y TTS local.
 
 ---
 
-## ✨ Características Principales (v0.9.9)
+## ✨ Características Principales (v0.10.1)
 * 🤖 **Agente Cognitivo Autónomo** — Zentra ahora razona paso a paso (Chain of Thought), elige herramientas dinámicamente y resuelve tareas complejas de forma autónoma.
 * 🛡️ **Zentra Code Jail (Sandbox AST)** — Un entorno de ejecución nativo altamente seguro que permite a la IA ejecutar algoritmos Python, matemáticas y lógica de datos de forma segura.
 * 👁️ **Soporte de Visión Nativa** — Capacidades de IA multimodal para Gemini, OpenAI y Ollama (LLaVA). Analiza imágenes, fotos y capturas de pantalla directamente en el chat.
-* 🎨 **Generación de Imágenes** — Genera contenido visual a partir de prompts de texto mediante servidores de IA externos (Integrado vía Pollinations.ai).
 * 🏗️ **Plugin WebUI Nativo** — Migrado de un bridge a un plugin core (`plugins/web_ui/`) para máximo rendimiento y estabilidad.
+* 🔒 **Seguridad HTTPS Local** — Interfaz web con integración nativa HTTPS para proporcionar contexto seguro para Webcam y Micrófono.
+* ⚙️ **Configuración YAML + Pydantic** — Sistema de configuración moderno, robusto y verificable, basado en esquemas Pydantic.
+* 📊 **Token Payload Inspector** — Métricas en tiempo real en la WebUI que detallan el uso del contexto por cada Plugin individualmente.
 * 🌐 **I18N Global (Multilingüe)** — Soporte completo para Inglés (default) e Italiano en Terminal e interfaz Web con cambio en tiempo real.
 * 🧠 **Streaming Multi-Nube** — Soporte nativo para Groq, OpenAI, Gemini e Anthropic con efecto "máquina de escribir".
 * 🔄 **Live-Sync Config** — Cambia cualquier ajuste en el Panel Web y aplícalo al instante sin reiniciar el sistema.
-* 🎭 **Sincronización de Personalidad** — Las personalidades añadidas a la carpeta `personality/` se detectan automáticamente y se sincronizan con `config.json`.
+* 🎭 **Sincronización de Personalidad** — Las personalidades añadidas a la carpeta `personality/` se detectan automáticamente y se sincronizan con `config.yaml`.
 * 🎙️ **Chat de Voz Integrado** — Interfaz de Chat nativa con integración de Piper TTS y reproducción de audio automática.
 * 🔌 **Botones Macro de Plugins** — La lista de plugins lateral ahora incluye macros clicables para inyectar comandos especializados al instante.
 * 💾 **Memoria Persistente** — Memoria SQLite con contexto compartido entre WebUI y Terminal.
@@ -146,7 +148,7 @@ Email Oficial: zentra.core.systems@gmail.com
 ## 📚 Documentación Técnica
 - 🏗️ **[Guía de Arquitectura](docs/TECHNICAL_GUIDE.md)**
 - 🔌 **[Desarrollo de Plugins](docs/PLUGINS_DEV.md)**
-- 📁 **[Mapa de Estructura](docs/zentra_core_structure_v0.9.9.md)**
+- 📁 **[Mapa de Estructura](docs/zentra_core_structure_v0.10.1.md)**
 
 ---
 
