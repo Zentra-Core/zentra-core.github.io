@@ -81,11 +81,7 @@ class SystemBootstrapper:
     def show_welcome(self):
         """Shows welcome message."""
         self.state_manager.system_status = translator.t("speaking")
-        
-        # Sincronizza il testo dell'interfaccia con quello pronunciato da Piper
-        from core.system.greeting import get_spoken_greeting
-        message = get_spoken_greeting(self.config_manager.config)
-        
+        message = self.config_manager.config.get("behavior", {}).get("welcome_message", translator.t("system_ready"))
         interface.write_zentra(message)
         
         self.state_manager.system_processing = False
