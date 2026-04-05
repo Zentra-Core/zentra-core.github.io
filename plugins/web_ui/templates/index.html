@@ -61,6 +61,7 @@
     <button class="tab" onclick="showTab('drive'); loadDriveConfig()">🗂️ Drive</button>
     {% if current_user.is_authenticated and current_user.role == 'admin' %}
     <button class="tab" onclick="showTab('users'); loadUsersData()">Users</button>
+    <button class="tab" onclick="showTab('security')">🔒 Security</button>
     {% endif %}
     <button class="tab" onclick="showTab('payload'); loadPayloadData()">Payload</button>
     <button class="tab" onclick="showTab('plugins')">Plugins</button>
@@ -80,6 +81,7 @@
     {% include 'modules/config_sysnet.html' %}
     {% if current_user.is_authenticated and current_user.role == 'admin' %}
     {% include 'modules/config_users.html' %}
+    {% include 'modules/config_security.html' %}
     {% endif %}
     {% include 'modules/config_payload.html' %}
     {% include 'modules/config_plugins.html' %}

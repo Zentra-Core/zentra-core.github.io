@@ -111,25 +111,36 @@ class ZentraWebUIServer:
                 scheme = "https" if use_https else "http"
 
                 if use_https:
-                    from .ssl_manager import ensure_certificates
-                    cert_file = webui_cfg.get("cert_file", "certs/cert.pem")
-                    key_file = webui_cfg.get("key_file", "certs/key.pem")
-                    ssl_paths = ensure_certificates(cert_file, key_file)
-                    
-                    if ssl_paths:
-                        ssl_context = ssl_paths  # Flask expects a tuple (cert, key)
-                    else:
-                        self.logger.warning("[WebUI] HTTPS requested but cert generation failed. Falling back to HTTP.")
-                        scheme = "http"
+                    # 1. Determina l'IP per passarlo nel SAN del certificato
+                    try:
+                        import socket
+                        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                        s.connect(('10.254.254.254', 1))
+                        lan_ip = s.getsockname()[0]
+                        s.close()
+                    except Exception:
+                        lan_ip = "127.0.0.1"
 
-                try:
-                    import socket
-                    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    s.connect(('10.254.254.254', 1))
-                    lan_ip = s.getsockname()[0]
-                    s.close()
-                except Exception:
-                    lan_ip = "127.0.0.1"
+                    # 2. Genera Root CA e Certificato Host
+                    from core.security.pki import CAManager, CertGenerator
+                    try:
+                        ca = CAManager()
+                        cert_gen = CertGenerator(ca)
+                        cert_file, key_file = cert_gen.generate_host_cert(lan_ip)
+                        ssl_context = (cert_file, key_file)
+                    except Exception as e:
+                        self.logger.warning(f"[WebUI] Errore generazione Zentra PKI: {e}. Fallback to HTTP.")
+                        scheme = "http"
+                        
+                else:
+                    try:
+                        import socket
+                        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                        s.connect(('10.254.254.254', 1))
+                        lan_ip = s.getsockname()[0]
+                        s.close()
+                    except Exception:
+                        lan_ip = "127.0.0.1"
 
                 self.logger.info(
                     f"[WebUI] 🚀 Server live (debug={debug_on}) → "

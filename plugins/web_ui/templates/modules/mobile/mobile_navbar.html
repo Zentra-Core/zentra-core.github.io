@@ -1,0 +1,14 @@
+<!-- mobile_navbar.html -->
+<div class="mobile-navbar mobile-only" style="display:none; padding: 10px 15px; background: rgba(11, 12, 16, 0.9); border-bottom: 1px solid rgba(102, 252, 241, 0.1); align-items: center; justify-content: space-between; backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 900;">
+    <div style="display:flex; align-items: center; gap: 12px;">
+        <button id="mobile-menu-btn" style="background: transparent; border: none; color: #66fcf1; font-size: 24px; cursor: pointer; padding: 0;">☰</button>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: bold; color: #c5c6c7;">Zentra <span style="color:#45a29e;">Core</span></span>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <!-- Elementi rapidi per mobile se necessari -->
+        <span id="mobile-status-dot" style="display:inline-block; width:8px; height:8px; background:#45a29e; border-radius:50%; box-shadow:0 0 5px #45a29e;"></span>
+    </div>
+</div>
+
+<!-- Div per l'overlay click-out -->
+<div id="mobile-overlay" class="mobile-overlay"></div>

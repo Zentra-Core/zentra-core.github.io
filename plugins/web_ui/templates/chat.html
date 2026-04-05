@@ -2,10 +2,11 @@
 <html lang="{{ config.language or 'en' }}">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
 <title>Zentra — {{ t('webui_chat_title') }}</title>
 <link rel="icon" type="image/png" href="/assets/Zentra_Core_Logo_NBG.png">
-<link rel="stylesheet" href="/assets/css/chat.css">
+<link rel="stylesheet" href="/assets/css/chat.css?v=2">
+<link rel="stylesheet" href="/static/css/mobile/responsive.css?v=3">
 {% include 'modules/chat_message_actions.html' %}
 {% include 'modules/chat_image_viewer.html' %}
 </head>
@@ -15,6 +16,7 @@
 {% include 'modules/neural_link.html' %}
 
 <div id="main">
+  {% include 'modules/mobile/mobile_navbar.html' %}
   {% include 'modules/chat_topbar.html' %}
   {% include 'modules/chat_area.html' %}
   {% include 'modules/chat_input.html' %}
@@ -51,5 +53,6 @@
 <script src="/static/js/chat_message_actions.js?v=2"></script>
 <script src="/static/js/chat_input_toolbar.js?v=2"></script>
 <script src="/static/js/chat_image_viewer.js?v=2"></script>
+<script src="/static/js/mobile/mobile_logic.js?v=1"></script>
 </body>
 </html>
