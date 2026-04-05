@@ -105,21 +105,29 @@ Zentra 0.9.9 include una potente interfaccia web nativa accessibile a `http://lo
 
 ---
 
-## 🗂️ 8. Zentra Drive (File Manager HTTP)
-
-Zentra 0.12.0 integra un file manager nativo e protetto, accessibile alla rotta `http://localhost:7070/drive` (oppure cliccando l'apposito link nella Navbar del Pannello di Configurazione).
-
-### Funzionalità Principali
-- **Layout a Doppio Pannello**: Albero di navigazione a sinistra (per espandere le cartelle) e lista dettagliata a destra (nome, dimensione, data di modifica).
-- **Protezione Path Traversal**: Livello di sicurezza back-end che impedisce agli utenti di navigare al di sopra o fuori dalla `Root Directory` impostata.
-- **Supporto Drag & Drop**: Caricamento semplificato trascinando i file direttamente nella "Dropzone".
-- **Upload Streaming Multiplo**: In grado di caricare file di grosse dimensioni scavalcando i limiti RAM standard, mostrando una barra di progresso in tempo reale che indica esplicitamente la cartella di destinazione.
-
-### Configurazione
-Il Modulo Drive è configurabile tramite il Pannello WebUI (Scheda **Drive**):
-- **Root Directory**: Il percorso base (Es. `C:\Users\Admin`). Lasciato vuoto punterà alla Home dell'utente di sistema corrente.
-- **Dimensione Max Upload**: Imposta il limite (in MB) accettato dal server.
 - **Estensioni Consentite**: Campo csv per blindare gli upload a specifiche estensioni (es. solo `pdf, jpg`). Se vuoto, nessuna restrizione viene applicata.
+
+---
+
+## 🛡️ 9. Sicurezza Avanzata (Zentra PKI)
+
+Zentra 0.12.0 introduce un'infrastruttura **PKI (Public Key Infrastructure)** integrata per garantire connessioni HTTPS sicure in tutta la rete locale.
+
+### Certificati e Root CA
+Per sbloccare funzionalità come il **Microfono** e la **Webcam** sui browser mobile (che richiedono contesti sicuri), Zentra agisce come una propria Autorità di Certificazione:
+1. **Root CA**: Generata automaticamente al primo avvio in `certs/ca/`.
+2. **Installazione**: È necessario scaricare e installare il certificato `Root CA` sul proprio dispositivo (Mobile o PC remoto) e impostarlo come "Attendibile".
+3. **Download**: Il certificato è scaricabile direttamente dalla tab **Security** nel Pannello di Configurazione o dal modal **Neural Link** nella chat.
+
+---
+
+## 📱 10. Interfaccia Mobile-First
+
+Zentra è ora ottimizzato per l'uso su smartphone e tablet.
+- **Menu Hamburger**: Su schermi piccoli, la sidebar scompare e viene sostituita da un menu a scorrimento (accessibile tramite l'icona `☰` in alto a sinistra).
+- **Safe Area & Gestures**: Le testate e i tab di configurazione sono ottimizzati per il tocco e lo scorrimento orizzontale.
+- **Neural Link**: Su mobile, la prima interazione richiede il tocco del pulsante "Establish Connection" per sbloccare l'AudioContext del browser e permettere all'IA di parlare e ascoltare.
+
 
 ---
 

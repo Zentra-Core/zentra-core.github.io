@@ -49,8 +49,14 @@ Zentra Core is built on a **Modular Object-Oriented Architecture** designed for 
 ### LLM Dynamic Routing
 Zentra Core features a built-in routing system. Instead of hardcoding models, plugins can request a "capability tag". The `LLMManager` looks up the best match in `system.yaml` under the `plugins` section or uses the global default backend. This prevents code repetition when switching models.
 
-### Hardware-Aware Dashboard
-The `plugins/dashboard` module uses a background thread (`ui_updater.py`) to bypass the standard scroll buffer and write directly to the top of the terminal, providing a real-time HUD without flickering.
+### Zentra PKI (Native HTTPS)
+Version 0.12.0 introduces a built-in Certificate Authority. The `core/security/pki` module handles CA generation and host certificate signing. This infrastructure is vital for bypassing browser security restrictions on remote devices, enabling secure access to the Microphone and Camera APIs across the network.
+
+### Mobile-First UI Architecture
+The WebUI now implements a responsive grid and an off-canvas navigation pattern. Key features include:
+- **Mobile Navbar**: A dedicated top bar for screens ≤ 768px.
+- **Swipeable Tabs**: Config tabs use `overflow-x: auto` with touch-scrolling enabled.
+- **Neural Link**: A mandatory bridge for mobile browsers to establish an authenticated and active AudioContext.
 
 ---
 

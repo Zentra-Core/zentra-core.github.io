@@ -14,6 +14,22 @@ Zentra-Core/
 │   ├── personality_manager.py # F3 Selection & Dynamic Sync logic
 │   ├── state_manager.py  # Tracks internal status (Thinking, Speaking, Ready)
 │   └── threads.py        # Background asynchronous workers
+# Zentra Core v0.12.0 - Architecture Map
+
+A visual guide to the Zentra Core folder structure and system components as of version 0.12.0.
+
+```text
+Zentra-Core/
+│
+├── app/                  # Application runtime environment
+│   ├── application.py    # Main boot sequence and event loop
+│   ├── bootstrapper.py   # System initialization (Console & Web access info)
+│   ├── config.py         # YAML ConfigManager (Pydantic v2 validation)
+│   ├── input_handler.py  # User keyboard and microphone unified input
+│   ├── model_manager.py  # Global AI model state management
+│   ├── personality_manager.py # F3 Selection & Dynamic Sync logic
+│   ├── state_manager.py  # Tracks internal status (Thinking, Speaking, Ready)
+│   └── threads.py        # Background asynchronous workers
 │
 ├── core/                 # Low-level core engines
 │   ├── agent/            # Agentic Loop (Chain of Thought, SSE Traces)
@@ -23,6 +39,7 @@ Zentra-Core/
 │   ├── llm/              # Unified AI backends (Ollama, Kobold, Cloud)
 │   │   └── vision/       # Multimodal adapters
 │   ├── processing/       # Token streaming and filters
+│   ├── security/         # Zentra PKI (Root CA & Cert Management)
 │   └── system/           # Bootstrap, versioning, and diagnostics
 │
 ├── docs/                 # Operational manuals and technical documentation
@@ -69,6 +86,7 @@ Zentra-Core/
 
 ### Component Overview
 * **`app/`**: Regulates the execution flow. Powered by a YAML-first configuration system for stability.
-* **`core/`**: The engine room. Version 0.12.0 introduces native Auth systems and Agentic reasoning.
-* **`plugins/`**: Modular heart. Now includes **Zentra Drive** for secure HTTP file management.
+* **`core/`**: The engine room. Version 0.12.0 introduces native Auth systems, **Zentra PKI** for self-hosted HTTPS, and Agentic reasoning.
+* **`plugins/`**: Modular heart. Now includes **Zentra Drive** for secure HTTP file management and a **Mobile-First WebUI**.
 * **`config/`**: Centralized repository for all system parameters, replacing old scattered JSONs.
+* **`scripts/`**: Internationalized launchers (.bat/.sh) in standard English.

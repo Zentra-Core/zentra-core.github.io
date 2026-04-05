@@ -125,7 +125,28 @@ The Drive Module can be configured via the WebUI Panel (**Drive** tab):
 
 ---
 
-## 🛡️ 9. Security and Troubleshooting
+## 🛡️ 9. Advanced Security (Zentra PKI)
+
+Zentra 0.12.0 introduces an integrated **PKI (Public Key Infrastructure)** to ensure secure HTTPS connections across your entire local network.
+
+### Certificates and Root CA
+To unlock features like the **Microphone** and **Webcam** on mobile browsers (which require secure contexts), Zentra acts as its own Certificate Authority:
+1. **Root CA**: Automatically generated on first boot in `certs/ca/`.
+2. **Installation**: You must download and install the `Root CA` certificate on your device (Mobile or remote PC) and set it as "Trusted".
+3. **Download**: The certificate can be downloaded directly from the **Security** tab in the Config Panel or from the **Neural Link** modal in the chat.
+
+---
+
+## 📱 10. Mobile-First Interface
+
+Zentra is now optimized for use on smartphones and tablets.
+- **Hamburger Menu**: On small screens, the sidebar is hidden and replaced by a sliding menu (accessible via the `☰` icon at the top left).
+- **Safe Area & Gestures**: Headers and configuration tabs are optimized for touch and horizontal scrolling.
+- **Neural Link**: On mobile, the first interaction requires tapping the "Establish Connection" button to unlock the browser's AudioContext and allow the AI to speak and listen.
+
+---
+
+## 🛡️ 11. Security and Troubleshooting
 
 1. **Graphic Interference Bug (Dashboard):** Zentra's engine asynchronously joins UI threads. Any text overlap is resolved by the total block `(Thread Join)` at the start of the F7 menu call.
 2. **Logs:** Zentra logs are kept in the `/logs` directory. From F7 Config, it's possible to hide log reports from the chat to favor text readability (exclusive visual routing to parallel log `Console` or `File Only` recommended).
