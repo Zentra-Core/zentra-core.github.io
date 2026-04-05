@@ -1,33 +1,44 @@
 /* responsive.css */
 /* Gestione layout mobile e tablet (max-width: 768px) */
 
+/* DEFAULT: Mobile elements are hidden on desktop */
+.mobile-only {
+    display: none !important;
+}
+
+/* ============================================================
+   MOBILE OVERRIDES (max-width: 768px)
+   ============================================================ */
 @media (max-width: 768px) {
-    /* Mappa componenti per mobile */
+
+    /* Show mobile-only elements */
     .mobile-only {
         display: flex !important;
     }
-    
+
+    /* Hide desktop-only elements */
     .desktop-only {
         display: none !important;
     }
 
-    /* 1. Sidebar in modalità Off-Canvas */
-    .sidebar {
+    /* 1. Sidebar - Off-Canvas */
+    #sidebar {
         position: fixed;
         left: -100%;
         top: 0;
         height: 100%;
-        width: 250px;
+        width: 260px;
         z-index: 1000;
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: 5px 0 20px rgba(0,0,0,0.5);
+        overflow-y: auto;
     }
 
-    .sidebar.open {
+    #sidebar.open {
         left: 0;
     }
 
-    /* Overlay per click-out Sidebar */
+    /* 2. Overlay for click-to-close */
     .mobile-overlay {
         position: fixed;
         top: 0;
@@ -40,34 +51,35 @@
         opacity: 0;
         transition: opacity 0.3s;
     }
-    
+
     .mobile-overlay.active {
         display: block;
         opacity: 1;
     }
 
-    /* 2. Main Container (Senza margine sinistro della Sidebar) */
+    /* 3. Main Container - no sidebar margin */
     #main {
         margin-left: 0 !important;
         width: 100%;
     }
 
-    /* 3. Nascondi Topbar Desktop e usa quella compatta */
+    /* 4. Hide Desktop Topbar */
     #topbar {
-        display: none !important; /* Disabilita la vecchia topbar su mobile */
+        display: none !important;
     }
 
-    /* 4. Input Area Safe-Zone (Tastiere e notch) */
+    /* 5. Input Safe-Zone (keyboards & notch) */
     .input-container {
-        padding: 10px 10px 15px 10px; /* Più spazio in basso */
+        padding: 10px 10px 15px 10px;
         margin: 0;
         width: 100%;
-        border-radius: 0; 
+        border-radius: 0;
         box-sizing: border-box;
     }
 
+    /* Prevent iOS auto-zoom on input focus */
     #user-input {
-        font-size: 16px; /* Previene l'auto-zoom di iOS su Safari */
+        font-size: 16px;
     }
 
     .chat-area {
@@ -77,12 +89,5 @@
 
     .msg-bubble {
         max-width: 90%;
-    }
-}
-
-/* Helper per Desktop (evita che roba mobile appaia) */
-@media (min-width: 769px) {
-    .mobile-only {
-        display: none !important;
     }
 }

@@ -5,7 +5,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     const mobileBtn = document.getElementById('mobile-menu-btn');
-    const sidebar = document.querySelector('.sidebar');
+    const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('mobile-overlay');
 
     if (mobileBtn && sidebar && overlay) {
