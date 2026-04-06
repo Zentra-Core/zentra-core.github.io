@@ -79,9 +79,15 @@ class WebcamTools:
             if not cap.isOpened():
                 return translator.t("plugin_webcam_error_sensor")
 
-            if delay > 0:
-                time.sleep(delay)
+            # Flush the stale buffer to avoid grabbing old cached OS frames
+            # We read a few transient frames during the stabilization period
+            flush_frames = 5
+            for i in range(flush_frames):
+                cap.read()
+                if delay > 0:
+                    time.sleep(delay / flush_frames)
             
+            # Now take the final fresh frame
             ret, frame = cap.read()
             if ret:
                 timestamp = int(time.time())

@@ -108,7 +108,11 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
     # 2. Memory and self-awareness (respecting cognition config)
     cog = config.get('cognition', {})
     logger.debug("BRAIN", "Memory loading...")
-    memory_context = brain_interface.get_context(config) if cog.get('include_identity_context', True) else ""
+    
+    # Calculate clean name for identity context
+    clean_name = personality_name.replace(".txt", "").replace("_", " ") if personality_name else "Zentra"
+    
+    memory_context = brain_interface.get_context(config, dynamic_name=clean_name) if cog.get('include_identity_context', True) else ""
     logger.debug("BRAIN", f"Memory: {len(memory_context)} characters")
     
     logger.debug("BRAIN", "Self-awareness generation...")
@@ -122,8 +126,6 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
         history_rows = brain_interface.get_history(limit=max_h, config=config)
         if history_rows:
             history_block = "\n[RECENT CONVERSATION HISTORY]\n"
-            # Extract clean name from personality string (e.g. 'Urania_9800_Woman.txt' -> 'Urania 9800 Woman')
-            clean_name = personality_name.replace(".txt", "").replace("_", " ") if personality_name else "Zentra"
             for role, msg in history_rows:
                 label = "User" if role == "user" else clean_name
                 history_block += f"{label}: {msg}\n"

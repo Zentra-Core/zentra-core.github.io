@@ -81,7 +81,7 @@ def maybe_clear_on_restart(config: dict):
 
 # ── Context retrieval ──────────────────────────────────────────────────────────
 
-def get_context(config: dict = None) -> str:
+def get_context(config: dict = None, dynamic_name: str = None) -> str:
     """Retrieves AI and Admin identity for the System Prompt."""
     cog = _get_cognition(config)
     if not cog.get("include_identity_context", True):
@@ -100,12 +100,19 @@ def get_context(config: dict = None) -> str:
         context = f"\n[ACTIVE IDENTITY MEMORY]\n"
         
         # AI Identity
-        ai_name     = id_data.get('ai', {}).get('name', 'Zentra')
-        ai_nature   = id_data.get('ai', {}).get('nature', 'AI Assistant')
-        ai_protocol = id_data.get('ai', {}).get('protocol', 'Standard')
+        fallback_name = id_data.get('ai', {}).get('name', 'Zentra')
+        ai_name = dynamic_name or fallback_name
         
-        context += f"You are {ai_name}, version {VERSION}. {ai_nature}.\n"
-        context += f"Your Creator (Admin) is {id_data.get('author', {}).get('name', 'Admin')}. Protocol: {ai_protocol}.\n"
+        if dynamic_name and dynamic_name.lower() != "zentra":
+            # Neutral context for custom roleplays (Urania, MacGyver, etc.)
+            context += f"You are {ai_name}, running on core version {VERSION}.\n"
+            context += f"Your user/interlocutor is {id_data.get('author', {}).get('name', 'Admin')}.\n"
+        else:
+            # Full Zentra context
+            ai_nature   = id_data.get('ai', {}).get('nature', 'AI Assistant')
+            ai_protocol = id_data.get('ai', {}).get('protocol', 'Standard')
+            context += f"You are {ai_name}, version {VERSION}. {ai_nature}.\n"
+            context += f"Your Creator (Admin) is {id_data.get('author', {}).get('name', 'Admin')}. Protocol: {ai_protocol}.\n"
         
         # Admin Biographical Notes
         notes = prof_data.get('author', {}).get('notes', 'No specific notes.')
