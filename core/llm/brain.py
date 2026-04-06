@@ -49,16 +49,16 @@ def generate_self_awareness(personality_name):
         from core.system.plugin_loader import get_active_tags
         active_plugins = get_active_tags()
         
-        souls = [f for f in os.listdir("personality") if f.endswith('.txt')]
-        core_modules = [f for f in os.listdir("core") if f.endswith('.py')]
+        # Simplified listing to save tokens
+        souls_count = len([f for f in os.listdir("personality") if f.endswith('.txt')])
+        core_count  = len([f for f in os.listdir("core") if f.endswith('.py')])
         
         awareness = f"\n{translator.t('structural_self_awareness')}\n"
         awareness += f"{translator.t('awareness_desc')}\n"
         awareness += f"- {translator.t('current_soul', name=personality_name)}\n"
-        other_souls = ', '.join([a for a in souls if a != personality_name])
-        awareness += f"- {translator.t('dormant_souls', souls=other_souls)}\n"
-        awareness += f"- {translator.t('central_nervous_system', modules=', '.join(core_modules))}\n"
-        awareness += f"- {translator.t('action_modules', modules=', '.join(active_plugins) if active_plugins else 'none')}\n"
+        awareness += f"- Total personality modules available: {souls_count}\n"
+        awareness += f"- Active Action Modules: {', '.join(active_plugins) if active_plugins else 'none'}\n"
+        awareness += f"- Core Subsystems: {core_count} integrated modules\n"
         awareness += f"{translator.t('admin_structure_hint')}\n"
         
         logger.debug("BRAIN", f"Self-awareness generated for {len(active_plugins)} active plugins")

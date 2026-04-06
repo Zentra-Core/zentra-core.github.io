@@ -11,7 +11,7 @@ except ImportError:
     # Minimal fallback for standalone testing
     class DummyBrainInterface:
         def update_profile(self, k, v): return True
-        def get_context(self): return "Stand-alone profile."
+        def get_context(self, *args, **kwargs): return "Stand-alone profile."
         def get_history(self, limit): return []
         def clear_history(self): return True
     brain_interface = DummyBrainInterface()
@@ -49,7 +49,16 @@ class MemoryTools:
         Ask Zentra to retrieve identity data for the Admin and the AI (context profile).
         Use this tool to read the current state of the relationship, personality, and known user traits.
         """
-        return brain_interface.get_context()
+        try:
+            from app.config import ConfigManager
+            cfg = ConfigManager().config
+            personality_name = cfg.get('ai', {}).get('active_personality', 'zentra.txt')
+            clean_name = personality_name.replace(".txt", "").replace("_", " ") if personality_name else "Zentra"
+            return brain_interface.get_context(config=cfg, dynamic_name=clean_name)
+        except Exception as e:
+            from core.logging import logger
+            logger.error(f"[MEMORY] who_am_i tool error: {e}")
+            return brain_interface.get_context()
 
     def read_history(self, n: str) -> str:
         """

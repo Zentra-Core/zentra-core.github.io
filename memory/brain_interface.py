@@ -44,7 +44,7 @@ def is_memory_enabled(config: dict = None) -> bool:
 def get_max_history(config: dict = None) -> int:
     """Returns the max number of history messages to include in context."""
     cog = _get_cognition(config)
-    return int(cog.get("max_history_messages", 20))
+    return int(cog.get("max_history_messages", 15))
 
 
 # ── Vault management ───────────────────────────────────────────────────────────
