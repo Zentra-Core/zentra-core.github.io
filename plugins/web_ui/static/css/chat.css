@@ -1,0 +1,16 @@
+﻿
+/* WebRTC Push To Talk Button */
+#web-ptt-btn {
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+}
+#web-ptt-btn.recording {
+  color: #ff3b3b !important;
+  background-color: rgba(255, 59, 59, 0.15) !important;
+  border-color: #ff3b3b !important;
+  animation: pulse-mic 1s infinite alternate;
+}
+@keyframes pulse-mic {
+  0%   { box-shadow: 0 0 5px rgba(255,59,59,0.3); transform: scale(1); }
+  100% { box-shadow: 0 0 15px rgba(255,59,59,0.8); transform: scale(1.05); }
+}

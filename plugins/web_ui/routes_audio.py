@@ -10,6 +10,65 @@ def init_audio_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
 
     # ── Audio Control API ─────────────────────────────────────────────────────
 
+    @app.route("/api/audio/transcribe", methods=["POST"])
+    def transcribe_audio():
+        """Accepts a WebRTC audio blob from the browser, converts to WAV, and transcribes."""
+        try:
+            if "audio_file" not in request.files:
+                return jsonify({"ok": False, "error": "No audio_file in request"}), 400
+                
+            audio_file = request.files["audio_file"]
+            if not audio_file.filename:
+                return jsonify({"ok": False, "error": "No selected file"}), 400
+
+            import tempfile
+            from pydub import AudioSegment
+            import speech_recognition as sr
+
+            # Save the incoming WebM/OGG file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp_in:
+                audio_file.save(tmp_in.name)
+                tmp_in_path = tmp_in.name
+
+            # Convert to standard WAV using pydub
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_out:
+                tmp_out_path = tmp_out.name
+
+            try:
+                # Load WebM and export as WAV 16kHz Mono
+                audio = AudioSegment.from_file(tmp_in_path)
+                audio = audio.set_channels(1).set_frame_rate(16000)
+                audio.export(tmp_out_path, format="wav")
+            except Exception as e:
+                logger.error(f"[WebUI] Pydub conversion error: {e}")
+                os.remove(tmp_in_path)
+                os.remove(tmp_out_path)
+                return jsonify({"ok": False, "error": "Audio conversion failed. Is ffmpeg installed?"}), 500
+
+            # Transcribe via speech_recognition
+            text = ""
+            try:
+                recognizer = sr.Recognizer()
+                with sr.AudioFile(tmp_out_path) as source:
+                    audio_data = recognizer.record(source)
+                    logger.info("[WebUI] Transcribing WebRTC audio via Google STT...")
+                    text = recognizer.recognize_google(audio_data, language="it-IT", show_all=False)
+            except sr.UnknownValueError:
+                logger.warning("[WebUI] WebRTC audio transcription could not understand audio.")
+            except Exception as e:
+                logger.error(f"[WebUI] WebRTC transcription error: {e}")
+            finally:
+                # Cleanup temp files
+                os.remove(tmp_in_path)
+                os.remove(tmp_out_path)
+
+            return jsonify({"ok": True, "text": text})
+
+        except Exception as exc:
+            logger.error(f"[WebUI] transcribe_audio error: {exc}")
+            return jsonify({"ok": False, "error": str(exc)}), 500
+
+
     @app.route("/api/audio/stop", methods=["POST"])
     def stop_audio():
         """Stop server-side TTS playback and generation."""
