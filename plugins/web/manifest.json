@@ -1,0 +1,51 @@
+{
+    "tag": "WEB",
+    "description": "Network access for Google searches and quick opening of websites.",
+    "lazy_load": true,
+    "is_class_based": true,
+    "status": "ONLINE (Browsing & Search)",
+    "commands": {
+        "open_url": "Opens a specific website in the default browser.",
+        "search_web": "Performs an internet search using the default search engine (e.g., Google)."
+    },
+    "tool_schema": [
+        {
+            "type": "function",
+            "function": {
+                "name": "WEB__open_url",
+                "description": "Opens a specific website in the default browser.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string",
+                            "description": "The website address to open (e.g., 'youtube.com', 'wikipedia.org')."
+                        }
+                    },
+                    "required": [
+                        "url"
+                    ]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "WEB__search_web",
+                "description": "Performs an internet search using the default search engine (e.g., Google).",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The terms to search for on the internet."
+                        }
+                    },
+                    "required": [
+                        "query"
+                    ]
+                }
+            }
+        }
+    ]
+}

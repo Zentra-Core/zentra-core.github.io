@@ -29,9 +29,9 @@ class ModelsTools:
         Returns the AI backend currently in use (e.g., cloud, ollama, kobold).
         """
         try:
-            with open('config.json', 'r', encoding='utf-8') as f:
-                config = json.load(f)
-            backend_type = config['backend']['type']
+            from app.config import ConfigManager
+            cfg = ConfigManager()
+            backend_type = cfg.get('backend', 'type', default='ollama')
             return f"Current backend: {backend_type.upper()}"
         except Exception as e:
             logger.error(f"MODELS: Error: {e}")
@@ -50,8 +50,7 @@ class ModelsTools:
             cfg_manager = ConfigManager()
             model_mgr = ModelManager(cfg_manager)
             
-            with open('config.json', 'r', encoding='utf-8') as f:
-                config = json.load(f)
+            config = cfg_manager.config
             
             backend_attuale = config.get('backend', {}).get('type', 'ollama')
             all_models = []
@@ -104,12 +103,11 @@ class ModelsTools:
             idx = int(numeri[0]) - 1
             if hasattr(self, 'last_listed_models') and 0 <= idx < len(self.last_listed_models):
                 nuovo_modello = self.last_listed_models[idx]
-                with open('config.json', 'r', encoding='utf-8') as f:
-                    config = json.load(f)
-                b_type = config['backend']['type']
-                config['backend'][b_type]['model'] = nuovo_modello
-                with open('config.json', 'w', encoding='utf-8') as f:
-                    json.dump(config, f, indent=4)
+                from app.config import ConfigManager
+                cfg = ConfigManager()
+                b_type = cfg.get('backend', 'type', default='ollama')
+                cfg.set(nuovo_modello, 'backend', b_type, 'model')
+                cfg.save()
                 return f"✅ Model set successfully: {nuovo_modello}"
             return "Error: Invalid index or list not loaded."
         except Exception as e:

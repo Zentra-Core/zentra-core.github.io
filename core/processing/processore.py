@@ -168,7 +168,7 @@ def extract_and_execute_tools(raw_response, config=None):
         from core.system import plugin_loader
         
         # FAIL-SAFE: If the registry is empty (happens in standalone child processes), auto-init.
-        if not plugin_loader._loaded_plugins:
+        if not plugin_loader.get_active_tags():
             logger.info("[PROCESSOR] Plugin registry empty; performing lazy initialization...")
             plugin_loader.update_capability_registry(current_config, debug_log=False)
             

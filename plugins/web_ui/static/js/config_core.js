@@ -88,6 +88,7 @@ async function saveConfig(silent = false) {
   if (!silent) setSaveMsg(I18N.msg_saving || 'Saving...', 'muted');
   try {
     const payload = buildPayload();
+    payload._force_restart = !silent;
 
     const audioPayload = (typeof buildAudioPayload === 'function') ? buildAudioPayload() : {};
     const mediaPayload = (typeof buildMediaPayload === 'function') ? buildMediaPayload() : {};

@@ -118,13 +118,41 @@ class AgentExecutor:
                 for res in tool_results:
                     self._emit(f"Tool execution result: {res.get('tag')}", level="tool")
                     
+                    output_text = res.get("output")
+                    
                     # Native Tool Message
                     agent_context.append({
                         "role": "tool",
                         "tool_call_id": res.get("id"),
                         "name": res.get("tag"),
-                        "content": res.get("output")
+                        "content": output_text
                     })
+                    
+                    # Intercept Image Paths for Vision-AI
+                    if output_text and isinstance(output_text, str):
+                        import re
+                        import mimetypes
+                        import base64
+                        # Identify file paths ending with typical image extensions
+                        potential_paths = re.findall(r'([\w\.\-\\/]+\.(?:jpg|jpeg|png))', output_text, re.IGNORECASE)
+                        for path in potential_paths:
+                            if os.path.exists(path):
+                                try:
+                                    with open(path, "rb") as f:
+                                        img_bytes = f.read()
+                                    if images is None:
+                                        images = []
+                                    mime, _ = mimetypes.guess_type(path)
+                                    # Pre-encode as base64 to avoid double-encoding in adapters
+                                    images.append({
+                                        "data_b64": base64.b64encode(img_bytes).decode("utf-8"),
+                                        "mime_type": mime or "image/jpeg",
+                                        "name": os.path.basename(path)
+                                    })
+                                    self._emit(f"Intercepted image for Vision-AI: {os.path.basename(path)}", level="info")
+                                    logger.info(f"[AGENT] Vision-AI: loaded {os.path.basename(path)} ({len(img_bytes)} bytes)")
+                                except Exception as e:
+                                    logger.debug(f"[AGENT] Failed to load intercepted image path {path}: {e}")
                     
                 self._emit("Analyzing tool results...", level="info")
                 

@@ -1,0 +1,24 @@
+{
+    "tag": "WEBCAM",
+    "description": "Access to PC optical vision to take snapshots of the environment or Admin.",
+    "lazy_load": true,
+    "is_class_based": true,
+    "status": "ONLINE (Optical Vision)",
+    "commands": {
+        "take_snapshot": "Takes a photo using the computer's webcam and saves it to disk."
+    },
+    "tool_schema": [
+        {
+            "type": "function",
+            "function": {
+                "name": "WEBCAM__take_snapshot",
+                "description": "Takes a photo using the computer's webcam and saves it to disk.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            }
+        }
+    ]
+}

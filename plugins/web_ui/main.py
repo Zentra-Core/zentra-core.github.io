@@ -94,24 +94,34 @@ class WebUIPlugin:
             except Exception as e:
                 logger.warning(f"[WEB_UI] Server startup error: {e}")
 
+    def _get_scheme(self) -> str:
+        """Dynamically gets the HTTP/HTTPS scheme based on current config."""
+        if self._cfg_mgr:
+            return "https" if self._cfg_mgr.config.get("plugins", {}).get("WEB_UI", {}).get("https_enabled", False) else "http"
+        return "http"
+
     @property
     def status(self) -> str:
         self._ensure_server()
-        return f"Online → {self._url}/chat"
+        scheme = self._get_scheme()
+        return f"Online → {scheme}://127.0.0.1:{self._port}/chat"
 
     def get_panel_url(self) -> str:
         """Returns the URL of the chat interface."""
         self._ensure_server()
-        return f"{self._url}/chat"
+        scheme = self._get_scheme()
+        return f"{scheme}://127.0.0.1:{self._port}/chat"
 
     def open_browser(self, **kwargs) -> str:
         """Opens the Zentra web interface in the default browser if not already open."""
         self._ensure_server()
+        scheme = self._get_scheme()
+        url = f"{scheme}://127.0.0.1:{self._port}/chat"
         if self._is_ui_active():
             return "Web UI is already active in another tab."
         try:
-            webbrowser.open(f"{self._url}/chat")
-            return f"Browser opened at {self._url}/chat"
+            webbrowser.open(url)
+            return f"Browser opened at {url}"
         except Exception as e:
             return f"Could not open browser: {e}"
 

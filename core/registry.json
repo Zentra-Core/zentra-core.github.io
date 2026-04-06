@@ -7,35 +7,40 @@
             "get_gpu_status": "Returns the video card (GPU) status, including VRAM usage and thermal/computational load.",
             "get_system_resources": "Returns a summary of system CPU and RAM usage."
         },
-        "status": "ONLINE (Telemetry active)",
+        "status": "ONLINE (DORMANT)",
         "example": "",
-        "is_class_based": true
+        "is_class_based": true,
+        "is_lazy": true
     },
     "DOMOTICA": {
         "description": "Smart Home control. Currently in integration phase.",
         "commands": {
             "get_home_status": "Provides a summary of the status of smart home devices (e.g., temperature, lights on)."
         },
-        "status": "ONLINE (Simulation)",
+        "status": "ONLINE (DORMANT)",
         "example": "",
-        "is_class_based": true
+        "is_class_based": true,
+        "is_lazy": true
     },
     "DRIVE": {
         "description": "HTTP File Manager: sfoglia, carica, scarica e cancella file via WebUI.",
         "commands": {
             "/drive": "Apre il File Manager nel browser"
         },
-        "status": "ONLINE",
-        "example": "Vai su /drive per sfogliare i tuoi file."
+        "status": "ONLINE (DORMANT)",
+        "example": "",
+        "is_class_based": false,
+        "is_lazy": true
     },
     "EXECUTOR": {
         "description": "Safe Python execution (AST Sandbox).",
         "commands": {
             "run_python_code": "Executes a block of Python code safely after strict Static Analysis."
         },
-        "status": "ONLINE (Code Jail Active)",
+        "status": "ONLINE (DORMANT)",
         "example": "",
-        "is_class_based": true
+        "is_class_based": true,
+        "is_lazy": true
     },
     "FILE_MANAGER": {
         "description": "System file and directory management with user path and file reading support.",
@@ -44,9 +49,10 @@
             "list_files": "SCANS and lists files/folders in a path to return the names to the AI.",
             "read_file": "Reads the textual content of a file specified by the path."
         },
-        "status": "ONLINE",
+        "status": "ONLINE (DORMANT)",
         "example": "",
-        "is_class_based": true
+        "is_class_based": true,
+        "is_lazy": true
     },
     "HELP": {
         "description": "Displays the list of all active commands and modules in the system.",
@@ -54,18 +60,31 @@
             "list_capabilities": "Displays the complete list of all tools, modules, and capabilities currently loaded in the system.",
             "refresh_registry": "Forces a re-read and update of the central capabilities registry (rescans plugins)."
         },
-        "status": "ONLINE",
+        "status": "ONLINE (DORMANT)",
         "example": "",
-        "is_class_based": true
+        "is_class_based": true,
+        "is_lazy": true
     },
     "IMAGE_GEN": {
         "description": "Generates images from text descriptions using AI image models.",
         "commands": {
             "generate_image": "Generates an image from a text description. Uses the configured provider."
         },
-        "status": "ONLINE",
+        "status": "ONLINE (DORMANT)",
         "example": "",
-        "is_class_based": true
+        "is_class_based": true,
+        "is_lazy": true
+    },
+    "LAZY_TEST": {
+        "description": "Test per architettura Lazy Loading",
+        "commands": {
+            "cmd": "Attiva il plugin al volo ed esegue un test",
+            "ping": "Verifica se il caricamento JIT funziona"
+        },
+        "status": "ONLINE (DORMANT)",
+        "example": "",
+        "is_class_based": true,
+        "is_lazy": true
     },
     "MEDIA": {
         "description": "Hardware volume and mute control.",
@@ -73,9 +92,10 @@
             "set_mute": "Toggles system mute mode on or off.",
             "set_volume": "Sets the system volume to a specific level."
         },
-        "status": "ONLINE",
+        "status": "ONLINE (DORMANT)",
         "example": "",
-        "is_class_based": true
+        "is_class_based": true,
+        "is_lazy": true
     },
     "MEMORY": {
         "description": "Access to the Vault of memories and Admin profile (Identity and History).",
@@ -85,9 +105,10 @@
             "reset_memory": "Execute the Tabula Rasa protocol: clear the entire episodic chat history.",
             "who_am_i": "Ask Zentra to retrieve identity data for the Admin and the AI (context profile)."
         },
-        "status": "ONLINE (Vault Access Granted)",
+        "status": "ONLINE (DORMANT)",
         "example": "",
-        "is_class_based": true
+        "is_class_based": true,
+        "is_lazy": true
     },
     "MODELS": {
         "description": "Changes the AI model based on the active backend (Ollama/Kobold).",
@@ -96,9 +117,10 @@
             "list_models": "Lists all available models for the currently selected backend.",
             "set_model": "Sets a new active AI model based on the numeric index obtained from list_models."
         },
-        "status": "ONLINE (Model management)",
+        "status": "ONLINE (DORMANT)",
         "example": "",
-        "is_class_based": true
+        "is_class_based": true,
+        "is_lazy": true
     },
     "ROLEPLAY": {
         "description": "Manages roleplay mode: loads characters and scenes for immersive conversations.",
@@ -111,9 +133,10 @@
             "unload_character": "Deactivates the current character and returns to the normal personality.",
             "unload_scene": "Removes the current scene or setting."
         },
-        "status": "plugin_roleplay_status_online",
+        "status": "ONLINE (DORMANT)",
         "example": "",
-        "is_class_based": true
+        "is_class_based": true,
+        "is_lazy": true
     },
     "SYSTEM": {
         "description": "Root Access: terminal management, reboot, log diagnostics, system utilities.",
@@ -141,9 +164,10 @@
             "set_dns_servers": "Changes the DNS servers of the active network adapter to bypass ISP level blocking.",
             "test_proxy": "Tests the configured Proxy by attempting to reach an external service and reports the visible IP."
         },
-        "status": "Online",
+        "status": "ONLINE (DORMANT)",
         "example": "",
-        "is_class_based": true
+        "is_class_based": true,
+        "is_lazy": true
     },
     "WEB": {
         "description": "Network access for Google searches and quick opening of websites.",
@@ -160,9 +184,10 @@
         "commands": {
             "take_snapshot": "Takes a photo using the computer's webcam and saves it to disk."
         },
-        "status": "ONLINE (Optical Vision)",
+        "status": "ONLINE (DORMANT)",
         "example": "",
-        "is_class_based": true
+        "is_class_based": true,
+        "is_lazy": true
     },
     "WEB_UI": {
         "description": "Native Web Interface — Chat + Config Panel on localhost:7070",
@@ -171,7 +196,7 @@
             "open_browser": "Opens the Zentra web interface in the default browser if not already open.",
             "set_state_manager": "Injects the live StateManager from the main application."
         },
-        "status": "Online → http://127.0.0.1:7070/chat",
+        "status": "Online → https://127.0.0.1:7070/chat",
         "example": "",
         "is_class_based": true
     }

@@ -122,8 +122,10 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
         history_rows = brain_interface.get_history(limit=max_h, config=config)
         if history_rows:
             history_block = "\n[RECENT CONVERSATION HISTORY]\n"
+            # Extract clean name from personality string (e.g. 'Urania_9800_Woman.txt' -> 'Urania 9800 Woman')
+            clean_name = personality_name.replace(".txt", "").replace("_", " ") if personality_name else "Zentra"
             for role, msg in history_rows:
-                label = "User" if role == "user" else "Zentra"
+                label = "User" if role == "user" else clean_name
                 history_block += f"{label}: {msg}\n"
         logger.debug("BRAIN", f"History injected: {len(history_rows)} messages")
     
@@ -134,7 +136,6 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
     # 3. Rules and guidelines
     identity_rules = (
         f"{translator.t('identity_protocol')}\n"
-        f"- {translator.t('rule_who_am_i')}\n"
     )
     file_manager_rules = (
         f"{translator.t('file_management_rules')}\n"
@@ -210,6 +211,19 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
         tag_instructions = ""  # No manual tags needed for Native tools
         tools = get_tools_schema()
 
+    # --- VISION CAPABILITY NOTE ---
+    # If images are attached to this call, explicitly tell the AI it can see them.
+    # This overrides the 'check ACTIVE PROTOCOLS' rule, since Vision is a native
+    # client capability (not a plugin) and is NOT listed in the registry.
+    vision_note = ""
+    if images:
+        vision_note = (
+            "\n### VISION INPUT ###\n"
+            "You have native visual analysis capability. One or more images have been "
+            "attached to this message. Analyse them directly and describe their contents "
+            "in your response. Do NOT say you cannot see or do not have a visual module.\n"
+        )
+
     system_prompt = (
         f"{personality_prompt}\n"
         f"{memory_context}\n"
@@ -225,6 +239,7 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
         f"{plugin_guidelines}"
         f"{tag_instructions}"
         f"{special_instructions_block}"
+        f"{vision_note}"
     )
 
     

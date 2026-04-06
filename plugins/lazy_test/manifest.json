@@ -1,0 +1,47 @@
+{
+    "tag": "LAZY_TEST",
+    "description": "Test per architettura Lazy Loading",
+    "lazy_load": true,
+    "is_class_based": true,
+    "status": "ONLINE",
+    "commands": {
+        "cmd": "Attiva il plugin al volo ed esegue un test",
+        "ping": "Verifica se il caricamento JIT funziona"
+    },
+    "tool_schema": [
+        {
+            "type": "function",
+            "function": {
+                "name": "LAZY_TEST__cmd",
+                "description": "Attiva il plugin al volo ed esegue un test",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "prompt": {
+                            "type": "string",
+                            "description": "Parameter prompt"
+                        }
+                    },
+                    "required": []
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "LAZY_TEST__ping",
+                "description": "Verifica se il caricamento JIT funziona",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "prompt": {
+                            "type": "string",
+                            "description": "Parameter prompt"
+                        }
+                    },
+                    "required": []
+                }
+            }
+        }
+    ]
+}

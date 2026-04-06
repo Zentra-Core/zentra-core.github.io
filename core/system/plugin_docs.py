@@ -13,7 +13,9 @@ from core.i18n import translator
 from .plugin_state import (
     REGISTRY_PATH,
     _loaded_plugins,
-    _loaded_legacy_plugins
+    _loaded_legacy_plugins,
+    _lazy_plugins_paths,
+    _lazy_tool_schemas
 )
 from .plugin_scanner import update_capability_registry
 
@@ -190,6 +192,11 @@ def get_tools_schema():
                     }
                 })
 
+    # --- ADD LAZY PLUGINS SCHEMAS ---
+    for tag, schema_list in _lazy_tool_schemas.items():
+        if tag not in _loaded_plugins: # Don't duplicate if already awakened
+            tools_list.extend(schema_list)
+
     return tools_list if tools_list else None
 
 def get_legacy_schema():
@@ -230,6 +237,20 @@ def get_legacy_schema():
                 param_str = ": " + ",".join(params) if params else ""
                 
                 result_string += f"  - [{tag}: {name}{param_str}] : {desc}\n"
+
+    # 3. Dormant Lazy Plugins (Tag info from registry)
+    if os.path.exists(REGISTRY_PATH):
+        try:
+            with open(REGISTRY_PATH, "r", encoding="utf-8") as f:
+                reg = json.load(f)
+            for tag, info in reg.items():
+                if tag not in _loaded_plugins and tag not in _loaded_legacy_plugins:
+                    is_lazy = tag in _lazy_plugins_paths
+                    if is_lazy or "DORMANT" in info.get("status", ""):
+                        result_string += f"\n[MODULE: {tag}] (Dormant)\n"
+                        for cmd, dsc in info.get("commands", {}).items():
+                            result_string += f"  - [{tag}: {cmd}] : {dsc}\n"
+        except: pass
 
     result_string += "\nATTENTION: Tags must be exactly in [TAG: command] format to be executed.\n"
     return result_string
