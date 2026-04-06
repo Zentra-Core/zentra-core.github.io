@@ -13,10 +13,22 @@ from core.logging import logger
 
 def _safe_path(root: str, rel_path: str) -> str | None:
     """
-    Resolves a relative path against the drive root.
-    Returns None if path traversal is detected (outside root).
+    Resolves a relative path against the drive root, OR accepts an absolute path 
+    directly to allow navigating across different disks (e.g., D:\)
+    Returns None if malicious path traversal is detected.
     """
-    # Normalize and resolve the candidate path
+    import sys
+
+    # If the provided path is already absolute (e.g., "D:\folder" or "/mnt")
+    if os.path.isabs(rel_path) or (sys.platform == "win32" and ":" in rel_path):
+        candidate = os.path.abspath(os.path.normpath(rel_path))
+        drive_root = os.path.splitdrive(candidate)[0] + os.sep
+        # Prevent traversal above the physical drive root
+        if not candidate.startswith(drive_root):
+            return None
+        return candidate
+
+    # Otherwise, resolve against the configured default root
     candidate = os.path.normpath(os.path.join(root, rel_path.lstrip("/\\")))
     candidate = os.path.abspath(candidate)
     root_abs = os.path.abspath(root)
@@ -77,7 +89,12 @@ def init_drive_routes(app, logger_instance=None):
             entries = []
             for name in sorted(os.listdir(target)):
                 full = os.path.join(target, name)
-                rel_entry = os.path.relpath(full, root).replace("\\", "/")
+                try:
+                    rel_entry = os.path.relpath(full, root).replace("\\", "/")
+                except ValueError:
+                    # Windows cross-drive relpath error -> fallback to absolute
+                    rel_entry = full.replace("\\", "/")
+                
                 stat = os.stat(full)
                 entries.append({
                     "name": name,
@@ -87,17 +104,39 @@ def init_drive_routes(app, logger_instance=None):
                     "modified": int(stat.st_mtime)
                 })
             
-            # Build breadcrumb
-            crumbs = []
-            parts = os.path.relpath(target, root).replace("\\", "/").split("/")
-            if parts == ["."]:
-                parts = []
-            cumulative = ""
-            for part in parts:
-                cumulative = (cumulative + "/" + part).lstrip("/")
-                crumbs.append({"name": part, "path": cumulative})
+            # Build breadcrumb with full absolute path segments safely (no relpath to avoid cross-drive ValueError)
+            import sys
+            abs_target = os.path.abspath(target).replace("\\", "/")
+            abs_root   = os.path.abspath(root).replace("\\", "/")
 
-            return jsonify({"ok": True, "path": rel, "entries": entries, "breadcrumb": crumbs})
+            if sys.platform == "win32":
+                slash_parts = abs_target.split("/")
+                root_display = slash_parts[0] + "/"
+                parts = slash_parts[1:] if len(slash_parts) > 1 else []
+                # Remove empty parts
+                parts = [p for p in parts if p]
+            else:
+                parts = [p for p in abs_target.split("/") if p]
+                root_display = "/"
+
+            crumbs = []
+            cumulative = root_display.rstrip("/") if sys.platform == "win32" else ""
+            for part in parts:
+                cumulative += "/" + part
+                crumbs.append({
+                    "name": part,
+                    "path": cumulative,
+                    "abs": cumulative
+                })
+
+            return jsonify({
+                "ok": True,
+                "path": rel,
+                "abs_path": abs_target,
+                "root_label": root_display,
+                "entries": entries,
+                "breadcrumb": crumbs
+            })
         except Exception as e:
             _log.error(f"[Drive] list error: {e}")
             return jsonify({"ok": False, "error": str(e)}), 500
@@ -243,3 +282,37 @@ def init_drive_routes(app, logger_instance=None):
             return jsonify({"ok": True})
         except Exception as e:
             return jsonify({"ok": False, "error": str(e)}), 500
+
+    # ─── DRIVES ────────────────────────────────────────────────────────────────
+
+    @app.route("/drive/api/drives")
+    @login_required
+    def drive_list_drives():
+        """Returns all available drives/volumes on the server."""
+        import sys
+        drives = []
+        try:
+            if sys.platform == "win32":
+                import ctypes
+                bitmask = ctypes.windll.kernel32.GetLogicalDrives()
+                for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                    if bitmask & 1:
+                        path = f"{letter}:\\"
+                        if os.path.exists(path):
+                            try:
+                                buf = ctypes.create_unicode_buffer(256)
+                                ctypes.windll.kernel32.GetVolumeInformationW(path, buf, 256, None, None, None, None, 0)
+                                vol_label = buf.value or ""
+                            except Exception:
+                                vol_label = ""
+                            try:
+                                free_bytes = shutil.disk_usage(path).free
+                            except Exception:
+                                free_bytes = 0
+                            drives.append({"letter": letter, "label": vol_label or f"Drive {letter}:", "path": path.replace("\\", "/"), "free_gb": round(free_bytes / (1024 ** 3), 1)})
+                    bitmask >>= 1
+            else:
+                drives = [{"letter": "/", "label": "Root (/)", "path": "/", "free_gb": 0}]
+        except Exception as e:
+            _log.error(f"[Drive] drives list error: {e}")
+        return jsonify({"ok": True, "drives": drives})
