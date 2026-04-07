@@ -76,7 +76,7 @@ def stream_response(
         for memory saving after draining the generator.
     """
     try:
-        from core.llm import client as llm_client
+        from zentra.core.llm import client as llm_client
     except ImportError as exc:
         bridge_logger.error(f"[STREAM] LLM client import error: {exc}")
         yield f"data: {json.dumps({'error': {'message': 'LLM client unavailable', 'type': 'internal_error'}})}\n\n"

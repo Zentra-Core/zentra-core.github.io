@@ -15,3 +15,6 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]
+
+[project.scripts]
+zentra = "zentra.main:main"

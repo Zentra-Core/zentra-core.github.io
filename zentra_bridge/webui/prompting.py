@@ -22,9 +22,9 @@ def build_system_prompt(config: dict, bridge_dir: str) -> str:
         A single multi-line string ready to be inserted as the ``system`` role message.
     """
     try:
-        from core.llm import brain
-        from memory import brain_interface
-        from core.i18n import translator
+        from zentra.core.llm import brain
+        from zentra.memory import brain_interface
+        from zentra.core.i18n import translator
     except ImportError as exc:
         bridge_logger.error(f"[PROMPT] Failed to import core modules: {exc}")
         return "You are Zentra, an AI assistant."
