@@ -23,18 +23,19 @@ let pressStartTime = 0;
 
 /**
  * Read user preference for auto-send.
- * @param {boolean} lockedMode - true if Toggle/Locked mode, false if PTT
+ * New logic: the UI toggle controls PREVIEW mode.
+ * If PREVIEW is ON (true) -> return false (meaning NO auto-send, show in textarea).
+ * If PREVIEW is OFF (false) -> return true (meaning YES auto-send, send immediately).
  */
 function _webptt_shouldAutoSend(lockedMode) {
   if (lockedMode) {
-    // Toggle mode: default OFF (show in textarea)
-    return localStorage.getItem('webptt_toggle_autosend') !== '0'
-      ? (localStorage.getItem('webptt_toggle_autosend') === '1')
-      : false;
+    // Toggle mode: Default Preview is OFF -> auto-send is ON
+    const previewOn = localStorage.getItem('webptt_toggle_preview') === 'true';
+    return !previewOn;
   } else {
-    // PTT mode: default ON (auto-send)
-    const val = localStorage.getItem('webptt_ptt_autosend');
-    return val === null || val === '1';
+    // PTT mode: Default Preview is OFF -> auto-send is ON
+    const previewOn = localStorage.getItem('webptt_ptt_preview') === 'true';
+    return !previewOn;
   }
 }
 
@@ -370,16 +371,18 @@ window.webptt_getPref = function(key) {
 };
 
 window.webptt_setPref = function(key, val) {
-  localStorage.setItem(key, val ? '1' : '0');
+  localStorage.setItem(key, val ? 'true' : 'false');
 };
 
 window.webptt_loadPrefs = function() {
-  const pttPref    = localStorage.getItem('webptt_ptt_autosend');
-  const togglePref = localStorage.getItem('webptt_toggle_autosend');
-  const pttEl    = document.getElementById('webptt-ptt-autosend');
-  const toggleEl = document.getElementById('webptt-toggle-autosend');
-  if (pttEl)    pttEl.checked    = (pttPref    === null || pttPref    === '1');
-  if (toggleEl) toggleEl.checked = (togglePref === '1');
+  const pttPref    = localStorage.getItem('webptt_ptt_preview');
+  const togglePref = localStorage.getItem('webptt_toggle_preview');
+  const pttEl    = document.getElementById('webptt-ptt-preview');
+  const toggleEl = document.getElementById('webptt-toggle-preview');
+  
+  // Custom defaults: BOTH PTT and Toggle preview are OFF by default
+  if (pttEl)    pttEl.checked    = (pttPref === 'true');
+  if (toggleEl) toggleEl.checked = (togglePref === 'true');
 };
 
 // ── Init ──────────────────────────────────────────────────────────────────
