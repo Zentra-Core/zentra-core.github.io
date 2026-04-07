@@ -13,7 +13,9 @@ from core.i18n import translator
 from .plugin_state import (
     REGISTRY_PATH,
     _loaded_plugins,
-    _loaded_legacy_plugins
+    _loaded_legacy_plugins,
+    _lazy_plugins_paths,
+    _lazy_tool_schemas
 )
 from .plugin_scanner import update_capability_registry
 
@@ -138,6 +140,11 @@ def get_tools_schema():
     import inspect
     import re
 
+    # CRITICAL: Ensure _lazy_tool_schemas is populated if this is a fresh process
+    if not _loaded_plugins and not _lazy_tool_schemas:
+        logger.debug("DOCS", "Memory schemas empty, triggering capability rescan...")
+        update_capability_registry(debug_log=False)
+
     tools_list = []
 
     def _parse_docstring(docstring):
@@ -190,6 +197,11 @@ def get_tools_schema():
                     }
                 })
 
+    # --- ADD LAZY PLUGINS SCHEMAS ---
+    for tag, schema_list in _lazy_tool_schemas.items():
+        if tag not in _loaded_plugins: # Don't duplicate if already awakened
+            tools_list.extend(schema_list)
+
     return tools_list if tools_list else None
 
 def get_legacy_schema():
@@ -230,6 +242,36 @@ def get_legacy_schema():
                 param_str = ": " + ",".join(params) if params else ""
                 
                 result_string += f"  - [{tag}: {name}{param_str}] : {desc}\n"
+
+    # 3. Dormant Lazy Plugins (Tag info from registry)
+    if os.path.exists(REGISTRY_PATH):
+        try:
+            with open(REGISTRY_PATH, "r", encoding="utf-8") as f:
+                reg = json.load(f)
+            for tag, info in reg.items():
+                if tag not in _loaded_plugins and tag not in _loaded_legacy_plugins:
+                    is_lazy = tag in _lazy_plugins_paths
+                    if is_lazy or "DORMANT" in info.get("status", ""):
+                        result_string += f"\n[MODULE: {tag}] (Dormant)\n"
+                        # Improve documentation by showing parameters if they exist in _lazy_tool_schemas
+                        lazy_commands = info.get("commands", {})
+                        
+                        # Peek into tool_schema for param names
+                        param_map = {}
+                        if tag in _lazy_tool_schemas:
+                            for schema in _lazy_tool_schemas[tag]:
+                                func_name = schema.get("function", {}).get("name", "")
+                                if "__" in func_name:
+                                    _, actual_cmd = func_name.split("__", 1)
+                                    props = schema.get("function", {}).get("parameters", {}).get("properties", {})
+                                    if props:
+                                        param_map[actual_cmd] = list(props.keys())
+
+                        for cmd, dsc in lazy_commands.items():
+                            p_list = param_map.get(cmd, [])
+                            p_str = ": " + ",".join(p_list) if p_list else ""
+                            result_string += f"  - [{tag}: {cmd}{p_str}] : {dsc}\n"
+        except: pass
 
     result_string += "\nATTENTION: Tags must be exactly in [TAG: command] format to be executed.\n"
     return result_string

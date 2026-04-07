@@ -24,6 +24,8 @@ def init_config_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
             incoming = request.get_json(force=True)
             if not isinstance(incoming, dict):
                 return jsonify({"ok": False, "error": "Invalid payload"}), 400
+            # Estrai il flag custom Frontend per forzare il riavvio (o auto-save silenzioso)
+            force_restart = incoming.pop("_force_restart", False)
             
             # DEBUG: Log exact state of plugins toggle
             p_state = incoming.get("plugins", {}).get("IMAGE_GEN", {}).get("enabled")
@@ -35,7 +37,6 @@ def init_config_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
                 get_translator().set_language(incoming.get("language", "en"))
                 
                 # Keep state_manager in sync with toggles
-                # Note: audio_mode is in config_audio.json, not here
                 sm = _sm()
                 if sm is not None:
                     from core.audio.device_manager import get_audio_config
@@ -51,6 +52,20 @@ def init_config_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
                 except Exception as e:
                     logger.debug(f"[WebUI] Processor runtime sync error: {e}")
                     
+                # Gestione dell'inibitore del Monitor in base al trigger Frontend
+                if not force_restart:
+                    # Salvataggio silenzioso: scriviamo l'inibitore così il monitor INGNORA il file cambiato
+                    try:
+                        with open(".config_saved_by_app", "w") as f:
+                            f.write("1")
+                    except Exception: pass
+                else:
+                    # Salvataggio esplicito utente: rimuoviamo l'inibitore per forzare il riavvio del processo
+                    if os.path.exists(".config_saved_by_app"):
+                        try:
+                            os.remove(".config_saved_by_app")
+                        except Exception: pass
+                        
                 return jsonify({"ok": True})
             return jsonify({"ok": False, "error": "Save failed"}), 500
         except Exception as exc:

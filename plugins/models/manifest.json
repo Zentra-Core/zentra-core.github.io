@@ -1,0 +1,57 @@
+{
+    "tag": "MODELS",
+    "description": "Changes the AI model based on the active backend (Ollama/Kobold).",
+    "lazy_load": true,
+    "is_class_based": true,
+    "status": "ONLINE (Model management)",
+    "commands": {
+        "get_current_backend": "Returns the AI backend currently in use (e.g., cloud, ollama, kobold).",
+        "list_models": "Lists all available models for the currently selected backend.",
+        "set_model": "Sets a new active AI model based on the numeric index obtained from list_models."
+    },
+    "tool_schema": [
+        {
+            "type": "function",
+            "function": {
+                "name": "MODELS__get_current_backend",
+                "description": "Returns the AI backend currently in use (e.g., cloud, ollama, kobold).",
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "MODELS__list_models",
+                "description": "Lists all available models for the currently selected backend.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "MODELS__set_model",
+                "description": "Sets a new active AI model based on the numeric index obtained from list_models.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "model_number": {
+                            "type": "string",
+                            "description": "Parameter model_number"
+                        }
+                    },
+                    "required": [
+                        "model_number"
+                    ]
+                }
+            }
+        }
+    ]
+}

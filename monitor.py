@@ -31,14 +31,14 @@ def get_translator():
         "it": {
             "critical_missing": "[MONITOR] CRITICAL: {file} not found.",
             "starting": "[MONITOR] Starting Zentra ({script})...",
-            "config_changed": "[MONITOR] config.json change detected. Terminating...",
+            "config_changed": "[MONITOR] system.yaml change detected. Terminating...",
             "reset_complete": "[MONITOR] Reset complete. Restarting in 2 seconds...",
             "error": "[MONITOR] Error: {error}"
         },
         "en": {
             "critical_missing": "[MONITOR] CRITICAL: {file} not found.",
             "starting": "[MONITOR] Starting Zentra ({script})...",
-            "config_changed": "[MONITOR] config.json change detected. Terminating...",
+            "config_changed": "[MONITOR] system.yaml change detected. Terminating...",
             "reset_complete": "[MONITOR] Reset complete. Restarting in 2 seconds...",
             "error": "[MONITOR] Error: {error}"
         }

@@ -49,16 +49,16 @@ def generate_self_awareness(personality_name):
         from core.system.plugin_loader import get_active_tags
         active_plugins = get_active_tags()
         
-        souls = [f for f in os.listdir("personality") if f.endswith('.txt')]
-        core_modules = [f for f in os.listdir("core") if f.endswith('.py')]
+        # Simplified listing to save tokens
+        souls_count = len([f for f in os.listdir("personality") if f.endswith('.txt')])
+        core_count  = len([f for f in os.listdir("core") if f.endswith('.py')])
         
         awareness = f"\n{translator.t('structural_self_awareness')}\n"
         awareness += f"{translator.t('awareness_desc')}\n"
         awareness += f"- {translator.t('current_soul', name=personality_name)}\n"
-        other_souls = ', '.join([a for a in souls if a != personality_name])
-        awareness += f"- {translator.t('dormant_souls', souls=other_souls)}\n"
-        awareness += f"- {translator.t('central_nervous_system', modules=', '.join(core_modules))}\n"
-        awareness += f"- {translator.t('action_modules', modules=', '.join(active_plugins) if active_plugins else 'none')}\n"
+        awareness += f"- Total personality modules available: {souls_count}\n"
+        awareness += f"- Active Action Modules: {', '.join(active_plugins) if active_plugins else 'none'}\n"
+        awareness += f"- Core Subsystems: {core_count} integrated modules\n"
         awareness += f"{translator.t('admin_structure_hint')}\n"
         
         logger.debug("BRAIN", f"Self-awareness generated for {len(active_plugins)} active plugins")
@@ -108,7 +108,11 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
     # 2. Memory and self-awareness (respecting cognition config)
     cog = config.get('cognition', {})
     logger.debug("BRAIN", "Memory loading...")
-    memory_context = brain_interface.get_context(config) if cog.get('include_identity_context', True) else ""
+    
+    # Calculate clean name for identity context
+    clean_name = personality_name.replace(".txt", "").replace("_", " ") if personality_name else "Zentra"
+    
+    memory_context = brain_interface.get_context(config, dynamic_name=clean_name) if cog.get('include_identity_context', True) else ""
     logger.debug("BRAIN", f"Memory: {len(memory_context)} characters")
     
     logger.debug("BRAIN", "Self-awareness generation...")
@@ -123,7 +127,7 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
         if history_rows:
             history_block = "\n[RECENT CONVERSATION HISTORY]\n"
             for role, msg in history_rows:
-                label = "User" if role == "user" else "Zentra"
+                label = "User" if role == "user" else clean_name
                 history_block += f"{label}: {msg}\n"
         logger.debug("BRAIN", f"History injected: {len(history_rows)} messages")
     
@@ -134,7 +138,6 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
     # 3. Rules and guidelines
     identity_rules = (
         f"{translator.t('identity_protocol')}\n"
-        f"- {translator.t('rule_who_am_i')}\n"
     )
     file_manager_rules = (
         f"{translator.t('file_management_rules')}\n"
@@ -171,6 +174,8 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
         "- [FILE_MANAGER: list:folder] - List files for analysis\n"
         "- [DASHBOARD: resources] - Get hardware telemetry\n"
         "- [IMAGE_GEN: generate_image:description] - Generate an image\n"
+        "- WEBCAM ROUTING RULE: When the user says 'phone', 'smartphone', 'mobile', 'il telefono', 'browser', or any remote device,"
+        " you MUST call WEBCAM take_snapshot with target='client'. NEVER use target='server' when the user is asking from a phone.\n"
     )
 
 
@@ -210,6 +215,19 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
         tag_instructions = ""  # No manual tags needed for Native tools
         tools = get_tools_schema()
 
+    # --- VISION CAPABILITY NOTE ---
+    # If images are attached to this call, explicitly tell the AI it can see them.
+    # This overrides the 'check ACTIVE PROTOCOLS' rule, since Vision is a native
+    # client capability (not a plugin) and is NOT listed in the registry.
+    vision_note = ""
+    if images:
+        vision_note = (
+            "\n### VISION INPUT ###\n"
+            "You have native visual analysis capability. One or more images have been "
+            "attached to this message. Analyse them directly and describe their contents "
+            "in your response. Do NOT say you cannot see or do not have a visual module.\n"
+        )
+
     system_prompt = (
         f"{personality_prompt}\n"
         f"{memory_context}\n"
@@ -225,6 +243,7 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
         f"{plugin_guidelines}"
         f"{tag_instructions}"
         f"{special_instructions_block}"
+        f"{vision_note}"
     )
 
     

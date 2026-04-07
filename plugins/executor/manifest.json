@@ -1,0 +1,31 @@
+{
+    "tag": "EXECUTOR",
+    "description": "Safe Python execution (AST Sandbox).",
+    "lazy_load": true,
+    "is_class_based": true,
+    "status": "ONLINE (Code Jail Active)",
+    "commands": {
+        "run_python_code": "Executes a block of Python code safely after strict Static Analysis."
+    },
+    "tool_schema": [
+        {
+            "type": "function",
+            "function": {
+                "name": "EXECUTOR__run_python_code",
+                "description": "Executes a block of Python code safely after strict Static Analysis.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "code": {
+                            "type": "string",
+                            "description": "The Python script to execute."
+                        }
+                    },
+                    "required": [
+                        "code"
+                    ]
+                }
+            }
+        }
+    ]
+}

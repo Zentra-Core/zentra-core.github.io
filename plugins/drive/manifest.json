@@ -1,0 +1,11 @@
+{
+    "tag": "DRIVE",
+    "description": "HTTP File Manager: sfoglia, carica, scarica e cancella file via WebUI.",
+    "lazy_load": true,
+    "is_class_based": false,
+    "status": "ONLINE",
+    "commands": {
+        "/drive": "Apre il File Manager nel browser"
+    },
+    "tool_schema": []
+}

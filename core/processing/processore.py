@@ -65,7 +65,7 @@ def configure(new_config):
 def process_exchange(user_text, voice_status, sm=None):
     """Manages the entire chain: AI -> Plugin -> Cleaning -> Response.
     NOW REFACTORED TO USE THE AGENTIC LOOP."""
-    logger.info(f"[PROCESSOR] Input received: '{user_text}'. Delegating to Agentic Loop.")
+    logger.info(f"[PROCESSOR] Input received (length: {len(user_text)}). Delegating to Agentic Loop.")
     
     from core.agent.loop import AgentExecutor
     
@@ -168,7 +168,7 @@ def extract_and_execute_tools(raw_response, config=None):
         from core.system import plugin_loader
         
         # FAIL-SAFE: If the registry is empty (happens in standalone child processes), auto-init.
-        if not plugin_loader._loaded_plugins:
+        if not plugin_loader.get_active_tags():
             logger.info("[PROCESSOR] Plugin registry empty; performing lazy initialization...")
             plugin_loader.update_capability_registry(current_config, debug_log=False)
             
@@ -238,11 +238,25 @@ def extract_and_execute_tools(raw_response, config=None):
     
     return True, tool_results, base_text
 
+# Tokens that must survive tag cleanup (intercepted by the browser JS)
+_PRESERVED_TOKENS = ["[CAMERA_SNAPSHOT_REQUEST]"]
+
 def clean_final_output(base_text, tool_results, raw_response_obj, voice_status=False):
     """Formats the final text for display and TTS after all loops are complete."""
+    # Temporarily protect special tokens from regex stripping
+    _placeholders = {}
+    for i, tok in enumerate(_PRESERVED_TOKENS):
+        placeholder = f"__PRESERVED_{i}__"
+        _placeholders[placeholder] = tok
+        base_text = base_text.replace(tok, placeholder)
+    
     # Extract tags (for UI rendering if legacy tags were used instead of native functions)
     base_video = re.sub(r'\[.*?:.*?\]', '', base_text).strip()
-    base_video = re.sub(r'\[.*?\]', '', base_video).strip() 
+    base_video = re.sub(r'\[.*?\]', '', base_video).strip()
+    
+    # Restore preserved tokens
+    for placeholder, tok in _placeholders.items():
+        base_video = base_video.replace(placeholder, tok)
     
     if not base_video:
         if tool_results:

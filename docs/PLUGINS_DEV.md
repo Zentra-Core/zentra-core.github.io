@@ -80,3 +80,65 @@ class Tools:
 tools = Tools()
 ```
 *When activated, the AI will automatically know it can call `tools__add` or `tools__multiply` when math is requested.*
+
+---
+
+## 7. Lazy Loading & Manifest Sync (v0.12.0+)
+To improve startup speed, plugins can now be loaded lazily. Instead of importing the Python module at boot, Zentra reads a `manifest.json` file.
+
+### manifest.json structure:
+```json
+{
+    "tag": "MY_PLUGIN",
+    "description": "Short description for the AI",
+    "lazy_load": true,
+    "commands": {
+        "my_command": "Description of what it does"
+    },
+    "tool_schema": [
+        {
+            "type": "function",
+            "function": {
+                "name": "MY_PLUGIN__my_command",
+                "parameters": { ... JSON Schema ... }
+            }
+        }
+    ]
+}
+```
+**Benefits:**
+- **Zero-boot time:** The Python file is only executed when the AI actually calls the tool.
+- **Memory efficiency:** Dormant plugins don't consume VRAM or RAM.
+
+---
+
+## 8. Remote Client Redirection (Camera)
+Zentra can now trigger actions directly on the user's browser/phone instead of the server hardware.
+
+**Pattern:**
+1. Your tool returns a unique token (e.g., `[CAMERA_SNAPSHOT_REQUEST]`).
+2. `core/agent/loop.py` intercepts this token and short-circuits the AI reasoning.
+3. `routes_chat.py` detects the token and emits a dedicated **SSE Event** (e.g., `camera_request`).
+4. The WebUI (via `client_camera.js`) reacts to this event by injecting a visible UI button.
+5. The button click triggers a native browser capability (like `camera.capture`).
+
+---
+
+## 9. Extension Architecture (JIT Modules)
+In version 0.12.0, Zentra introduced "Extensions", which are dynamically loaded sub-plugins encapsulated inside specific master plugins (e.g., Code Editor inside the Drive plugin).
+
+**Structure:**
+```text
+plugins/drive/
+├── extensions/
+│   └── editor/
+│       ├── manifest.json
+│       ├── main.py     # Only loaded when the Editor is opened!
+│       └── assets/     # JS/CSS dependencies loaded dynamically
+```
+
+**Workflow:**
+- The master plugin registers an endpoint (e.g. `/drive/editor`).
+- When the user visits it, `extension_loader.load_extension("drive", "editor")` is called.
+- Zentra validates `manifest.json`, injects `main.py` functions into the master module conditionally, and serves the UI.
+- This allows Zentra plugins to grow infinitely in capabilities without affecting boot times or holding RAM hostage.

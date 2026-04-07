@@ -1,0 +1,37 @@
+{
+    "tag": "HELP",
+    "description": "Displays the list of all active commands and modules in the system.",
+    "lazy_load": true,
+    "is_class_based": true,
+    "status": "ONLINE",
+    "commands": {
+        "list_capabilities": "Displays the complete list of all tools, modules, and capabilities currently loaded in the system.",
+        "refresh_registry": "Forces a re-read and update of the central capabilities registry (rescans plugins)."
+    },
+    "tool_schema": [
+        {
+            "type": "function",
+            "function": {
+                "name": "HELP__list_capabilities",
+                "description": "Displays the complete list of all tools, modules, and capabilities currently loaded in the system.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "HELP__refresh_registry",
+                "description": "Forces a re-read and update of the central capabilities registry (rescans plugins).",
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            }
+        }
+    ]
+}

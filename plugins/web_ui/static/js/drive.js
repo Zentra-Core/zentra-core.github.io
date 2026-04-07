@@ -18,7 +18,10 @@ function pathId(path) {
 // ─── Init ────────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
   initDropzone();
-  loadDir(""); // kick off from root
+  const urlParams = new URLSearchParams(window.location.search);
+  const startRoot = urlParams.get("root") || "";
+  loadDir(startRoot); // kick off from configured root or custom absolute root
+  loadDrives(); // populate drive selector
 });
 
 // ─── Load directory ──────────────────────────────────────────────────────────
@@ -34,12 +37,16 @@ async function loadDir(path) {
 
     allEntries = data.entries;
 
+    // Store absolute path context
+    currentAbsPath   = data.abs_path   || "";
+    currentRootLabel = data.root_label || "";
+
     // Store dirs in tree cache for this path
     treeData[path] = data.entries.filter(e => e.is_dir);
 
-    renderBreadcrumb(data.breadcrumb || []);
+    renderBreadcrumb(data.breadcrumb || [], data.root_label || "");
     renderTable();
-    updateLocationBar(path, data.entries);
+    updateLocationBar(path, data.entries, data.abs_path, data.root_label);
 
     // Rebuild the entire tree from what we know
     renderTree();
@@ -59,23 +66,89 @@ function goUp() {
   loadDir(parts.join("/"));
 }
 
+// ─── State extras ────────────────────────────────────────────────────────────
+let currentRootLabel = "";   // e.g. "C:/"  – set from API response
+let currentAbsPath   = "";   // full absolute path of current dir
+
+// ─── Drive selector ──────────────────────────────────────────────────────────
+async function loadDrives() {
+  try {
+    const res  = await fetch("/drive/api/drives");
+    const data = await res.json();
+    if (!data.ok || !data.drives || !data.drives.length) return;
+
+    const bar  = document.getElementById("path-bar");
+    const sel  = document.createElement("select");
+    sel.id     = "drive-select";
+    sel.title  = "Cambio disco / periferica";
+    sel.style.cssText = `
+      background: rgba(102,252,241,0.08);
+      color: var(--accent);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 3px 8px;
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      margin-right: 6px;
+    `;
+
+    data.drives.forEach(d => {
+      const opt   = document.createElement("option");
+      opt.value   = d.path;
+      opt.textContent = `💾 ${d.letter}: — ${d.label}  (${d.free_gb} GB liberi)`;
+      sel.appendChild(opt);
+    });
+
+    sel.addEventListener("change", async () => {
+      // When user picks a different drive, navigate to that drive root (relative = "")
+      // We must tell the backend which root to use — for now we trigger reload with path=""
+      // and change the config on the fly via the SYSTEM set_configuration tool.
+      // Simpler approach: navigate to the drive path relative to its own root.
+      // Since the Drive root is currently C:\ we use a "change_root" approach.
+      // We signal via a special query param ?drive= so the server knows which root to use.
+      // Cleanest: just open /drive and update the UI root via a new query.
+      window.location.href = `/drive?root=${encodeURIComponent(sel.value)}`;
+    });
+
+    // Insert the selector BEFORE the path bar's content
+    const toolbar = document.getElementById("toolbar");
+    toolbar.insertBefore(sel, toolbar.children[2]); // after ⬆ button
+
+    // Pre-select current drive if we know it
+    if (currentRootLabel) {
+      for (const opt of sel.options) {
+        if (currentRootLabel.toLowerCase().startsWith(opt.value.replace(/\//g,"\\").toLowerCase().substring(0,3))) {
+          opt.selected = true;
+          break;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[Drive] Could not load drive list:", e);
+  }
+}
+
 // ─── Breadcrumb (top toolbar) ─────────────────────────────────────────────────
-function renderBreadcrumb(crumbs) {
+function renderBreadcrumb(crumbs, rootLabel) {
   const bar = document.getElementById("path-bar");
-  let html = `<span class="crumb" onclick="navigateTo('')">🏠 Drive</span>`;
+  // Show the actual root (e.g. "C:/") as the first clickable crumb
+  const rootDisplay = rootLabel || "🏠 Drive";
+  let html = `<span class="crumb" onclick="navigateTo('')" title="${rootLabel}">${rootDisplay}</span>`;
   crumbs.forEach((c, i) => {
     const isLast = i === crumbs.length - 1;
     html += `<span class="sep">/</span>`;
     html += isLast
       ? `<span class="crumb current">${esc(c.name)}</span>`
-      : `<span class="crumb" onclick="navigateTo('${esc(c.path)}')">${esc(c.name)}</span>`;
+      : `<span class="crumb" onclick="navigateTo('${esc(c.path)}')" title="${esc(c.abs || c.path)}">${esc(c.name)}</span>`;
   });
   bar.innerHTML = html;
 }
 
 // ─── Location bar ────────────────────────────────────────────────────────────
-function updateLocationBar(path, entries) {
-  const dispPath = path ? "/" + path.replace(/\\/g, "/") : "/  (root)";
+function updateLocationBar(path, entries, absPath, rootLabel) {
+  // Show the FULL absolute path (e.g. "C:/Users/Tony/Documents")
+  const dispPath = absPath || (path ? "/" + path.replace(/\\/g, "/") : rootLabel || "/");
   document.getElementById("loc-path").textContent = dispPath;
 
   const dirs  = entries.filter(e => e.is_dir).length;
@@ -87,6 +160,20 @@ function updateLocationBar(path, entries) {
 }
 
 // ─── File table ───────────────────────────────────────────────────────────────
+
+// File types the Zentra Code Editor supports
+const EDITABLE_EXTS = new Set([
+  'py','js','ts','json','yaml','yml','toml','html','htm','css','scss',
+  'sh','bat','ps1','md','txt','ini','cfg','conf','log','xml','env'
+]);
+function isEditable(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  return EDITABLE_EXTS.has(ext);
+}
+function openEditor(path) {
+  window.open(`/drive/editor?path=${encodeURIComponent(path)}`, '_blank');
+}
+
 function sortBy(key) {
   sortAsc = (sortKey === key) ? !sortAsc : true;
   sortKey = key;
@@ -131,6 +218,9 @@ function renderTable() {
         ${e.is_dir
           ? `<button onclick="navigateTo('${esc(e.path)}')" title="Apri">📂</button>`
           : `<button onclick="downloadFile('${esc(e.path)}')" title="Scarica">⬇️</button>`}
+        ${!e.is_dir && isEditable(e.name)
+          ? `<button onclick="openEditor('${esc(e.path)}')" title="Apri in Zentra Editor" style="color:#58a6ff;">✏️</button>`
+          : ''}
         <button onclick="deleteItem('${esc(e.path)}','${esc(e.name)}')" title="Elimina">🗑️</button>
       </td>
     </tr>`;

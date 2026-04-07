@@ -57,12 +57,20 @@ class WebcamTools:
             }
         }
 
-    def take_snapshot(self) -> str:
+    def take_snapshot(self, target: str = "server") -> str:
         """
         Takes a photo using the computer's webcam and saves it to disk.
         Use this tool when the user asks to take a photo or look at something.
+        
+        Args:
+            target (str): "server" to use the local OS webcam hardware.
+                          "client" to ask the user's remote device (smartphone/browser) 
+                                   to take a picture and auto-upload it.
         """
-        logger.debug(f"PLUGIN_{self.tag}", "Executing snapshot protocol")
+        logger.debug(f"PLUGIN_{self.tag}", f"Executing snapshot protocol (Target: {target})")
+        
+        if target.lower() == "client":
+            return "[CAMERA_SNAPSHOT_REQUEST]"
         
         cfg = ConfigManager()
         save_dir = cfg.get_plugin_config(self.tag, "save_directory", "snapshots")
@@ -79,9 +87,15 @@ class WebcamTools:
             if not cap.isOpened():
                 return translator.t("plugin_webcam_error_sensor")
 
-            if delay > 0:
-                time.sleep(delay)
+            # Flush the stale buffer to avoid grabbing old cached OS frames
+            # We read a few transient frames during the stabilization period
+            flush_frames = 5
+            for i in range(flush_frames):
+                cap.read()
+                if delay > 0:
+                    time.sleep(delay / flush_frames)
             
+            # Now take the final fresh frame
             ret, frame = cap.read()
             if ret:
                 timestamp = int(time.time())

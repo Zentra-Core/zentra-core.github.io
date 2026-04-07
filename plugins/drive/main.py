@@ -42,10 +42,12 @@ class DrivePlugin:
             root = cfg.get_plugin_config(TAG, "root_dir", "")
         except Exception:
             root = ""
-        
+
         if not root:
-            root = os.path.expanduser("~")  # Default: home utente
-        
+            # Default: filesystem root (C:\ on Windows, / on Linux)
+            import sys
+            root = "C:\\" if sys.platform == "win32" else "/"
+
         return os.path.abspath(root)
 
     def get_max_upload_bytes(self):

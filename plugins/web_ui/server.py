@@ -49,6 +49,11 @@ class ZentraWebUIServer:
         tpl_dir = os.path.join(os.path.dirname(__file__), "templates")
         app = Flask("ZentraWebUI", template_folder=tpl_dir)
         
+        # FIX: Force CSS/JS mimetypes to prevent Windows Registry corruption issues leading to blank pages
+        import mimetypes
+        mimetypes.add_type('text/css', '.css')
+        mimetypes.add_type('application/javascript', '.js')
+        
         # Inject translation system into Jinja2 templates
         app.jinja_env.globals.update(t=t)
 
@@ -70,7 +75,7 @@ class ZentraWebUIServer:
         @app.before_request
         def require_login():
             # Exempt routes for the login process and static files
-            exempt_paths = ['/login', '/logout', '/static']
+            exempt_paths = ['/login', '/logout', '/static', '/assets', '/favicon.ico']
             if any(request.path.startswith(p) for p in exempt_paths):
                 return
             
@@ -84,7 +89,17 @@ class ZentraWebUIServer:
         debug_on = self.config_manager.config.get("system", {}).get("flask_debug", False)
 
         import logging as _lg
+
+        class _ProtocolMismatchFilter(_lg.Filter):
+            """Silences the 400 errors caused by browsers sending HTTPS to an HTTP socket."""
+            def filter(self, record):
+                msg = record.getMessage()
+                return not ("Bad request version" in msg or
+                            "Bad request syntax" in msg or
+                            "Bad HTTP/0.9 request" in msg)
+
         wz_log = _lg.getLogger("werkzeug")
+        wz_log.addFilter(_ProtocolMismatchFilter())
         if not debug_on:
             try:
                 wz_log.setLevel(_lg.ERROR)
@@ -129,7 +144,9 @@ class ZentraWebUIServer:
                         cert_file, key_file = cert_gen.generate_host_cert(lan_ip)
                         ssl_context = (cert_file, key_file)
                     except Exception as e:
-                        self.logger.warning(f"[WebUI] Errore generazione Zentra PKI: {e}. Fallback to HTTP.")
+                        import traceback
+                        self.logger.error(f"[WebUI] Errore CRITICO generazione Zentra PKI: {e}\n{traceback.format_exc()}")
+                        self.logger.warning("[WebUI] Fallback forzato a HTTP a causa di errore certificato.")
                         scheme = "http"
                         
                 else:

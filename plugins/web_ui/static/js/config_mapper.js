@@ -124,9 +124,10 @@ function renderPlugins(plugins) {
   let html = '';
   for (const [tag, pCfg] of Object.entries(plugins)) {
     const on = pCfg.enabled !== false;
+    const lazyOn = pCfg.lazy_load === true;
     html += `<div class="plugin-row">
-      <div><div class="plugin-name">${tag}</div>${descs[tag] ? `<div class="plugin-desc">${descs[tag]}</div>` : ''}</div>
-      <label class="switch"><input type="checkbox" data-plugin="${tag}" ${on?'checked':''} onchange="saveConfig(true)"><span class="slider"></span></label>
+      <div><div class="plugin-name">${tag} <label style="font-size:10px; color:var(--muted); margin-left:10px; cursor:pointer;" title="Abilita Lazy Loading"><input type="checkbox" data-plugin-lazy="${tag}" ${lazyOn?'checked':''} style="vertical-align:middle"> Lazy</label></div>${descs[tag] ? `<div class="plugin-desc">${descs[tag]}</div>` : ''}</div>
+      <label class="switch"><input type="checkbox" data-plugin="${tag}" ${on?'checked':''}><span class="slider"></span></label>
     </div>`;
   }
   cont.innerHTML = html || `<p style="color:var(--muted)">${I18N.no_plugins || 'No plugins'}</p>`;
@@ -217,6 +218,13 @@ function buildPayload() {
       const tag = cb.dataset.plugin;
       out.plugins[tag] = out.plugins[tag] || {};
       out.plugins[tag].enabled = cb.checked;
+    });
+
+    document.querySelectorAll('[data-plugin-lazy]').forEach(cb => {
+      const tag = cb.dataset.pluginLazy;
+      if (out.plugins[tag]) {
+        out.plugins[tag].lazy_load = cb.checked;
+      }
     });
 
   } catch (err) { console.error("buildPayload err:", err); }

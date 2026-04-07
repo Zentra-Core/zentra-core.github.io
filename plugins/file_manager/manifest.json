@@ -1,0 +1,71 @@
+{
+    "tag": "FILE_MANAGER",
+    "description": "System file and directory management with user path and file reading support.",
+    "lazy_load": true,
+    "is_class_based": true,
+    "status": "ONLINE",
+    "commands": {
+        "count_items": "Counts the total number of files and folders in a given path, without listing them.",
+        "list_files": "SCANS and lists files/folders in a path to return the names to the AI.",
+        "read_file": "Reads the textual content of a file specified by the path."
+    },
+    "tool_schema": [
+        {
+            "type": "function",
+            "function": {
+                "name": "FILE_MANAGER__count_items",
+                "description": "Counts the total number of files and folders in a given path, without listing them.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "The path of the directory to inspect."
+                        }
+                    },
+                    "required": [
+                        "path"
+                    ]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "FILE_MANAGER__list_files",
+                "description": "SCANS and lists files/folders in a path to return the names to the AI.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "The path of the directory to inspect (e.g., 'desktop' or an absolute path)."
+                        }
+                    },
+                    "required": [
+                        "path"
+                    ]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "FILE_MANAGER__read_file",
+                "description": "Reads the textual content of a file specified by the path.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "The path of the text file to read."
+                        }
+                    },
+                    "required": [
+                        "path"
+                    ]
+                }
+            }
+        }
+    ]
+}

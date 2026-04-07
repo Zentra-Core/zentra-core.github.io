@@ -126,30 +126,36 @@ class MonitorConfig(BaseModel):
 
 class PluginDashboard(BaseModel):
     enabled: bool = True
+    lazy_load: bool = False
     backend_timeout: float = 0.5
     monitor_interval: int = 2
 
 class PluginFileManager(BaseModel):
     enabled: bool = True
+    lazy_load: bool = False
     enable_path_mapping: bool = True
     max_list_items: int = 5
     max_read_lines: int = 50
 
 class PluginHelp(BaseModel):
     enabled: bool = True
+    lazy_load: bool = False
     show_disabled: bool = False
 
 class PluginImageGen(BaseModel):
     enabled: bool = True
+    lazy_load: bool = False
     width: int = 1024
     height: int = 1024
     nologo: bool = False
 
 class PluginMedia(BaseModel):
     enabled: bool = True
+    lazy_load: bool = False
 
 class PluginRoleplay(BaseModel):
     enabled: bool = True
+    lazy_load: bool = False
     default_character: str = ""
     default_scene: str = ""
     llm_model: str = ""
@@ -158,6 +164,7 @@ class PluginRoleplay(BaseModel):
 
 class PluginSystem(BaseModel):
     enabled: bool = True
+    lazy_load: bool = False
     enable_config_set: bool = True
     shell_command_timeout: int = 15
     shell_command_whitelist: List[str] = []
@@ -166,10 +173,12 @@ class PluginSystem(BaseModel):
 
 class PluginSysNet(BaseModel):
     enabled: bool = True
+    lazy_load: bool = False
     proxy_url: str = "socks5://localhost:9150"
 
 class PluginWeb(BaseModel):
     enabled: bool = True
+    lazy_load: bool = False
     llm_model: str = ""
     search_engine: str = "google"
     use_https: bool = True
@@ -177,6 +186,7 @@ class PluginWeb(BaseModel):
 
 class PluginWebcam(BaseModel):
     enabled: bool = True
+    lazy_load: bool = False
     camera_index: int = 0
     image_format: str = "jpg"
     save_directory: str = "snapshots"
@@ -184,6 +194,7 @@ class PluginWebcam(BaseModel):
 
 class PluginWebUI(BaseModel):
     enabled: bool = True
+    lazy_load: bool = False
     port: int = 7070
     auto_open_browser: bool = False
     https_enabled: bool = False
@@ -192,6 +203,7 @@ class PluginWebUI(BaseModel):
 
 class PluginExecutor(BaseModel):
     enabled: bool = True
+    lazy_load: bool = False
     timeout_seconds: int = 10
 
 class PluginsConfig(BaseModel):

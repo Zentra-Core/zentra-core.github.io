@@ -14,7 +14,8 @@ from .plugin_state import (
     REGISTRY_PATH,
     _plugin_config_schemas,
     _loaded_plugins,
-    _loaded_legacy_plugins
+    _loaded_legacy_plugins,
+    _lazy_plugins_paths
 )
 
 def update_capability_registry(config=None, debug_log=True):
@@ -26,6 +27,7 @@ def update_capability_registry(config=None, debug_log=True):
     _plugin_config_schemas.clear()
     _loaded_plugins.clear()
     _loaded_legacy_plugins.clear()
+    _lazy_plugins_paths.clear()
     skills_map = {}
 
     # If we don't have config, load it (for backward compatibility)
@@ -41,10 +43,51 @@ def update_capability_registry(config=None, debug_log=True):
 
     for plugin_dir in plugin_dirs:
         main_file = os.path.join("plugins", plugin_dir, "main.py")
+        manifest_file = os.path.join("plugins", plugin_dir, "manifest.json")
         if not os.path.exists(main_file):
             logger.debug("LOADER", f"Plugin {plugin_dir} without main.py, ignored")
             continue
 
+        # --- NEW SECTION: LAZY LOADING via manifest.json ---
+        if os.path.exists(manifest_file):
+            try:
+                with open(manifest_file, "r", encoding="utf-8") as f:
+                    manifest_data = json.load(f)
+                
+                tag = manifest_data.get("tag", "").upper()
+                if tag:
+                    plugin_enabled = config.get('plugins', {}).get(tag, {}).get('enabled', True)
+                    if not plugin_enabled:
+                        if debug_log: logger.debug("LOADER", f"Plugin {plugin_dir} disabled by config.")
+                        continue
+                    
+                    # Priorità alla configurazione utente, fallback sul manifest
+                    is_lazy = config.get('plugins', {}).get(tag, {}).get('lazy_load', manifest_data.get("lazy_load", False))
+                    
+                    if is_lazy:
+                        # Register capability without executing Python file
+                        skills_map[tag] = {
+                            "description": manifest_data.get("description", ""),
+                            "commands": manifest_data.get("commands", {}),
+                            "status": "ONLINE (DORMANT)",
+                            "example": manifest_data.get("example", ""),
+                            "is_class_based": manifest_data.get("is_class_based", True),
+                            "is_lazy": True
+                        }
+                        
+                        _lazy_plugins_paths[tag] = os.path.abspath(main_file)
+                        
+                        # Cache the tool schema for LLM prompting without import
+                        from .plugin_state import _lazy_tool_schemas
+                        _lazy_tool_schemas[tag] = manifest_data.get("tool_schema", [])
+                        
+                        if debug_log: logger.debug("LOADER", f"Plugin {plugin_dir} registered efficiently (Lazy Load).")
+                        continue # Skip the dynamic import section entirely
+                        
+            except Exception as e:
+                logger.error(f"LOADER: Failed to parse {manifest_file}, falling back to eager load: {e}")
+
+        # --- EAGER LOADING (Backward compatibility or Critical Plugins) ---
         try:
             # Dynamic module import
             spec = importlib.util.spec_from_file_location(

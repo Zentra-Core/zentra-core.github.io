@@ -73,6 +73,10 @@ def generate(system_prompt, user_message, config_or_subconfig, llm_config=None, 
             if adapter:
                 messages = adapter.build_messages(system_prompt, user_message, images)
                 zlog_debug("LiteLLM", f"Vision adapter used: {adapter.__class__.__name__} ({len(images)} image(s))")
+                
+                # CRITICAL FIX: Even with images, we MUST include Agentic Loop history (tool results, etc.)
+                if extra_messages:
+                    messages.extend(extra_messages)
             else:
                 # Adapter not available: fallback to text-only with a notice
                 zlog_debug("LiteLLM", "No vision adapter for this model; falling back to text-only")
@@ -173,12 +177,14 @@ def generate(system_prompt, user_message, config_or_subconfig, llm_config=None, 
                 env_var = ENV_KEY_MAP.get(provider, f"{provider.upper()}_API_KEY")
                 api_key = os.environ.get(env_var, '').strip().strip("'").strip('"')
                 if api_key:
-                    zlog_info("LiteLLM", f"API key for '{provider}' loaded from env '{env_var}'")
+                    masked = f"{api_key[:4]}...{api_key[-4:]}" if len(api_key) > 8 else "***"
+                    zlog_info("LiteLLM", f"API key for '{provider}' loaded from env '{env_var}' ({masked})")
                 else:
                     zlog_debug("LiteLLM", f"API key for '{provider}' not found in env.")
             else:
                 api_key = api_key.strip().strip("'").strip('"')
-                zlog_debug("LiteLLM", f"API key for '{provider}' loaded from config.json")
+                masked = f"{api_key[:4]}...{api_key[-4:]}" if len(api_key) > 8 else "***"
+                zlog_info("LiteLLM", f"API key for '{provider}' loaded from YAML config ({masked})")
             
             if api_key:
                 params["api_key"] = api_key

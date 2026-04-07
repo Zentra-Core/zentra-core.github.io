@@ -54,8 +54,8 @@ class AgentExecutor:
         Calls the LLM, checks if tools are requested, executes them, feeds the result back.
         Repeats until the LLM returns plain text without tools or hits max iterations.
         """
-        self._emit(f"Analyzing request: '{user_text[:30]}...'", level="info")
-        
+        # Privacy-oriented log: avoid echoing private user text on the server physical console.
+        self._emit(f"Analyzing incoming user request...", level="info")
         if not self.is_enabled:
             logger.info("[AGENT] Agentic Loop is disabled in config. Running single iteration.")
             self.max_iterations = 1
@@ -88,6 +88,30 @@ class AgentExecutor:
                 # BREAK CONDITION: The LLM didn't call any tools, so it produced the final response.
                 self._emit("Response formulated.", level="success")
                 
+                # If the AI produces NO text (common for some models after tool calls),
+                # provide a friendly fallback instead of showing an error.
+                if not extracted_text or not extracted_text.strip():
+                    if tool_results:
+                        extracted_text = f"I have executed the requested actions: {', '.join([r.get('tag') for r in tool_results])}."
+                    else:
+                        extracted_text = "I'm thinking, but I don't have a specific text response yet. How can I help further?"
+
+                # ── Server Image Rendering ──────────────────────────────────────────
+                # If any tool returned an image path (e.g. WEBCAM target='server'),
+                # append it as a markdown image so the user can actually see it.
+                # We use the new /snapshots/ route for this.
+                import re
+                for res in tool_results:
+                    out = res.get("output", "")
+                    if out and isinstance(out, str):
+                        potential_paths = re.findall(r'([\w\.\-\\/]+\.(?:jpg|jpeg|png))', out, re.IGNORECASE)
+                        for path in potential_paths:
+                            fname = os.path.basename(path)
+                            # Convert local path to web URL
+                            img_url = f"/snapshots/{fname}"
+                            extracted_text += f"\n\n![Snapshot]({img_url})"
+                # ────────────────────────────────────────────────────────────────────
+
                 # IMPORTANT: If it took loops, we must save the FINAL response to history manually.
                 if iteration > 1:
                      from memory import brain_interface
@@ -118,13 +142,59 @@ class AgentExecutor:
                 for res in tool_results:
                     self._emit(f"Tool execution result: {res.get('tag')}", level="tool")
                     
+                    output_text = res.get("output")
+                    
+                    # ── Client Camera Short-Circuit ───────────────────────────────────────
+                    # When WEBCAM is called with target='client', it returns a signal 
+                    # asking the AI to output [CAMERA_SNAPSHOT_REQUEST]. Instead of relying
+                    # on the LLM to do this (it gets confused), we intercept it here and
+                    # construct the final response directly — guaranteeing the token reaches
+                    # the Javascript interceptor in the browser.
+                    CAMERA_TOKEN = "[CAMERA_SNAPSHOT_REQUEST]"
+                    if output_text and CAMERA_TOKEN in str(output_text).strip():
+                        self._emit("Client camera request intercepted — forwarding directly to browser.", level="info")
+                        # Use the user's personality or a polite default
+                        final_response = f"Sure! {CAMERA_TOKEN} Please take the photo when prompted by your browser."
+                        video_response, clean_voice = processore.clean_final_output(final_response, tool_results, final_response, voice_status)
+                        return video_response, clean_voice
+                    
+                    if res.get("tag") == "WEBCAM":
+                        logger.debug(f"[AGENT] WEBCAM result did NOT trigger short-circuit. Output: '{str(output_text)[:50]}...'")
+                    # ─────────────────────────────────────────────────────────────────────
+                    
                     # Native Tool Message
                     agent_context.append({
                         "role": "tool",
                         "tool_call_id": res.get("id"),
                         "name": res.get("tag"),
-                        "content": res.get("output")
+                        "content": output_text
                     })
+                    
+                    # Intercept Image Paths for Vision-AI
+                    if output_text and isinstance(output_text, str):
+                        import re
+                        import mimetypes
+                        import base64
+                        # Identify file paths ending with typical image extensions
+                        potential_paths = re.findall(r'([\w\.\-\\/]+\.(?:jpg|jpeg|png))', output_text, re.IGNORECASE)
+                        for path in potential_paths:
+                            if os.path.exists(path):
+                                try:
+                                    with open(path, "rb") as f:
+                                        img_bytes = f.read()
+                                    if images is None:
+                                        images = []
+                                    mime, _ = mimetypes.guess_type(path)
+                                    # Pre-encode as base64 to avoid double-encoding in adapters
+                                    images.append({
+                                        "data_b64": base64.b64encode(img_bytes).decode("utf-8"),
+                                        "mime_type": mime or "image/jpeg",
+                                        "name": os.path.basename(path)
+                                    })
+                                    self._emit(f"Intercepted image for Vision-AI: {os.path.basename(path)}", level="info")
+                                    logger.info(f"[AGENT] Vision-AI: loaded {os.path.basename(path)} ({len(img_bytes)} bytes)")
+                                except Exception as e:
+                                    logger.debug(f"[AGENT] Failed to load intercepted image path {path}: {e}")
                     
                 self._emit("Analyzing tool results...", level="info")
                 

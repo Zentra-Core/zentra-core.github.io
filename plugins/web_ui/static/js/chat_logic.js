@@ -202,6 +202,10 @@ async function setAudioRouting(key, val) {
 // (DOM rendering moved to chat_renderer.js)
 
 async function sendMessage() {
+  if (typeof window.unlockAudioContext === 'function') {
+      window.unlockAudioContext();
+  }
+
   const text = userInput ? userInput.value.trim() : '';
   if(!text || isStreaming) return;
 
@@ -259,6 +263,9 @@ async function sendMessage() {
         aiBubble.innerHTML = renderMarkdown(aiText);
         aiBubble.appendChild(cursor);
         if (chatArea) chatArea.scrollTop = chatArea.scrollHeight;
+      } else if(ev.type==='camera_request') {
+        // Dedicated event emitted by Python before chunking — guaranteed not split
+        if (window.ClientCameraManager) window.ClientCameraManager.showCameraButton(aiBubble);
       } else if(ev.type==='audio_ready') {
         tryLoadAudio(aiBubble);
       } else if(ev.type==='system_audio_playing') {
@@ -319,6 +326,8 @@ window.sendInternalMessage = async function(text) {
         aiBubble.innerHTML = renderMarkdown(aiText);
         aiBubble.appendChild(cursor);
         if (chatArea) chatArea.scrollTop = chatArea.scrollHeight;
+      } else if(ev.type==='camera_request') {
+        if (window.ClientCameraManager) window.ClientCameraManager.showCameraButton(aiBubble);
       } else if(ev.type==='audio_ready') {
         tryLoadAudio(aiBubble);
       } else if(ev.type==='system_audio_playing') {
