@@ -4,7 +4,7 @@ import sys
 # Ensure Zentra root is in PYTHONPATH so it can be run standalone securely
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from core.auth.auth_manager import auth_mgr
+from zentra.core.auth.auth_manager import auth_mgr
 from werkzeug.security import generate_password_hash
 import getpass
 

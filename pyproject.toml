@@ -4,7 +4,7 @@ build-backend = "setuptools.build-meta"
 
 [project]
 name = "zentra-core"
-version = "0.13.0"
+version = "0.14.0"
 description = "Modular AI Agentic Framework"
 dependencies = [
     "pydantic>=2.0",
@@ -15,3 +15,6 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]
+
+[project.scripts]
+zentra = "zentra.main:main"

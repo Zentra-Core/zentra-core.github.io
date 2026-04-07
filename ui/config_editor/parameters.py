@@ -1,7 +1,7 @@
 import os
 import glob
 import json
-from core.i18n import translator
+from zentra.core.i18n import translator
 
 class Parameter:
     """
@@ -31,7 +31,7 @@ def build_parameter_list(config):
 
     # --- Audio Devices Section ---
     try:
-        from core.audio.device_manager import get_audio_config, list_devices
+        from zentra.core.audio.device_manager import get_audio_config, list_devices
         acfg = get_audio_config()
         out_name = acfg.get("output_device_name", "") or "(not configured)"
         in_name  = acfg.get("input_device_name",  "") or "(not configured)"
@@ -67,7 +67,7 @@ def build_parameter_list(config):
         '🔄 Re-scan Audio Devices Now',  'command', command='rescan_audio_devices'))
 
     # --- Backend e Modelli (esistenti) ---
-    from app.model_manager import ModelManager
+    from zentra.app.model_manager import ModelManager
     backend_type, active_model_value = ModelManager.get_effective_model_info(config)
     backend_config = config.get('backend', {}).get(backend_type, {})
     

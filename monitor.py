@@ -9,10 +9,10 @@ import os
 import sys
 import json
 import argparse
-from core.system import instance_lock
+from zentra.core.system import instance_lock
 
 # Path configuration
-DEFAULT_MAIN_SCRIPT = "main.py"
+DEFAULT_MAIN_SCRIPT = "zentra.main"
 CONFIG_FILE = os.path.join("config", "system.yaml")
 
 def get_translator():
@@ -55,7 +55,7 @@ def get_file_timestamp(path):
 def start_and_monitor(script_to_run):
     # For module-style runs (like plugins.web_ui.server), we don't check file existence directly if it contains dots
     if "." not in script_to_run or not script_to_run.endswith(".py"):
-        if not os.path.exists(script_to_run) and not script_to_run.startswith("plugins."):
+        if not os.path.exists(script_to_run) and not script_to_run.startswith("zentra."):
             print(t("critical_missing", file=script_to_run))
             return False
 
@@ -63,7 +63,7 @@ def start_and_monitor(script_to_run):
     print(t("starting", script=script_to_run))
     
     # Process startup: handle both direct scripts and module-style runs
-    if script_to_run.startswith("plugins."):
+    if script_to_run.startswith("zentra."):
         process = subprocess.Popen([sys.executable, "-m", script_to_run])
     else:
         process = subprocess.Popen([sys.executable, script_to_run])
@@ -119,7 +119,7 @@ if __name__ == "__main__":
     print(f"{'-'*55}\n")
     
     # Determine lock name based on script
-    lock_name = "zentra_console" if "main.py" in args.script else "zentra_web"
+    lock_name = "zentra_console" if ".main" in args.script or "main.py" in args.script else "zentra_web"
     
     if not instance_lock.acquire_lock(lock_name):
         print(f"\n[MONITOR] ERROR: Another instance of Zentra ({lock_name}) is already running.")

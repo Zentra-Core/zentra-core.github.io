@@ -48,7 +48,7 @@ echo -e "\033[1;36m=============================================================
 echo ""
 
 # Starting the monitor passing the standalone web server module.
-python3 monitor.py --script plugins.web_ui.server
+python3 monitor.py --script zentra.plugins.web_ui.server
 
 echo ""
 echo "[!] Watchdog terminated."

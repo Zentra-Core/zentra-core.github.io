@@ -29,12 +29,12 @@ except ImportError:
 
 # --- Core Zentra imports ---
 try:
-    from core.llm import brain
-    from core.processing import processore
-    from core.logging import logger as core_logger
-    from memory import brain_interface
-    from app.config import ConfigManager
-    from core.i18n import translator
+    from zentra.core.llm import brain
+    from zentra.core.processing import processore
+    from zentra.core.logging import logger as core_logger
+    from zentra.memory import brain_interface
+    from zentra.app.config import ConfigManager
+    from zentra.core.i18n import translator
 except ImportError as _e:
     raise ImportError(f"[ZentraWebUIBridge] Cannot import core Zentra modules: {_e}") from _e
 
@@ -43,7 +43,7 @@ from zentra_bridge.webui.audio        import speak_local
 from zentra_bridge.webui.prompting    import build_system_prompt
 from zentra_bridge.webui.streaming    import stream_response
 from zentra_bridge.webui.tools        import build_tool_schemas
-from plugins.web_ui.server           import start_if_needed as _start_config_server
+from zentra.plugins.web_ui.server           import start_if_needed as _start_config_server
 
 # --- Bridge logger ---
 bridge_logger = logging.getLogger("WebUI_Bridge")
@@ -128,7 +128,7 @@ class ZentraWebUIBridge:
 
     def _resolve_backend_cfg(self) -> dict:
         """Extracts and returns the active backend sub-config dict."""
-        from core.llm.manager import manager
+        from zentra.core.llm.manager import manager
         backend_type = self.config.get("backend", {}).get("type", "ollama")
         backend_cfg  = self.config.get("backend", {}).get(backend_type, {}).copy()
         model = manager.resolve_model()

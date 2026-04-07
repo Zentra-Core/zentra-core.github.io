@@ -4,7 +4,7 @@ Compatibility shim — all logic has moved to plugins/web_ui/.
 This shim re-exports start_if_needed so that legacy bridge code continues working.
 """
 try:
-    from plugins.web_ui.server import start_if_needed, ZentraWebUIServer as ZentraConfigServer
+    from zentra.plugins.web_ui.server import start_if_needed, ZentraWebUIServer as ZentraConfigServer
 except ImportError:
     # Graceful fallback if plugin not yet loaded (e.g. standalone bridge testing)
     def start_if_needed(*args, **kwargs):
