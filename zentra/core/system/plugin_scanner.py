@@ -5,6 +5,7 @@ creation of the central JSON registry.
 """
 
 import importlib.util
+import sys
 import os
 import glob
 import json
@@ -41,145 +42,168 @@ def update_capability_registry(config=None, debug_log=True):
 
     # Determine the actual plugins directory
     # Try local 'plugins' first, then 'zentra/plugins'
-    plugins_dir = "plugins"
-    if not os.path.exists(plugins_dir):
+    primary_plugins_dir = "plugins"
+    if not os.path.exists(primary_plugins_dir):
         # We might be in package mode
-        plugins_dir = os.path.join("zentra", "plugins")
-        if not os.path.exists(plugins_dir):
+        primary_plugins_dir = os.path.join("zentra", "plugins")
+        if not os.path.exists(primary_plugins_dir):
             # Try absolute path from this file
             base = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
-            plugins_dir = os.path.join(base, "plugins")
+            primary_plugins_dir = os.path.join(base, "plugins")
 
-    plugin_dirs = []
-    if os.path.exists(plugins_dir):
+    # Build list of all directories to scan
+    scan_targets = []
+    if os.path.exists(primary_plugins_dir):
+        scan_targets.append(primary_plugins_dir)
+        
+    # Add external directories from config
+    extra_dirs = config.get('plugins', {}).get('extra_dirs', [])
+    for ed in extra_dirs:
+        if os.path.exists(ed):
+            scan_targets.append(ed)
+        else:
+            logger.warning(f"LOADER: Extra plugins directory not found: {ed}")
+
+    for plugins_dir in scan_targets:
+        if not os.path.isdir(plugins_dir): continue
+        
+        # Ensure the parent directory is in sys.path so 'plugins.xxx' works
+        abs_p_dir = os.path.abspath(plugins_dir)
+        parent_dir = os.path.dirname(abs_p_dir)
+        if parent_dir not in sys.path:
+            sys.path.append(parent_dir)
+        # Also add the dir itself for direct imports if needed
+        if abs_p_dir not in sys.path:
+            sys.path.append(abs_p_dir)
+            
         plugin_dirs = [d for d in os.listdir(plugins_dir)
                       if os.path.isdir(os.path.join(plugins_dir, d))
                       and not d.startswith("__")
                       and d != "plugins_disabled"]
 
-    for plugin_dir in plugin_dirs:
-        main_file = os.path.join(plugins_dir, plugin_dir, "main.py")
-        manifest_file = os.path.join(plugins_dir, plugin_dir, "manifest.json")
-        if not os.path.exists(main_file):
-            logger.debug("LOADER", f"Plugin {plugin_dir} without main.py, ignored")
-            continue
+        for plugin_dir in plugin_dirs:
+            main_file = os.path.join(plugins_dir, plugin_dir, "main.py")
+            manifest_file = os.path.join(plugins_dir, plugin_dir, "manifest.json")
+            if not os.path.exists(main_file):
+                # logger.debug("LOADER", f"Plugin {plugin_dir} without main.py, ignored")
+                continue
 
-        # --- NEW SECTION: LAZY LOADING via manifest.json ---
-        if os.path.exists(manifest_file):
+            # --- NEW SECTION: LAZY LOADING via manifest.json ---
+            if os.path.exists(manifest_file):
+                try:
+                    with open(manifest_file, "r", encoding="utf-8") as f:
+                        manifest_data = json.load(f)
+                    
+                    tag = manifest_data.get("tag", "").upper()
+                    if tag:
+                        plugin_enabled = config.get('plugins', {}).get(tag, {}).get('enabled', True)
+                        if not plugin_enabled:
+                            if debug_log: logger.debug("LOADER", f"Plugin {plugin_dir} disabled by config.")
+                            continue
+                        
+                        # Priorità alla configurazione utente, fallback sul manifest
+                        is_lazy = config.get('plugins', {}).get(tag, {}).get('lazy_load', manifest_data.get("lazy_load", False))
+                        
+                        if is_lazy:
+                            # Register capability without executing Python file
+                            skills_map[tag] = {
+                                "description": manifest_data.get("description", ""),
+                                "commands": manifest_data.get("commands", {}),
+                                "status": "ONLINE (DORMANT)",
+                                "example": manifest_data.get("example", ""),
+                                "is_class_based": manifest_data.get("is_class_based", True),
+                                "is_lazy": True
+                            }
+                            
+                            _lazy_plugins_paths[tag] = os.path.abspath(main_file)
+                            
+                            # Cache the tool schema for LLM prompting without import
+                            from .plugin_state import _lazy_tool_schemas
+                            _lazy_tool_schemas[tag] = manifest_data.get("tool_schema", [])
+                            
+                            if debug_log: logger.debug("LOADER", f"Plugin {plugin_dir} registered efficiently (Lazy Load).")
+                            continue # Skip the dynamic import section entirely
+                            
+                except Exception as e:
+                    logger.error(f"LOADER: Failed to parse {manifest_file}, falling back to eager load: {e}")
+
+            # --- EAGER LOADING (Backward compatibility or Critical Plugins) ---
             try:
-                with open(manifest_file, "r", encoding="utf-8") as f:
-                    manifest_data = json.load(f)
-                
-                tag = manifest_data.get("tag", "").upper()
-                if tag:
+                # Dynamic module import
+                spec = importlib.util.spec_from_file_location(
+                    f"plugins.{plugin_dir}.main",
+                    main_file
+                )
+                if spec is None:
+                    continue
+
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+
+                # Manifest extraction
+                if hasattr(module, "tools"):
+                    # --- NEW CLASS-BASED SYSTEM (FUNCTION CALLING) ---
+                    tools_instance = module.tools
+                    tag = tools_instance.tag
                     plugin_enabled = config.get('plugins', {}).get(tag, {}).get('enabled', True)
                     if not plugin_enabled:
                         if debug_log: logger.debug("LOADER", f"Plugin {plugin_dir} disabled by config.")
                         continue
-                    
-                    # Priorità alla configurazione utente, fallback sul manifest
-                    is_lazy = config.get('plugins', {}).get(tag, {}).get('lazy_load', manifest_data.get("lazy_load", False))
-                    
-                    if is_lazy:
-                        # Register capability without executing Python file
-                        skills_map[tag] = {
-                            "description": manifest_data.get("description", ""),
-                            "commands": manifest_data.get("commands", {}),
-                            "status": "ONLINE (DORMANT)",
-                            "example": manifest_data.get("example", ""),
-                            "is_class_based": manifest_data.get("is_class_based", True),
-                            "is_lazy": True
-                        }
-                        
-                        _lazy_plugins_paths[tag] = os.path.abspath(main_file)
-                        
-                        # Cache the tool schema for LLM prompting without import
-                        from .plugin_state import _lazy_tool_schemas
-                        _lazy_tool_schemas[tag] = manifest_data.get("tool_schema", [])
-                        
-                        if debug_log: logger.debug("LOADER", f"Plugin {plugin_dir} registered efficiently (Lazy Load).")
-                        continue # Skip the dynamic import section entirely
-                        
+
+                    _loaded_plugins[tag] = module
+                    status = getattr(tools_instance, "status", "ONLINE")
+
+                    # Extract commands by inspecting public methods
+                    import inspect
+                    commands = {}
+                    for name, method in inspect.getmembers(tools_instance, predicate=inspect.ismethod):
+                        if not name.startswith('_'):
+                            doc = method.__doc__
+                            commands[name] = doc.strip().split('\n')[0] if doc else "Method"
+
+                    skills_map[tag] = {
+                        "description": tools_instance.desc,
+                        "commands": commands,
+                        "status": status,
+                        "example": "",
+                        "is_class_based": True
+                    }
+                    logger.debug("LOADER", f"Class-based Plugin {plugin_dir} loaded with tag {tag}")
+
+                    if hasattr(tools_instance, "config_schema"):
+                        _plugin_config_schemas[tag] = tools_instance.config_schema
+
+                elif hasattr(module, "info"):
+                    # --- OLD LEGACY SYSTEM ---
+                    plugin_info = module.info()
+                    tag = plugin_info['tag']
+                    # Check enabled flag
+                    plugin_enabled = config.get('plugins', {}).get(tag, {}).get('enabled', True)
+                    if not plugin_enabled:
+                        if debug_log: logger.debug("LOADER", f"Plugin {plugin_dir} disabled by config.")
+                        continue
+
+                    # Save module and load
+                    _loaded_plugins[tag] = module
+
+                    status = module.status() if hasattr(module, "status") else "ONLINE"
+
+                    skills_map[tag] = {
+                        "description": plugin_info.get('desc') or plugin_info.get('description', ''),
+                        "commands": plugin_info.get('comandi') or plugin_info.get('commands', {}),
+                        "status": status,
+                        "example": plugin_info.get("esempio") or plugin_info.get("example", "")
+                    }
+                    logger.debug("LOADER", f"Plugin {plugin_dir} loaded with tag {tag}")
+
+                    # Collect configuration schema if present
+                    if hasattr(module, "config_schema"):
+                        _plugin_config_schemas[tag] = module.config_schema()
+                        logger.debug("LOADER", f"Plugin {plugin_dir} has config_schema")
+
             except Exception as e:
-                logger.error(f"LOADER: Failed to parse {manifest_file}, falling back to eager load: {e}")
-
-        # --- EAGER LOADING (Backward compatibility or Critical Plugins) ---
-        try:
-            # Dynamic module import
-            spec = importlib.util.spec_from_file_location(
-                f"plugins.{plugin_dir}.main",
-                main_file
-            )
-            if spec is None:
+                logger.error(f"LOADER: Failed to load {plugin_dir}: {e}")
                 continue
-
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-
-            # Manifest extraction
-            if hasattr(module, "tools"):
-                # --- NEW CLASS-BASED SYSTEM (FUNCTION CALLING) ---
-                tools_instance = module.tools
-                tag = tools_instance.tag
-                plugin_enabled = config.get('plugins', {}).get(tag, {}).get('enabled', True)
-                if not plugin_enabled:
-                    if debug_log: logger.debug("LOADER", f"Plugin {plugin_dir} disabled by config.")
-                    continue
-
-                _loaded_plugins[tag] = module
-                status = getattr(tools_instance, "status", "ONLINE")
-
-                # Extract commands by inspecting public methods
-                import inspect
-                commands = {}
-                for name, method in inspect.getmembers(tools_instance, predicate=inspect.ismethod):
-                    if not name.startswith('_'):
-                        doc = method.__doc__
-                        commands[name] = doc.strip().split('\n')[0] if doc else "Method"
-
-                skills_map[tag] = {
-                    "description": tools_instance.desc,
-                    "commands": commands,
-                    "status": status,
-                    "example": "",
-                    "is_class_based": True
-                }
-                logger.debug("LOADER", f"Class-based Plugin {plugin_dir} loaded with tag {tag}")
-
-                if hasattr(tools_instance, "config_schema"):
-                    _plugin_config_schemas[tag] = tools_instance.config_schema
-
-            elif hasattr(module, "info"):
-                # --- OLD LEGACY SYSTEM ---
-                plugin_info = module.info()
-                tag = plugin_info['tag']
-                # Check enabled flag
-                plugin_enabled = config.get('plugins', {}).get(tag, {}).get('enabled', True)
-                if not plugin_enabled:
-                    if debug_log: logger.debug("LOADER", f"Plugin {plugin_dir} disabled by config.")
-                    continue
-
-                # Save module and load
-                _loaded_plugins[tag] = module
-
-                status = module.status() if hasattr(module, "status") else "ONLINE"
-
-                skills_map[tag] = {
-                    "description": plugin_info.get('desc') or plugin_info.get('description', ''),
-                    "commands": plugin_info.get('comandi') or plugin_info.get('commands', {}),
-                    "status": status,
-                    "example": plugin_info.get("esempio") or plugin_info.get("example", "")
-                }
-                logger.debug("LOADER", f"Plugin {plugin_dir} loaded with tag {tag}")
-
-                # Collect configuration schema if present
-                if hasattr(module, "config_schema"):
-                    _plugin_config_schemas[tag] = module.config_schema()
-                    logger.debug("LOADER", f"Plugin {plugin_dir} has config_schema")
-
-        except Exception as e:
-            logger.error(f"LOADER: Failed to load {plugin_dir}: {e}")
-            continue
 
     # --- NEW SECTION: Load Legacy Plugins from plugins_legacy/ folder ---
     legacy_root = "plugins_legacy"

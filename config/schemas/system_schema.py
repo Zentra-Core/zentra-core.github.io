@@ -234,6 +234,7 @@ class PluginsConfig(BaseModel):
     WEB_UI: PluginWebUI = Field(default_factory=PluginWebUI)
     EXECUTOR: PluginExecutor = Field(default_factory=PluginExecutor)
     DRIVE: PluginDrive = Field(default_factory=PluginDrive)
+    extra_dirs: List[str] = []
 
 
 # ─── PROCESSOR & ROUTING & SYSTEM ─────────────────────────────────────────────
