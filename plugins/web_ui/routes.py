@@ -33,3 +33,10 @@ def init_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
     except Exception as e:
         logger.warning(f"[WebUI] Zentra Drive non disponibile: {e}")
 
+    # Remote Triggers — Tasti hardware iPhone e Webhooks Arduino 
+    try:
+        from plugins.remote_triggers.routes import init_remote_triggers_routes
+        init_remote_triggers_routes(app, logger)
+    except Exception as e:
+        pass
+

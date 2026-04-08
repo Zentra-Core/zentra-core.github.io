@@ -1,0 +1,11 @@
+{
+  "name": "Remote Triggers",
+  "version": "1.0.0",
+  "description": "Consente l'attivazione del PTT tramite bottoni USB, Media Keys e webhook esterni.",
+  "author": "Zentra Core",
+  "dependencies": [],
+  "settings": {},
+  "inject_js": [
+    "static/js/remote_triggers.js"
+  ]
+}

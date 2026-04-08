@@ -8,6 +8,12 @@ window.initEvents = function() {
   evtSrc.onmessage = (e) => {
     const ev = JSON.parse(e.data);
     
+    // Support dynamic handlers from plugins (like remote_triggers.js)
+    if (window._zentraSSEHandlers && window._zentraSSEHandlers[ev.type]) {
+        window._zentraSSEHandlers[ev.type](ev);
+        return;
+    }
+    
     if (ev.type === 'agent_trace') {
       if (window.AgentUI) window.AgentUI.handleEvent(ev);
       
