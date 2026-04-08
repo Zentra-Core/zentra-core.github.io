@@ -31,6 +31,7 @@ class ImageGenTools:
     def generate_image(self, prompt: str) -> str:
         """
         Generates an image from a text description. Uses the configured provider.
+        IMPORTANT: You MUST include the exact [[IMG:filename.ext]] tag returned by this function in your final response to the user so they can see the image!
         
         :param prompt: Detailed description of the image to generate.
         """
@@ -44,11 +45,23 @@ class ImageGenTools:
             api_key  = cfg.get("api_key", "").strip()
 
             # Also check .env for provider-specific key if not in config_media.json
+            if not api_key:
+                try:
+                    from core.keys.key_manager import KeyManager
+                    manager = KeyManager()
+                    # Fallback to key manager logic that handles API_KEY_1 etc.
+                    k = manager.get_key(provider)
+                    if k:
+                        api_key = k
+                except ImportError:
+                    pass
+
             env_map = {
                 "gemini":        "GEMINI_API_KEY",
                 "gemini_native": "GEMINI_API_KEY",
                 "openai":        "OPENAI_API_KEY",
                 "stability":     "STABILITY_API_KEY",
+                "huggingface":   "HUGGINGFACE_API_KEY",
             }
             if not api_key and provider in env_map:
                 api_key = os.environ.get(env_map[provider], "").strip()

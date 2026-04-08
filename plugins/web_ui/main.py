@@ -59,19 +59,19 @@ class WebUIPlugin:
             }
         }
 
-        cfg_mgr = ConfigManager() if _HAVE_CORE else None
-        port = 7070
-        if cfg_mgr:
-            port = cfg_mgr.config.get("plugins", {}).get("WEB_UI", {}).get("port", 7070)
-            auto_open = cfg_mgr.config.get("plugins", {}).get("WEB_UI", {}).get("auto_open_browser", False)
-        else:
-            auto_open = False
-
-        self._port = port
-        self._url  = f"http://127.0.0.1:{port}"
+        self._cfg_mgr = None
+        self._port = 7070
+        self._auto_open = False
         self._server_started = False
+        self._url = f"http://127.0.0.1:{self._port}"
+
+    def set_config_manager(self, cfg_mgr):
+        """Injects the live ConfigManager from the main application."""
         self._cfg_mgr = cfg_mgr
-        self._auto_open = auto_open
+        if cfg_mgr:
+            self._port = cfg_mgr.config.get("plugins", {}).get("WEB_UI", {}).get("port", 7070)
+            self._auto_open = cfg_mgr.config.get("plugins", {}).get("WEB_UI", {}).get("auto_open_browser", False)
+            self._url = f"http://127.0.0.1:{self._port}"
 
     def set_state_manager(self, sm):
         """Injects the live StateManager from the main application."""
@@ -96,7 +96,7 @@ class WebUIPlugin:
 
     def _get_scheme(self) -> str:
         """Dynamically gets the HTTP/HTTPS scheme based on current config."""
-        if self._cfg_mgr:
+        if self._cfg_mgr and self._cfg_mgr.config:
             return "https" if self._cfg_mgr.config.get("plugins", {}).get("WEB_UI", {}).get("https_enabled", False) else "http"
         return "http"
 

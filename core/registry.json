@@ -194,9 +194,10 @@
         "commands": {
             "get_panel_url": "Returns the URL of the chat interface.",
             "open_browser": "Opens the Zentra web interface in the default browser if not already open.",
+            "set_config_manager": "Injects the live ConfigManager from the main application.",
             "set_state_manager": "Injects the live StateManager from the main application."
         },
-        "status": "Online → https://127.0.0.1:7070/chat",
+        "status": "Online → http://127.0.0.1:7070/chat",
         "example": "",
         "is_class_based": true
     }

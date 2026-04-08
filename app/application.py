@@ -122,10 +122,13 @@ class ZentraApplication:
         ascolto_thread = AscoltoThread(self.state_manager)
         ascolto_thread.start()
 
-        # [WEB_UI] Inject live StateManager into plugin if active
+        # [WEB_UI] Inject live managers into plugin if active
         web_ui_mod = plugin_loader.get_plugin_module("WEB_UI")
-        if web_ui_mod and hasattr(web_ui_mod, "tools") and hasattr(web_ui_mod.tools, "set_state_manager"):
-            web_ui_mod.tools.set_state_manager(self.state_manager)
+        if web_ui_mod and hasattr(web_ui_mod, "tools"):
+            if hasattr(web_ui_mod.tools, "set_config_manager"):
+                web_ui_mod.tools.set_config_manager(self.config_manager)
+            if hasattr(web_ui_mod.tools, "set_state_manager"):
+                web_ui_mod.tools.set_state_manager(self.state_manager)
 
         sys.stdout.write(prefisso)
         sys.stdout.flush()

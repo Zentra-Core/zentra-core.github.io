@@ -49,6 +49,7 @@ _ENV_KEY_MAP = {
     "perplexity":   "PERPLEXITY_API_KEY",
     "stability":    "STABILITY_API_KEY",
     "pollinations": "POLLINATIONS_API_KEY",
+    "huggingface":  "HUGGINGFACE_API_KEY",
 }
 
 # Reverse map: base env var name → provider

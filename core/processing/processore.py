@@ -243,6 +243,7 @@ _PRESERVED_TOKENS = ["[CAMERA_SNAPSHOT_REQUEST]"]
 
 def clean_final_output(base_text, tool_results, raw_response_obj, voice_status=False):
     """Formats the final text for display and TTS after all loops are complete."""
+    import re as _re
     # Temporarily protect special tokens from regex stripping
     _placeholders = {}
     for i, tok in enumerate(_PRESERVED_TOKENS):
@@ -250,11 +251,18 @@ def clean_final_output(base_text, tool_results, raw_response_obj, voice_status=F
         _placeholders[placeholder] = tok
         base_text = base_text.replace(tok, placeholder)
     
-    # Extract tags (for UI rendering if legacy tags were used instead of native functions)
-    base_video = re.sub(r'\[.*?:.*?\]', '', base_text).strip()
-    base_video = re.sub(r'\[.*?\]', '', base_video).strip()
+    # Protect [[IMG:...]] tags from the regex below
+    _img_tags = _re.findall(r'\[\[IMG:[^\]]+\]\]', base_text)
+    for j, img_tag in enumerate(_img_tags):
+        marker = f"__IMG_{j}__"
+        _placeholders[marker] = img_tag
+        base_text = base_text.replace(img_tag, marker, 1)
     
-    # Restore preserved tokens
+    # Extract tags (for UI rendering if legacy tags were used instead of native functions)
+    base_video = _re.sub(r'\[.*?:.*?\]', '', base_text).strip()
+    base_video = _re.sub(r'\[.*?\]', '', base_video).strip()
+    
+    # Restore preserved tokens and IMG tags
     for placeholder, tok in _placeholders.items():
         base_video = base_video.replace(placeholder, tok)
     
@@ -266,15 +274,38 @@ def clean_final_output(base_text, tool_results, raw_response_obj, voice_status=F
     
     video_response = filtri.clean_for_video(base_video)
     
+
+    
     clean_voice_text = ""
     if voice_status:
         # We use base_video so Zentra speaks only her intention, not the raw JSON/logs.
         clean_voice_text = filtri.clean_for_voice(base_video)
         
     if tool_results:
-        # Append raw plugin results explicitly to the GUI chat window (video_response)
-        video_response += "\n\n" + "\n\n".join([r['output'] for r in tool_results])
+        for r in tool_results:
+            out = r.get('output', '')
+            if not out:
+                continue
+            # If this is an image generation result, extract only the [[IMG:]] tag to show
+            img_tags_in_out = _re.findall(r'\[\[IMG:[^\]]+\]\]', out)
+            if img_tags_in_out:
+                for img_tag in img_tags_in_out:
+                    if img_tag not in video_response:
+                        video_response += f"\n\n{img_tag}"
+            else:
+                # Append the raw output for non-image tools (e.g. system commands)
+                video_response += f"\n\n{out}"
+                
+    # DEBUG: trace what REACHES the browser exactly at the exit point
+    try:
+        import datetime
+        _pat = r'\[\[IMG:'
+        _has_vr = bool(_re.search(_pat, video_response))
+        with open("logs/image_gen_debug.txt", "a", encoding="utf-8") as _f:
+            _now = datetime.datetime.now().strftime("%H:%M:%S")
+            _f.write(f"[{_now}] [ProcessorExitDebug] Final video_response (len={len(video_response)}, has_img={_has_vr}): {video_response[:200]}\n")
+    except Exception:
+        pass
 
-        
     return video_response, clean_voice_text
 

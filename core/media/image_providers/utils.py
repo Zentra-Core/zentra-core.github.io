@@ -38,7 +38,7 @@ def get_proxies(provider: str = "") -> dict:
     Read proxy configuration from SYS_NET plugin settings.
     Bypass proxy for free APIs (Pollinations/Airforce) to avoid timeouts over Tor.
     """
-    if provider in ["pollinations", "airforce"]:
+    if provider in ["pollinations", "airforce", "huggingface"]:
         return {}
         
     try:

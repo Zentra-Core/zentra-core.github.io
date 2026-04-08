@@ -62,7 +62,9 @@ class AgentExecutor:
             
         iteration = 0
         # agent_context accumulates assistant and tool messages for the current chat session
-        agent_context = []  
+        agent_context = []
+        # Accumulate ALL tool results across iterations so the final response can reference them
+        accumulated_tool_results = []
         
         while iteration < self.max_iterations:
             iteration += 1
@@ -104,12 +106,24 @@ class AgentExecutor:
                 for res in tool_results:
                     out = res.get("output", "")
                     if out and isinstance(out, str):
+                        # 1. Check for explicit [[IMG:...]] from ImageGen
+                        img_tags = re.findall(r'\[\[IMG:([^\]]+)\]\]', out)
+                        for idx, tag in enumerate(img_tags):
+                            # Append directly as expected by chat UI
+                            if f"[[IMG:{tag}]]" not in extracted_text:
+                                extracted_text += f"\n\n[[IMG:{tag}]]"
+                                
+                        # 2. Check for raw paths (e.g. from WEBCAM module which saves to /snapshots)
                         potential_paths = re.findall(r'([\w\.\-\\/]+\.(?:jpg|jpeg|png))', out, re.IGNORECASE)
                         for path in potential_paths:
                             fname = os.path.basename(path)
-                            # Convert local path to web URL
+                            if fname in img_tags:
+                                continue  # Covered above
+                            
+                            # Convert local path to web URL for WEBCAM
                             img_url = f"/snapshots/{fname}"
-                            extracted_text += f"\n\n![Snapshot]({img_url})"
+                            if img_url not in extracted_text:
+                                extracted_text += f"\n\n![Snapshot]({img_url})"
                 # ────────────────────────────────────────────────────────────────────
 
                 # IMPORTANT: If it took loops, we must save the FINAL response to history manually.
@@ -118,7 +132,21 @@ class AgentExecutor:
                      brain_interface.save_message("assistant", extracted_text, config=self.config)
                 
                 # Proceed to voice/video cleaning
-                video_response, clean_voice = processore.clean_final_output(extracted_text, tool_results, raw_response, voice_status)
+                # DEBUG: log what we pass to clean_final_output
+                try:
+                    import datetime
+                    _img_p = r'\[\[IMG:'
+                    _has_i = bool(re.search(_img_p, extracted_text))
+                    with open("logs/image_gen_debug.txt", "a", encoding="utf-8") as _dbg:
+                        _now = datetime.datetime.now().strftime("%H:%M:%S")
+                        _dbg.write(f"[{_now}] [LoopDebug] tool_results count={len(tool_results)}, extracted_text_has_img={_has_i}\n")
+                        _dbg.write(f"[{_now}] [LoopDebug] extracted_text={extracted_text[:300]}\n")
+                        for ri, rr in enumerate(tool_results):
+                            _out = str(rr.get('output', ''))[:200]
+                            _dbg.write(f"[{_now}] [LoopDebug] tool_result[{ri}] tag={rr.get('tag')} output={_out}\n")
+                except Exception:
+                    pass
+                video_response, clean_voice = processore.clean_final_output(extracted_text, accumulated_tool_results, raw_response, voice_status)
                 return video_response, clean_voice
                 
             else:
@@ -139,6 +167,8 @@ class AgentExecutor:
                     agent_context.append({"role": "assistant", "content": str(raw_response)})
 
                 # B) Execute tool and add 'tool' results to context
+                # Also accumulate for final response rendering (e.g. [[IMG:...]] tags)
+                accumulated_tool_results.extend(tool_results)
                 for res in tool_results:
                     self._emit(f"Tool execution result: {res.get('tag')}", level="tool")
                     

@@ -48,14 +48,19 @@ class ModelManager:
         if config.get('llm', {}).get('allow_cloud', False):
             import os
             try:
-                from dotenv import load_dotenv
-                load_dotenv(override=True)  # Load fresh in case user edited .env while app was open
+                from core.keys.key_manager import KeyManager
+                key_mgr = KeyManager()
             except ImportError:
-                pass
+                key_mgr = None
                 
             providers = config.get('llm', {}).get('providers', {})
             for provider_name, p_data in providers.items():
-                api_key = p_data.get('api_key') or os.environ.get(f"{provider_name.upper()}_API_KEY", "").strip().strip("'").strip('"')
+                api_key = p_data.get('api_key')
+                if not api_key and key_mgr:
+                    api_key = key_mgr.get_key(provider_name.lower())
+                elif not api_key:
+                    # Fallback old style
+                    api_key = os.environ.get(f"{provider_name.upper()}_API_KEY", "").strip().strip("'").strip('"')
                 
                 cloud_models = []
                 if api_key:

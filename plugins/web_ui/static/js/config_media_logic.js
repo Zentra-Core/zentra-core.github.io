@@ -12,7 +12,7 @@ function populateMediaUI() {
         imgProvSelect.innerHTML = '';
         const globalProviders = Object.keys(cfg.llm.providers);
         globalProviders.push("ollama");
-        const extraImageProviders = ["pollinations", "airforce", "stability", "gemini_native"];
+        const extraImageProviders = ["pollinations", "airforce", "stability", "gemini_native", "huggingface"];
         
         // Merge without duplicates
         const allSet = new Set([...globalProviders, ...extraImageProviders]);
@@ -24,6 +24,7 @@ function populateMediaUI() {
             "gemini_native": "Google Gemini (Studio Multi-Modality)",
             "openai": "OpenAI DALL-E",
             "stability": "Stability.ai",
+            "huggingface": "Hugging Face Inference API",
             "groq": "Groq (Testo - Non supporta immagini)",
             "anthropic": "Anthropic (Testo - Non supporta immagini)",
             "ollama": "Ollama (Testo - Non supporta immagini)",
@@ -72,6 +73,7 @@ function onProviderChanged() {
     gemini:    'Gemini API Key (GEMINI_API_KEY)',
     openai:    'OpenAI API Key (OPENAI_API_KEY)',
     stability: 'Stability API Key (STABILITY_API_KEY)',
+    huggingface: 'Hugging Face Token (HUGGINGFACE_API_KEY)',
   };
 
   if (labels[provider]) {
