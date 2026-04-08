@@ -1,7 +1,7 @@
 # 📖 MANUALE OPERATIVO - Zentra Core
 
 *Documentazione di sistema per l'Amministratore (Admin).*
-**Versione:** 0.13.0 (Zentra Drive & WebUI Autonoma)
+**Versione:** 0.15.0 (Management update)
 
 ---
 
@@ -75,7 +75,7 @@ Tutti i plugin rispondono ad interfacce unificate che esportano `comandi shell` 
 
 ---
 
-## 👁️ 5. Visione e Interazione Multimodale (v0.13.0)
+## 👁️ 5. Visione e Interazione Multimodale (v0.15.0)
 
 Zentra 0.9.9 introduce il **Sistema di Supporto Visione**, permettendo all'AI di "vedere" e analizzare dati visivi.
 - **Caricamento Immagini**: Trascina i file direttamente nella chat web o incolla immagini dalla memoria (**Ctrl+V**).
@@ -91,14 +91,14 @@ Zentra 0.9.9 introduce il **Sistema di Supporto Visione**, permettendo all'AI di
 
 ---
 
-## 🎨 7. Generazione Immagini (v0.13.0)
+## 🎨 7. Generazione Immagini (v0.15.0)
 
 Zentra può creare contenuti visivi utilizzando il plugin `IMAGE_GEN`.
 - **Come usarlo**: Chiedi semplicemente a Zentra di "Generare un'immagine di..." o "Disegna un...".
 - **Server Esterni**: Di default utilizza **Pollinations.ai** per una generazione veloce e senza filtri.
 - **Interazione**: L'immagine generata apparirà direttamente in chat con opzioni per il download o lo zoom.
 
-## 💻 WebUI Nativa (v0.13.0)
+## 💻 WebUI Nativa (v0.15.0)
 Zentra 0.9.9 include una potente interfaccia web nativa accessibile a `http://localhost:7070` (di default).
 - **Chat in Tempo Reale**: Visualizza lo streaming dell'IA direttamente nel browser.
 - **Dashboard Config**: Modifica le impostazioni di sistema tramite una GUI moderna con sincronizzazione istantanea al core.
@@ -113,7 +113,7 @@ Zentra 0.9.9 include una potente interfaccia web nativa accessibile a `http://lo
 
 ## 🛡️ 9. Sicurezza Avanzata (Zentra PKI)
 
-Zentra 0.13.0 introduce un'infrastruttura **PKI (Public Key Infrastructure)** integrata per garantire connessioni HTTPS sicure in tutta la rete locale.
+Zentra 0.15.0 introduce un'infrastruttura **PKI (Public Key Infrastructure)** integrata per garantire connessioni HTTPS sicure in tutta la rete locale.
 
 ### Certificati e Root CA
 Per sbloccare funzionalità come il **Microfono** e la **Webcam** sui browser mobile (che richiedono contesti sicuri), Zentra agisce come una propria Autorità di Certificazione:
@@ -150,4 +150,31 @@ Dalla versione 0.9.9 Zentra integra un **Loop Cognitivo (Agentic Loop)**. Questo
 - **Zentra Code Jail (Sandbox)**: Zentra può scrivere frammenti di codice Python al volo ed eseguirli (nella cartella sicura `/workspace/sandbox/`) per risolvere calcoli aritmetici lunghi, costruire algoritmi o manipolare dati complessi con precisione assoluta. Una speciale macchina AST di sicurezza interviene prima dell'esecuzione: se l'IA prova a usare comandi di sistema pericolosi, l'azione viene bloccata all'istante, mantenendo il computer sempre protetto.
 
 ---
-*Fine del rapporto documentale v0.13.0.*
+
+## 🔑 13. Gestione API Keys e Failover (v0.15.0)
+
+Zentra introduce un sistema avanzato per la gestione delle chiavi API, eliminando la necessità di riavvii manuali in caso di esaurimento dei crediti.
+
+### Funzionamento del Key Manager
+Il sistema gestisce un **Pool di chiavi** per ogni provider (Groq, Gemini, OpenAI, ecc.):
+- **Failover Automatico**: Se una chiave restituisce un errore di autenticazione (401, 403, 400 su Gemini) o di quota (429), Zentra la marca come "Invalida" o "In Pausa" e passa istantaneamente alla successiva disponibile nel pool.
+- **Cooldown**: Le chiavi che vanno in "Rate Limit" vengono messe in attesa per 60 secondi prima di essere riprovate.
+
+### Configurazione tramite file `.env`
+Oltre al file `config/keys.yaml`, è possibile gestire tutto dal file `.env` principale usando il **Formato Esteso**:
+```env
+# Chiave base (standard)
+GROQ_API_KEY=gsk_...
+
+# Chiavi multiple (indicizzate _1, _2...)
+GROQ_API_KEY_1=gsk_principale  # Account primario
+GROQ_API_KEY_2=gsk_backup      # Account di riserva
+```
+*I commenti dopo il simbolo `#` vengono estratti automaticamente come descrizioni.*
+
+### Pannello WebUI [Key Manager]
+Dalla WebUI è possibile monitorare in tempo reale lo stato delle chiavi. È possibile aggiungere nuove chiavi al pool e scegliere se salvarle permanentemente nel file `.env` o nel file di configurazione interno.
+
+---
+
+*Fine del rapporto documentale v0.15.0.*

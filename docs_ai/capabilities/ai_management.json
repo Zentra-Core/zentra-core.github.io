@@ -52,6 +52,19 @@
       },
       "verification_step": "Enable roleplay via /roleplay on/off command.",
       "notes": "Alters AI behavior significantly."
+    },
+    {
+      "id": "api_key_management",
+      "description": "Multi-key pool management with automatic failover, description mining from .env, and real-time status tracking.",
+      "risk": "medium",
+      "available_in": ["ai", "web"],
+      "implementation": {
+        "core_files": ["core/keys/key_manager.py", "core/keys/key_loader.py", "plugins/web_ui/routes_keys.py"],
+        "entry_points": ["KeyManager.get_key()", "WebUI Key Manager Tab"],
+        "config_keys": ["keys.yaml", ".env (Extended Format)"]
+      },
+      "verification_step": "Check Key Manager tab in WebUI, verify keys load from .env with the new indexed format.",
+      "notes": "Handles 400/401/403/429 errors automatically with key rotation."
     }
   ]
 }

@@ -117,6 +117,19 @@
       },
       "verification_step": "Switch language in F7, verify UI prompts change to chosen language.",
       "notes": "Affects terminal logs, UI labels, and voice responses."
+    },
+    {
+      "id": "api_failover_engine",
+      "description": "Autonomous error recovery logic for LLM calls. Transparently switches API keys upon 400/401/403/429 errors without breaking the chat session.",
+      "risk": "medium",
+      "available_in": ["ai"],
+      "implementation": {
+        "core_files": ["core/llm/client.py", "core/keys/key_manager.py"],
+        "entry_points": ["Retry loop in core/llm/client.py -> generate()"],
+        "config_keys": []
+      },
+      "verification_step": "Invalidate an active key, try a prompt, check if system automatically fails over to the next one.",
+      "notes": "Crucial for system robustness during long sessions."
     }
   ]
 }
