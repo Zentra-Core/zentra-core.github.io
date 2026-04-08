@@ -14,6 +14,7 @@ from .routes_media import init_media_routes
 from .routes_system import init_system_routes
 from .routes_users import init_users_routes
 from .routes_security import init_security_routes
+from .routes_keys import init_keys_routes
 
 def init_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
     """Initializes all component routes for the Web UI."""
@@ -23,6 +24,7 @@ def init_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
     init_system_routes(app, cfg_mgr, root_dir, logger, get_sm)
     init_users_routes(app, logger)
     init_security_routes(app, logger)
+    init_keys_routes(app, logger)
     
     # Zentra Drive — HTTP File Manager
     try:

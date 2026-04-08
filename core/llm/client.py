@@ -159,41 +159,31 @@ def generate(system_prompt, user_message, config_or_subconfig, llm_config=None, 
         else:
             params["model"] = model_name
         
-        # Mappa dei nomi di variabili d'ambiente per provider
-        ENV_KEY_MAP = {
-            "groq": "GROQ_API_KEY",
-            "openai": "OPENAI_API_KEY",
-            "anthropic": "ANTHROPIC_API_KEY",
-            "gemini": "GEMINI_API_KEY",
-            "cohere": "COHERE_API_KEY",
-        }
-        
-        if llm_config:
-            # 1. Prova a recuperare la chiave dal config.json
-            api_key = llm_config.get('providers', {}).get(provider, {}).get('api_key', '').strip()
-            
-            # 2. Se assente o vuota, prova la variabile d'ambiente del sistema operativo
-            if not api_key:
-                env_var = ENV_KEY_MAP.get(provider, f"{provider.upper()}_API_KEY")
-                api_key = os.environ.get(env_var, '').strip().strip("'").strip('"')
-                if api_key:
-                    masked = f"{api_key[:4]}...{api_key[-4:]}" if len(api_key) > 8 else "***"
-                    zlog_info("LiteLLM", f"API key for '{provider}' loaded from env '{env_var}' ({masked})")
-                else:
-                    zlog_debug("LiteLLM", f"API key for '{provider}' not found in env.")
-            else:
-                api_key = api_key.strip().strip("'").strip('"')
-                masked = f"{api_key[:4]}...{api_key[-4:]}" if len(api_key) > 8 else "***"
-                zlog_info("LiteLLM", f"API key for '{provider}' loaded from YAML config ({masked})")
-            
+        # ── KeyManager: pool di chiavi con failover automatico ────────────
+        try:
+            from core.keys import get_key_manager
+            _km = get_key_manager()
+            api_key = _km.get_key(provider)
             if api_key:
-                params["api_key"] = api_key
-                
-                # LiteLLM in alcune versioni preferisce/richiede la env var per Gemini
-                if provider == "gemini":
-                    os.environ["GEMINI_API_KEY"] = api_key
+                masked = f"{api_key[:4]}...{api_key[-4:]}" if len(api_key) > 8 else "***"
+                zlog_info("LiteLLM", f"API key for '{provider}' from KeyManager ({masked})")
             else:
-                zlog_error(f"LiteLLM: No API key found for provider '{provider}'. Call may fail.")
+                zlog_error(f"LiteLLM: No available API key for provider '{provider}' in KeyManager.")
+        except Exception as km_err:
+            zlog_debug("LiteLLM", f"KeyManager not available ({km_err}), falling back to legacy lookup")
+            api_key = None
+            _km = None
+
+        if api_key:
+            params["api_key"] = api_key
+            # LiteLLM in alcune versioni preferisce/richiede la env var per Gemini
+            if provider == "gemini":
+                os.environ["GEMINI_API_KEY"] = api_key
+        else:
+            zlog_error(f"LiteLLM: No API key found for provider '{provider}'. Call may fail.")
+        
+        # Salviamo la chiave corrente usata per poter notificare il failover in caso di errore
+        _current_api_key_for_provider = api_key
 
     # LOG MANUALE PRE-CHIAMATA E UPDATE PAYLOAD
     try:
@@ -237,44 +227,89 @@ def generate(system_prompt, user_message, config_or_subconfig, llm_config=None, 
             zlog_debug("LiteLLM", f"REQUEST_PARAMS: [Debug Log Error: {sle}]")
 
 
-    try:
-        response = litellm.completion(**params)
+    # ── Retry loop with auto-failover ────────────────────────────────────
+    from core.keys import get_key_manager as _get_km
+    _max_key_retries = 8  # max chiavi diverse da provare in sequenza
+    _tried_keys: list = []
 
-        if stream:
-            return response  # Restituisce il generatore per il bridge WebUI
+    for _attempt in range(_max_key_retries):
+        # On retry: get a fresh key from the pool (skip already tried ones)
+        if _attempt > 0 and backend_type == "cloud" and provider:
+            try:
+                _km2 = _get_km()
+                _next_key = _km2.get_key(provider)
+                # If we get the same key (or None), stop retrying
+                if not _next_key or _next_key in _tried_keys:
+                    break
+                params["api_key"] = _next_key
+                if provider == "gemini":
+                    os.environ["GEMINI_API_KEY"] = _next_key
+                masked2 = f"{_next_key[:4]}...{_next_key[-4:]}" if len(_next_key) > 8 else "***"
+                zlog_info("LiteLLM", f"[FAILOVER] Switching to next key for '{provider}' ({masked2})")
+                _current_api_key_for_provider = _next_key
+            except Exception:
+                break
 
-        # CONTROLLO SE HA USATO TOOLS
-        msg = response.choices[0].message
-        if hasattr(msg, 'tool_calls') and msg.tool_calls:
+        _used_key = params.get("api_key", None)
+        if _used_key:
+            _tried_keys.append(_used_key)
+
+        try:
+            response = litellm.completion(**params)
+
+            if stream:
+                return response  # Restituisce il generatore per il bridge WebUI
+
+            # CONTROLLO SE HA USATO TOOLS
+            msg = response.choices[0].message
+            if hasattr(msg, 'tool_calls') and msg.tool_calls:
+                if debug_enabled:
+                    zlog_debug("LiteLLM", f"TOOL_CALLS: {msg.tool_calls}")
+                return msg
+
             if debug_enabled:
-                zlog_debug("LiteLLM", f"TOOL_CALLS: {msg.tool_calls}")
-            # Ritorna l'oggetto message intero affinché processore.py possa leggerne i tool_calls
-            return msg
+                zlog_debug("LiteLLM", f"RESPONSE_OBJECT: {str(response)[:2000]}")
 
-        # LOG MANUALE POST-CHIAMATA
-        if debug_enabled:
-            # Serializziamo solo il contenuto utile per non intasare troppo il log se enorme
-            zlog_debug("LiteLLM", f"RESPONSE_OBJECT: {str(response)[:2000]}")
-            
-        if not msg.content:
-            return ""
-        content = msg.content.strip()
-        import re
-        content = re.sub(r'^(ZENTRA|Zentra|zentra)\s*:\s*', '', content, flags=re.IGNORECASE)
-        return content
-    except Exception as e:
-        error_msg = str(e)
-        zlog_error(f"LiteLLM: Error: {error_msg}")
-        
-        if "400" in error_msg:
-            return f"⚠️ Errore 400: Parametri non validi per '{model_name}'. Dettagli: {error_msg[:200]}"
-        if "401" in error_msg:
-            return f"⚠️ Errore 401: Chiave API non valida o non autorizzata per '{provider}'. Verifica di averla incollata correttamente."
-        if "404" in error_msg:
-            return f"⚠️ Errore 404: Il modello '{model_name}' non è stato trovato o l'endpoint è errato."
-        if "429" in error_msg:
-            return f"⚠️ Quota Esaurita o Limite Superato (Errore 429) per {provider}. Dettaglio provider: {error_msg[:300]}"
-        if "503" in error_msg or "ServiceUnavailableError" in error_msg:
-            return f"⚠️ Server AI Sovraccarico (Errore 503). Il provider {provider} è momentaneamente non disponibile. Dettagli: {error_msg[:100]}"
-            
-        return f"⚠️ Errore LLM imprevisto: {error_msg[:250]}"
+            if not msg.content:
+                return ""
+            content = msg.content.strip()
+            import re
+            content = re.sub(r'^(ZENTRA|Zentra|zentra)\s*:\s*', '', content, flags=re.IGNORECASE)
+            return content
+
+        except Exception as e:
+            error_msg = str(e)
+            zlog_error(f"LiteLLM: Error (attempt {_attempt + 1}): {error_msg}")
+
+            # ── KeyManager: notify failure and attempt failover ──────────
+            _failed_key = params.get("api_key", None)
+            if _failed_key and backend_type == "cloud" and provider:
+                try:
+                    _km_err = _get_km()
+                    if "401" in error_msg or "403" in error_msg or ("400" in error_msg and "API key not valid" in error_msg):
+                        _km_err.mark_exhausted(provider, _failed_key, "invalid")
+                        zlog_info("LiteLLM", f"[KeyManager] Key marked INVALID for '{provider}' — trying next.")
+                    elif "429" in error_msg:
+                        _km_err.mark_exhausted(provider, _failed_key, "rate_limited")
+                        zlog_info("LiteLLM", f"[KeyManager] Key marked RATE_LIMITED for '{provider}' — trying next.")
+                    else:
+                        # Non-auth error: do not retry with a different key
+                        pass
+                except Exception:
+                    pass
+
+            # ── Only retry on auth/rate-limit errors ─────────────────────
+            if "401" in error_msg or "403" in error_msg or "429" in error_msg:
+                continue  # Retry with next key
+
+            # ── Non-retryable errors: return immediately ──────────────────
+            if "400" in error_msg:
+                return f"⚠️ Errore 400: Parametri non validi per '{model_name}'. Dettagli: {error_msg[:200]}"
+            if "404" in error_msg:
+                return f"⚠️ Errore 404: Il modello '{model_name}' non è stato trovato o l'endpoint è errato."
+            if "503" in error_msg or "ServiceUnavailableError" in error_msg:
+                return f"⚠️ Server AI Sovraccarico (Errore 503). Il provider {provider} è momentaneamente non disponibile. Dettagli: {error_msg[:100]}"
+            return f"⚠️ Errore LLM imprevisto: {error_msg[:250]}"
+
+    # All keys exhausted
+    return f"⚠️ Tutte le chiavi API per '{provider}' sono esaurite o non valide. Aggiungi nuove chiavi nel Key Manager."

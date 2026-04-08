@@ -88,6 +88,7 @@
   <div class="tabs">
     <button class="tab active" onclick="showTab('backend')">Backend</button>
     <button class="tab" onclick="showTab('llm')">LLM Keys</button>
+    <button class="tab" onclick="showTab('keymanager'); kmRefresh()">🔑 Key Manager</button>
     <button class="tab" onclick="showTab('routing')">Routing</button>
     <button class="tab" onclick="showTab('ia')">Persona</button>
     <button class="tab" onclick="showTab('bridge')">Bridge</button>
@@ -109,6 +110,7 @@
   <form id="config-form" onsubmit="event.preventDefault(); saveConfig();">
     {% include 'modules/config_backend.html' %}
     {% include 'modules/config_llm.html' %}
+    {% include 'modules/key_manager.html' %}
     {% include 'modules/config_routing.html' %}
     {% include 'modules/config_persona.html' %}
     {% include 'modules/config_bridge.html' %}
