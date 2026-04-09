@@ -14,6 +14,8 @@ window.chatArea = chatArea;
 window.userInput = userInput;
 window.sendBtn = sendBtn;
 
+window.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
 window.hideWelcome = function() {
   if (welcome) welcome.style.display = 'none';
 };
@@ -93,9 +95,11 @@ window.refreshStatus = async function() {
     const d = await (await fetch('/zentra/status')).json();
     const sbB = document.getElementById('sb-backend');
     const sbM = document.getElementById('sb-model');
+    const sbS = document.getElementById('sb-soul');
     const tbM = document.getElementById('tb-model');
     if (sbB) sbB.textContent = d.backend || '—';
     if (sbM) sbM.textContent = d.model || '—';
+    if (sbS) sbS.textContent = d.persona || '—';
     if (tbM) tbM.textContent = d.model || (window.I18N.offline || 'Offline');
 
     if (window._applyMicState) window._applyMicState(d.mic === 'ON');

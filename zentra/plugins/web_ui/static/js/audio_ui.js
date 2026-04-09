@@ -30,20 +30,20 @@ window._webptt_setButtonState = function(state) {
   switch (state) {
     case 'idle':
       btn.innerHTML = '🎙️';
-      btn.setAttribute('aria-label', 'Microfono — tieni premuto per PTT, tocca per bloccare');
-      window._webptt_setStatus('Tieni premuto · Tocca per bloccare');
+      btn.setAttribute('aria-label', 'Microphone — hold for PTT, tap to toggle lock');
+      window._webptt_setStatus('MIC: Hold to talk · Tap to lock (Toggle)');
       break;
     case 'listening':
       btn.innerHTML = '🔴';
       btn.classList.add('listening');
-      btn.setAttribute('aria-label', 'Registrazione in corso — rilascia per inviare');
-      window._webptt_setStatus(window.isLockedMode ? '🔴 Ascolto (bloccato) — tocca per fermare' : '🔴 Ascolto...');
+      btn.setAttribute('aria-label', 'Recording in progress — release to send');
+      window._webptt_setStatus(window.isLockedMode ? '🔴 Listening (Locked) — tap to stop' : '🔴 Listening...');
       break;
     case 'transcribing':
       btn.innerHTML = '⏳';
       btn.classList.add('transcribing');
-      btn.setAttribute('aria-label', 'Trascrizione in corso...');
-      window._webptt_setStatus('🗣️ Trascrizione in corso...');
+      btn.setAttribute('aria-label', 'Transcribing...');
+      window._webptt_setStatus('🗣️ Transcribing...');
       break;
   }
 };

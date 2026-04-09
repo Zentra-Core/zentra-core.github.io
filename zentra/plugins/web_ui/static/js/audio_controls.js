@@ -61,10 +61,10 @@ function _applyPTTState(on) {
   
   const hintEle = document.querySelector('.input-hint');
   if (hintEle) {
-    if (on) {
+    if (on && !window.isMobile) {
       hintEle.innerHTML = `${window.I18N?.chat_hint || ''} <span style="color:var(--accent); font-weight:600;">· ${window.I18N?.ptt_hint || ''}</span>`;
     } else {
-      hintEle.textContent = window.I18N?.chat_hint || '';
+      hintEle.textContent = (window.isMobile ? '' : (window.I18N?.chat_hint || ''));
     }
   }
 }

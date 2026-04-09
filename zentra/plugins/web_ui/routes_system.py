@@ -84,9 +84,13 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
             stt_s = sm.stt_source if sm else acfg.get("stt_source", "system")
             tts_d = sm.tts_destination if sm else acfg.get("tts_destination", "web")
 
+            persona = cfg.get("ai", {}).get("active_personality", "?")
+            if persona.endswith(".txt"): persona = persona[:-4]
+
             return jsonify({
                 "backend":    backend.upper(),
                 "model":      model,
+                "persona":    persona,
                 "bridge":     ", ".join(flags) if flags else "default",
                 "mic":        mic_status,
                 "tts":        tts_status,
