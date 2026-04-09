@@ -21,7 +21,7 @@
 }
 
 * { box-sizing:border-box; margin:0; padding:0; }
-body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; overflow:hidden; height:100vh; }
+body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; overflow:hidden; height:100vh; height:100dvh; }
 
 body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px; height:600px; background:radial-gradient(circle, rgba(108,140,255,0.08) 0%, transparent 70%); pointer-events:none; z-index:0; }
 

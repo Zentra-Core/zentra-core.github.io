@@ -133,7 +133,7 @@
 <div class="save-bar">
   <div id="save-msg"></div>
   <button type="button" class="btn btn-secondary" style="background:#422; border-color:#633; color:#f88;" onclick="rebootSystem()">{{ t("label_reboot_system") }}</button>
-  <button type="button" class="btn btn-secondary" onclick="initAll()">{{ t("webui_conf_btn_reload") }}</button>
+  <button type="button" class="btn btn-secondary" onclick="window.location.reload()">{{ t("webui_conf_btn_reload") }}</button>
   <button type="button" class="btn btn-primary" onclick="saveConfig()">{{ t("webui_conf_btn_save") }}</button>
 </div>
 
