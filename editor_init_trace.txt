@@ -1,3 +1,0 @@
-cfg enabled: True
-zentra_editor in app.blueprints: False
-SUCCESS: Blueprint registered.

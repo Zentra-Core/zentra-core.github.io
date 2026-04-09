@@ -30,7 +30,8 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
     @app.route("/assets/<path:filename>")
     def serve_assets(filename):
         from flask import send_from_directory
-        assets_dir = os.path.join(root_dir, "assets")
+        # New location inside the package for v0.15.0
+        assets_dir = os.path.join(root_dir, "zentra", "assets")
         return send_from_directory(assets_dir, filename)
 
     @app.route("/zentra/status", methods=["GET"])

@@ -1,7 +1,7 @@
 image_gen:
   enabled: true
-  provider: pollinations
-  model: flux
+  provider: huggingface
+  model: black-forest-labs/FLUX.1-schnell
   width: 1024
   height: 1024
   nologo: true

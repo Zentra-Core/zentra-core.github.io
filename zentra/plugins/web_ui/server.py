@@ -2,11 +2,13 @@
 WEB_UI Plugin — Server
 Flask daemon thread that serves both the Config Panel and the native Chat UI.
 """
+import sys
+import os
 import threading
 import logging
-import os
+from flask import Flask, send_from_directory, request, redirect, url_for, jsonify
+from flask_login import LoginManager, current_user
 from .routes import init_routes
-from .routes_chat import init_chat_routes
 
 log = logging.getLogger("ZentraWebUIServer")
 
@@ -14,6 +16,7 @@ from app.state_manager import StateManager
 from app.threads import AscoltoThread
 
 import sys
+print(f"[DEBUG BOOT] server.py loaded from: {__file__}", flush=True)
 _server_lock = threading.Lock()
 
 def set_state_manager(sm) -> None:
@@ -40,6 +43,7 @@ class ZentraWebUIServer:
         self.root_dir = root_dir
         self.port = port
         self.logger = logger or logging.getLogger()
+        print(f"[DEBUG BOOT] ZentraWebUIServer init. root_dir={self.root_dir}", flush=True)
         self._thread = None
 
     def start(self) -> None:
@@ -124,22 +128,19 @@ class ZentraWebUIServer:
             wz_log.propagate = True
 
         # Register all routes — pass getter so routes always read the current SM
-        init_routes(app, self.config_manager, self.root_dir, self.logger, get_state_manager)
-        init_chat_routes(app, self.config_manager, self.root_dir, self.logger)
-        from .routes_auth import init_auth_routes
-        init_auth_routes(app, self.logger)
-
-        # SERVE ASSETS FOLDER (Logos, index.css, etc.)
-        # Assets are in the root directory or in zentra/assets
-        if "serve_assets" not in app.view_functions:
-            from flask import send_from_directory
-            @app.route('/assets/<path:filename>', endpoint='serve_assets')
-            def serve_assets(filename):
-                # Try root/assets then zentra/assets
-                assets_root = os.path.join(self.root_dir, "assets")
-                if not os.path.exists(os.path.join(assets_root, filename)):
-                    assets_root = os.path.join(self.root_dir, "zentra", "assets")
-                return send_from_directory(assets_root, filename)
+        try:
+            init_routes(app, self.config_manager, self.root_dir, self.logger, get_state_manager)
+            
+            from .routes_chat import init_chat_routes
+            init_chat_routes(app, self.config_manager, self.root_dir, self.logger)
+            
+            from .routes_auth import init_auth_routes
+            init_auth_routes(app, self.logger)
+        except Exception as e:
+            import traceback
+            print(f"[DEBUG BOOT] CRITICAL ERROR during route registration: {e}", flush=True)
+            print(traceback.format_exc(), flush=True)
+            return
 
         def _run():
             try:
