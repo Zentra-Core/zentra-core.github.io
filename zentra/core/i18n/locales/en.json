@@ -303,6 +303,7 @@
         "webui_chat_placeholder": "Write a message to Zentra...",
         "webui_chat_hint": "Enter to send · Shift+Enter for new line",
         "webui_chat_btn_clear": "Clear chat",
+        "webui_chat_btn_clear_input": "Clear input field",
         "webui_chat_btn_send": "Send",
         "webui_chat_err_connected": "Connection lost.",
         "webui_chat_err_general": "Error:",

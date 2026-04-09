@@ -317,6 +317,7 @@
         "webui_chat_placeholder": "Scrivi un messaggio a Zentra...",
         "webui_chat_hint": "Enter per inviare · Shift+Enter per andare a capo",
         "webui_chat_btn_clear": "Cancella chat",
+        "webui_chat_btn_clear_input": "Svuota campo testo",
         "webui_chat_btn_send": "Invia",
         "webui_chat_err_connected": "Connessione interrotta.",
         "webui_chat_err_general": "Errore:",

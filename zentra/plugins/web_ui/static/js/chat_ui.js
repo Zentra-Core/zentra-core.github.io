@@ -47,6 +47,14 @@ window.clearChat = function() {
   }
 };
 
+window.clearInput = function() {
+  if (window.userInput) {
+    window.userInput.value = '';
+    window.autoResize(window.userInput);
+    window.userInput.focus();
+  }
+};
+
 window.stopVoice = async function() {
   console.log("[Audio] stopVoice triggered");
   if (window.currentAudio) {
