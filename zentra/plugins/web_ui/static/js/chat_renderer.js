@@ -55,6 +55,15 @@ window.ZentraTTSPlayer.controls = true;
 window.ZentraTTSPlayer.style.display = 'block';
 window.ZentraTTSPlayer.style.marginTop = '10px';
 
+// Append to body to ensure it's in the DOM for earlier interaction
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.createElement('div');
+  container.id = 'zentra-player-container';
+  container.style.display = 'none';
+  document.body.appendChild(container);
+  container.appendChild(window.ZentraTTSPlayer);
+});
+
 // Helper to unlock autoplay on mobile during user interaction (called from sendMessage/bindWebPTT)
 window.unlockAudioContext = function() {
   if (window.ZentraTTSPlayer.src !== SILENT_WAV && !window.ZentraTTSPlayer.src.includes('blob:')) {

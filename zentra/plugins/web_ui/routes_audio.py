@@ -211,9 +211,10 @@ def init_audio_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
                 threading.Thread(target=speak, args=(text,), daemon=True).start()
                 return jsonify({"ok": True, "msg": "Speaking on console..."})
             else:
-                from plugins.web_ui.routes_chat import generate_voice_file
+                from .routes_chat import generate_voice_file, set_last_audio_path
                 path = generate_voice_file(text, acfg)
                 if path:
+                    set_last_audio_path(path)
                     return jsonify({"ok": True, "url": f"/api/audio?t={int(time.time()*1000)}"})
                 else:
                     return jsonify({"ok": False, "error": "Failed to generate audio file"})

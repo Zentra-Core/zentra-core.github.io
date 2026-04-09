@@ -150,6 +150,9 @@ window.testSidebarAudio = async function() {
   const msg = dest === 'web' ? '🌐 Test Audio in corso nel browser...' : '🖥️ Test Audio in corso sulle casse del PC...';
   if (window.showToast) showToast(msg);
   
+  // Unlock audio context for mobile (requires user interaction, which this click is)
+  if (window.unlockAudioContext) window.unlockAudioContext();
+  
   try {
     const r = await fetch('/api/audio/test', {
       method: 'POST',
@@ -157,14 +160,20 @@ window.testSidebarAudio = async function() {
     });
     const data = await r.json();
     if (data.ok && dest === 'web' && data.url) {
-       // On mobile, we might need a "blessed" audio object. 
-       // We can reuse ZentraTTSPlayer if it exists (it's in chat_renderer.js)
-       if (window.ZentraTTSPlayer) {
-           window.ZentraTTSPlayer.src = data.url;
-           window.ZentraTTSPlayer.play();
-       } else {
-           const a = new Audio(data.url);
-           a.play();
+       const player = window.ZentraTTSPlayer || new Audio();
+       try {
+         const resp = await fetch(data.url);
+         const blob = await resp.blob();
+         const blobUrl = URL.createObjectURL(blob);
+         player.src = blobUrl;
+         player.play().catch(e => {
+           console.warn("[Audio] Test autoplay blocked:", e);
+           if (window.showToast) showToast('👆 Clicca Play per ascoltare il test (Blocco Browser)', 'info');
+           // If it's a new audio element, we should probably append it somewhere if it fails
+         });
+       } catch (e) {
+         console.error("[Audio] Test fetch failed:", e);
+         if (window.showToast) showToast('❌ Errore caricamento audio test', 'error');
        }
     }
   } catch(e) { console.error('[Audio] Sidebar test failed', e); }

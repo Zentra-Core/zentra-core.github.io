@@ -22,6 +22,11 @@ _last_audio_path = None
 _current_piper_proc = None
 _chat_log = logging.getLogger("ZentraChatRoutes")
 
+def set_last_audio_path(path: str):
+    global _last_audio_path
+    _last_audio_path = path
+    _chat_log.info(f"[Audio] Global _last_audio_path updated to: {path}")
+
 
 def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr, images=None):
     sess = _sessions.get(session_id)
@@ -318,10 +323,11 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
     @app.route("/api/audio")
     def api_audio():
         from flask import send_file, jsonify
+        _chat_log.debug(f"[Audio] GET /api/audio requested. Last path: {_last_audio_path}")
         if _last_audio_path and os.path.exists(_last_audio_path):
-            # Add a timestamp to bust browser cache between responses
             return send_file(_last_audio_path, mimetype="audio/wav",
                              download_name="zentra_response.wav")
+        _chat_log.warning(f"[Audio] GET /api/audio failed. Path not found or empty: {_last_audio_path}")
         return jsonify({"error": "No audio available"}), 404
 
     @app.route("/api/upload", methods=["POST"])
