@@ -37,6 +37,17 @@ body::before { content:''; position:fixed; top:-200px; left:-200px; width:600px;
   overflow-y:auto; 
   scrollbar-width:thin; 
   scrollbar-color:var(--border) transparent; 
+  transition: width 0.3s ease, min-width 0.3s ease, border-right 0.3s ease, padding 0.3s ease;
+}
+#sidebar.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  border-right: none !important;
+  overflow: hidden !important;
+}
+.desktop-only { display: flex !important; }
+@media (max-width: 768px) {
+  .desktop-only { display: none !important; }
 }
 
 #sidebar::-webkit-scrollbar { width:4px; }

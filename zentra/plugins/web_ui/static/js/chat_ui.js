@@ -142,8 +142,19 @@ window.loadPlugins = async function() {
   } catch(e){}
 };
 
+window.toggleSidebarDesktop = function() {
+  const sb = document.getElementById('sidebar');
+  if(!sb) return;
+  const isCollapsed = sb.classList.toggle('collapsed');
+  localStorage.setItem('sidebarCollapsed', isCollapsed);
+};
+
 // Start periodic checks
 document.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+      const sb = document.getElementById('sidebar');
+      if (sb) sb.classList.add('collapsed');
+    }
     window.refreshStatus();
     window.loadPlugins();
     setInterval(window.refreshStatus, 4000);
