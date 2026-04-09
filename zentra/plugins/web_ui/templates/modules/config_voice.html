@@ -19,24 +19,24 @@
       </select>
     </div>
     <div class="field" style="margin-top:10px;">
-      <label>Output (Voice) Routing</label>
+      <label>Uscita Audio (Voice Routing)</label>
       <select id="tts-destination">
-         <option value="system">PC Speakers (Local)</option>
-         <option value="web">Web Browser Audio</option>
+         <option value="system">🖥️ Casse PC (Locale)</option>
+         <option value="web">🌐 Web Browser (Questo Dispositivo)</option>
       </select>
     </div>
     <div class="field" style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border);">
       <label style="display:flex; align-items:center; gap:6px;">
-        🔀 Modalità Audio
+        🔀 Modalità Audio Dinamica
         <span style="font-size:11px; color:var(--muted); font-weight:400;">(dove Zentra ascolta e parla)</span>
       </label>
       <select id="audio-mode" style="margin-top:6px;">
-         <option value="console">Console — Mic e altoparlanti PC</option>
-         <option value="web">Web — Browser audio</option>
-         <option value="auto">Auto — rileva in base a cosa è aperto</option>
+         <option value="console">Console — Sempre su PC</option>
+         <option value="web">Web — Sempre su Browser</option>
+         <option value="auto">Auto — Segue il dispositivo attivo</option>
       </select>
       <p style="font-size:11px; color:var(--muted); margin-top:5px;">
-        In modalità <strong>Auto</strong>, il sistema usa console se la WebUI non è in primo piano, e browser se lo è.
+        In modalità <strong>Auto</strong>, Zentra risponderà sul dispositivo da cui riceve il comando (PC o Browser).
       </p>
     </div>
   </div>

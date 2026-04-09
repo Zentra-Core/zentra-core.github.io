@@ -145,6 +145,31 @@ window.setAudioRouting = async function(key, val) {
   } catch(e) { console.error('[Audio] setAudioRouting failed', e); }
 };
 
+window.testSidebarAudio = async function() {
+  const dest = document.getElementById('tts-dest-select').value;
+  const msg = dest === 'web' ? '🌐 Test Audio in corso nel browser...' : '🖥️ Test Audio in corso sulle casse del PC...';
+  if (window.showToast) showToast(msg);
+  
+  try {
+    const r = await fetch('/api/audio/test', {
+      method: 'POST',
+      body: JSON.stringify({ text: "Sincronizzazione audio completata. Tutto funziona correttamente.", mode: dest })
+    });
+    const data = await r.json();
+    if (data.ok && dest === 'web' && data.url) {
+       // On mobile, we might need a "blessed" audio object. 
+       // We can reuse ZentraTTSPlayer if it exists (it's in chat_renderer.js)
+       if (window.ZentraTTSPlayer) {
+           window.ZentraTTSPlayer.src = data.url;
+           window.ZentraTTSPlayer.play();
+       } else {
+           const a = new Audio(data.url);
+           a.play();
+       }
+    }
+  } catch(e) { console.error('[Audio] Sidebar test failed', e); }
+};
+
 window._applyMicState = _applyMicState;
 window._applyTTSState = _applyTTSState;
 window._applyPTTState = _applyPTTState;
