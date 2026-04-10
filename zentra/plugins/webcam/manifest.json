@@ -4,6 +4,7 @@
     "lazy_load": true,
     "is_class_based": true,
     "status": "ONLINE (Optical Vision)",
+    "routing_instructions": "WEBCAM ROUTING RULE: When the user says 'phone', 'smartphone', 'mobile', 'il telefono', 'browser', or any remote device, you MUST call WEBCAM take_snapshot with target='client'. NEVER use target='server' when the user is asking from a phone.",
     "commands": {
         "take_snapshot": "Takes a photo. Use target='server' for PC webcam, target='client' for the user's own phone or browser."
     },
@@ -12,13 +13,13 @@
             "type": "function",
             "function": {
                 "name": "WEBCAM__take_snapshot",
-                "description": "Takes a photo. CRITICAL ROUTING: If the user mentions taking a photo from their PHONE, SMARTPHONE, MOBILE, BROWSER or REMOTE DEVICE, you MUST pass target='client'. This opens their native camera app automatically. Only use target='server' (default) if the user explicitly wants the local PC webcam.",
+                "description": "Takes a photo. CRITICAL: Use target='server' for PC webcam, target='client' for user's phone. DO NOT use this for 'generating' AI art or drawings; use IMAGE_GEN instead.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "target": {
                             "type": "string",
-                            "description": "REQUIRED ROUTING. Use 'client' if user says phone/smartphone/mobile/browser/remote — opens the user's native device camera. Use 'server' only if user wants the local PC webcam attached to the server.",
+                            "description": "REQUIRED ROUTING. Use 'client' if user says phone/smartphone/browser. Use 'server' for local PC webcam. NEVER use this to 'generate' photos of cats/characters.",
                             "enum": ["server", "client"]
                         }
                     },

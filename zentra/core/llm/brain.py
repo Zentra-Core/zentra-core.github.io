@@ -10,7 +10,9 @@ from zentra.memory import brain_interface
 from zentra.core.llm import client
 from zentra.core.i18n import translator
 from zentra.core.llm.manager import manager
-from zentra.core.system.plugin_loader import get_tools_schema, get_legacy_schema
+from zentra.core.system.plugin_loader import get_tools_schema, get_legacy_schema, get_active_tags
+from zentra.config import load_yaml
+from zentra.config.schemas.routing_schema import RoutingOverrides
 
 # --- PROJECT ROOT CALCULATION ---
 # Anchored to zentra/ folder
@@ -19,6 +21,58 @@ CONFIG_PATH = os.path.join(_ZENTRA_DIR, "config", "data", "system.yaml")
 REGISTRY_PATH = os.path.join(_ZENTRA_DIR, "core", "registry.json")
 PERSONALITY_DIR = os.path.join(_ZENTRA_DIR, "personality")
 CORE_DIR = os.path.join(_ZENTRA_DIR, "core")
+ROUTING_OVERRIDES_PATH = os.path.join(_ZENTRA_DIR, "config", "data", "routing_overrides.yaml")
+
+class RoutingManager:
+    """
+    Manages the 3-tier hybrid routing system:
+    1. Plugin Manifest (Default)
+    2. User Overrides (YAML)
+    3. Core Defaults (Fallback)
+    """
+    @staticmethod
+    def get_dynamic_instructions(config):
+        try:
+            # 1. Load active plugin tags
+            active_tags = get_active_tags()
+            
+            # 2. Load instructions from registry
+            registry_data = {}
+            if os.path.exists(REGISTRY_PATH):
+                with open(REGISTRY_PATH, "r", encoding="utf-8") as f:
+                    registry_data = json.load(f)
+            
+            # 3. Load user overrides
+            overrides = {}
+            if os.path.exists(ROUTING_OVERRIDES_PATH):
+                try:
+                    overrides_model = load_yaml(ROUTING_OVERRIDES_PATH, RoutingOverrides)
+                    overrides = overrides_model.overrides
+                except Exception as e:
+                    logger.debug(f"BRAIN: Error loading routing overrides: {e}")
+
+            # 4. Merge logic
+            merged_instructions = []
+            for tag in active_tags:
+                tag_upper = tag.upper()
+                # Priority: YAML Override > Registry (Manifest)
+                instruction = overrides.get(tag_upper)
+                
+                if not instruction and tag_upper in registry_data:
+                    instruction = registry_data[tag_upper].get("routing_instructions")
+                
+                if instruction:
+                    merged_instructions.append(f"- [{tag_upper}] {instruction}")
+
+            if merged_instructions:
+                block = "\n### DYNAMIC ROUTING RULES ###\n"
+                block += "These rules define how to choose targets or modes for specific tools. FOLLOW THEM STRICTLY.\n"
+                block += "\n".join(merged_instructions) + "\n"
+                return block
+            return ""
+        except Exception as e:
+            logger.error(f"BRAIN: Routing Manager error: {e}")
+            return ""
 
 def load_config():
     try:
@@ -179,9 +233,6 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
         "- [SYSTEM: explore:folder] - Open folder graphically\n"
         "- [FILE_MANAGER: list:folder] - List files for analysis\n"
         "- [DASHBOARD: resources] - Get hardware telemetry\n"
-        "- [IMAGE_GEN: generate_image:description] - Generate an image\n"
-        "- WEBCAM ROUTING RULE: When the user says 'phone', 'smartphone', 'mobile', 'il telefono', 'browser', or any remote device,"
-        " you MUST call WEBCAM take_snapshot with target='client'. NEVER use target='server' when the user is asking from a phone.\n"
     )
 
 
@@ -247,6 +298,7 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
         f"{file_manager_rules}"
         f"{force_clause}"
         f"{plugin_guidelines}"
+        f"{RoutingManager.get_dynamic_instructions(config)}"
         f"{tag_instructions}"
         f"{special_instructions_block}"
         f"{vision_note}"

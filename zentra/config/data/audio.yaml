@@ -70,7 +70,7 @@ stt_source: system
 
 # "system" to output voice directly from the connected PC's speakers.
 # "web" to encapsulate the WAV file and play it inside the browser via the integrated WebUI.
-tts_destination: system
+tts_destination: web
 
 # Status of the audio playback system (console mode means bypassing web redirects).
 audio_mode: console

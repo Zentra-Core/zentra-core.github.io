@@ -253,6 +253,7 @@ if __name__ == "__main__":
     from zentra.app.config import ConfigManager
     from zentra.core.i18n.translator import init_translator
     from zentra.core.logging import logger
+    from zentra.core.constants import LOGS_DIR
     cfg = ConfigManager()
     
     # Initialize basic logging (disable external windows for webui standalone)
@@ -306,10 +307,8 @@ if __name__ == "__main__":
 
     def is_webui_already_open(root_dir):
         """Check if a WebUI tab is already active via heartbeat file."""
-        import time, json, os
         # hb_file is in zentra/logs/
-        central_logs = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "logs"))
-        hb_file = os.path.join(central_logs, "webui_heartbeat.json")
+        hb_file = os.path.join(LOGS_DIR, "webui_heartbeat.json")
         if not os.path.exists(hb_file): 
             return False
         try:

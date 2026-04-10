@@ -8,9 +8,10 @@ Thank you for contributing to Zentra Core! To ensure the project remains accessi
 - **Comments:** Code comments should be written in **English**.
 - **Commits:** Git commit messages should be in **English**.
 
-## 🏗️ Configuration Logic
+## 🏗️ Configuration & Path Logic
 - If you add or modify configuration keys, ensure they are descriptive and follow the camel_case or snake_case convention (snake_case preferred for Python).
 - Always update `app/config.py` (default config) when introducing new parameters.
+- **Path Integrity:** Always use `zentra/core/constants.py` for file operations. NEVER hardcode absolute or relative paths pointing to the project root. All operational data must reside within the `zentra/` directory.
 
 ## 🧪 Internationalization (i18n)
 - **Strings:** Never hardcode user-facing strings in Python or HTML. Always use the `translator.t()` function.

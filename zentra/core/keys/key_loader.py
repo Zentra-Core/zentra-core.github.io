@@ -33,8 +33,12 @@ try:
 except ImportError:
     _YAML_AVAILABLE = False
 
-# Root project directory (keys.yaml and .env live here or in /config/)
-_PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
+# Root project directory: the 'zentra/' black-box folder
+# key_loader.py is at: zentra/core/keys/key_loader.py
+# .parent        → zentra/core/keys/
+# .parent.parent → zentra/core/
+# .parent.parent.parent → zentra/   ← BLACK BOX ROOT
+_PROJECT_ROOT = Path(__file__).parent.parent.parent
 _KEYS_YAML_PATH = _PROJECT_ROOT / "config" / "keys.yaml"
 _ENV_PATH = _PROJECT_ROOT / ".env"
 
