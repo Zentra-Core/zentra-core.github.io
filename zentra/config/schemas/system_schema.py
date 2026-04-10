@@ -206,6 +206,14 @@ class PluginExecutor(BaseModel):
     lazy_load: bool = False
     timeout_seconds: int = 10
 
+class PluginRemoteTriggers(BaseModel):
+    enabled: bool = True
+    lazy_load: bool = False
+    settings: Dict[str, Any] = Field(default_factory=lambda: {
+        "enable_mediasession": True,
+        "enable_volume_keys": True
+    })
+
 class PluginDrive(BaseModel):
     enabled: bool = True
     lazy_load: bool = True
@@ -234,6 +242,7 @@ class PluginsConfig(BaseModel):
     WEB_UI: PluginWebUI = Field(default_factory=PluginWebUI)
     EXECUTOR: PluginExecutor = Field(default_factory=PluginExecutor)
     DRIVE: PluginDrive = Field(default_factory=PluginDrive)
+    REMOTE_TRIGGERS: PluginRemoteTriggers = Field(default_factory=PluginRemoteTriggers)
     extra_dirs: List[str] = []
 
 
