@@ -30,10 +30,15 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
 
     @app.route("/assets/<path:filename>")
     def serve_assets(filename):
-        from flask import send_from_directory
+        from flask import send_from_directory, make_response
         # New location inside the package for v0.15.2
         assets_dir = os.path.join(root_dir, "zentra", "assets")
-        return send_from_directory(assets_dir, filename)
+        resp = make_response(send_from_directory(assets_dir, filename))
+        # Prevent aggressive browser caching for assets to ensure UI updates are seen
+        resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        resp.headers["Pragma"] = "no-cache"
+        resp.headers["Expires"] = "0"
+        return resp
 
     @app.route("/zentra/status", methods=["GET"])
     def get_status():
