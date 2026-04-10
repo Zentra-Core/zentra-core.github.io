@@ -1,7 +1,7 @@
 # 📖 OPERATING MANUAL - Zentra Core
 
 *System documentation for the Administrator (Admin).*
-**Version:** 0.15.2 (Zentra Drive & Standalone WebUI)
+**Version:** 0.16.0 (3-Tier Hybrid Configuration)
 
 ---
 
@@ -165,4 +165,46 @@ From version 0.9.9 Zentra integrates a **Cognitive Loop (Agentic Loop)**. This t
 - **Zentra Code Jail (Sandbox)**: Zentra can write Python code snippets on the fly and execute them (in the secure folder `/workspace/sandbox/`) to solve long arithmetic calculations, build algorithms or manipulate complex data with absolute precision. A special security AST machine intervenes before execution: if the AI tries to use dangerous system commands, the action is blocked instantly, keeping the computer always protected.
 
 ---
-*End of documentation report v0.13.0.*
+
+## 🧭 13. Tiered AI Instruction System (v0.16.0)
+
+Zentra v0.16.0 introduces a **3-Tier Hybrid Configuration** architecture to control how the AI routes and handles specific plugin commands. Understand which layer to use:
+
+### Tier overview
+
+| Layer | Where | Scope | Use For |
+|---|---|---|---|
+| **1. Special AI Instructions** | Config Panel → Persona tab | Global | General behavior, tone, communication style |
+| **2. Routing Overrides (YAML)** | Config Panel → Routing tab | Per-plugin | Forcing specific tool actions, parameter constraints |
+| **3. Plugin Manifest** | `zentra/core/registry.json` | Default | Factory defaults (set by developers) |
+
+> **[!NOTE]**: Layer 1 (Special AI Instructions) defeats Layer 3 but Layer 2 (YAML overrides) defeats **all** layers for its specific plugin.
+
+### How to use the Routing Editor (Browser)
+1. Open the Config Panel at `https://localhost:7070/zentra/config/ui`.
+2. Click the **Routing** tab.
+3. You'll see the **Custom Plugin Overrides** section at the bottom.
+4. Click **+ Add Override** to add a new rule. The tag must match the plugin name exactly (e.g. `WEBCAM`, `IMAGE_GEN`).
+5. Write your instruction in plain language — the AI receives it verbatim with each prompt.
+6. Click **Save Overrides** to persist to disk.
+
+### How to edit the YAML directly (Drive Editor)
+1. In the Routing tab, click **📝 Edit in Drive**.
+2. The Monaco Code Editor will open `routing_overrides.yaml` directly for full editing.
+3. Save with `Ctrl+S`.
+
+### Practical examples
+```yaml
+overrides:
+  # Always use the user's phone camera instead of the server webcam
+  WEBCAM: "When the user says 'phone', 'mobile', or 'browser', ALWAYS use target='client'."
+
+  # Restrict image generation to explicit requests only
+  IMAGE_GEN: "Only call generate_image if the user explicitly asks to 'create', 'draw', or 'generate' an image."
+
+  # Make web searches prefer technical sources
+  WEB: "Prioritize technical documentation, Wikipedia, and official sources. Avoid gossip or news aggregators."
+```
+
+---
+*End of documentation report v0.16.0.*

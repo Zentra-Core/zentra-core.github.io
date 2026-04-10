@@ -3,7 +3,7 @@
   <img src="https://raw.githubusercontent.com/Zentra-Core/zentra-core.github.io/main/zentra/assets/Zentra_Core_Logo.jpg" width="400" alt="Zentra Logo">
 </p>
 
-# Zentra Core - Version 0.15.2 (Runtime Alpha)
+# Zentra Core - Version 0.16.0 (Runtime Alpha)
 Language: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP.md)
 
 # 🤖 Zentra Core
@@ -12,17 +12,19 @@ Language: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_E
 ---
 
 > [!WARNING]
-> **Runtime Alpha Status**: Zentra Core is currently in `v0.15.2`. This repository contains the engine, backend, AI reasoning modules, and the main native WebUI. Features may change, and the system is not yet considered stable. Use with caution.
+> **Runtime Alpha Status**: Zentra Core is currently in `v0.16.0`. This repository contains the engine, backend, AI reasoning modules, and the main native WebUI. Features may change, and the system is not yet considered stable. Use with caution.
 
 ## 🚀 Overview
 **Zentra Core** is a local-first AI assistant platform that runs entirely on your machine.
 It combines local LLMs, voice interaction, system automation, and a modular plugin architecture to create a fully customizable AI companion.
 
-Now fully migrated to a **stable Native Plugin architecture**, Zentra 0.15.2 offers a dedicated Web Interface (Chat + Config) and complete Internationalization. Powered by **LiteLLM**, it supports Ollama, KoboldCpp, and major cloud providers with real-time streaming and local TTS.
+Now fully migrated to a **stable Native Plugin architecture**, Zentra 0.16.0 offers a dedicated Web Interface (Chat + Config) and complete Internationalization. Powered by **LiteLLM**, it supports Ollama, KoboldCpp, and major cloud providers with real-time streaming and local TTS.
 
 ---
 
-## ✨ Key Features (v0.15.2)
+## ✨ Key Features (v0.16.0)
+* 🧭 **3-Tier Hybrid Configuration** — A powerful layered override system: Plugin Manifest defaults → User YAML Overrides (`routing_overrides.yaml`) → Core Fallback. Customize AI routing behavior per-plugin without ever touching source code.
+* 📝 **In-WebUI Routing Editor** — A new built-in key-value editor in the **Routing** tab lets you add, edit, and delete plugin-specific routing instructions directly from the browser. One click to open the full YAML file in the Zentra Code Editor.
 * 🤖 **Autonomous Agentic Loop** — Zentra can now reason step-by-step (Chain of Thought), dynamically select tools, and solve complex multi-step problems autonomously.
 * 🛡️ **Zentra Code Jail (AST Sandbox)** — A native, highly secure Python sandbox that allows the AI to execute algorithms, math, and data logic safely.
 * 👁️ **Native Vision Support** — Multimodal AI capabilities for Gemini, OpenAI, and Ollama (LLaVA). Analyze images, photos, and screenshots directly in chat.
@@ -159,8 +161,9 @@ Official Email: zentra.core.systems@gmail.com
 
 ---
 
-## 📚 Technical Documentation
-Detailed technical guides for developers and advanced users:
+## 📚 Documentation
+Detailed guides for developers, admins, and users:
+- 📖 **[Operating Manual (EN)](docs/OPERATING_MANUAL.md)**: User-facing guide to all features and panels.
 - 🏗️ **[Technical Architecture Guide](docs/TECHNICAL_GUIDE.md)**: Deep dive into the OOP structure, data flow, and core engines.
 - 🔌 **[Plugin Development Guide](docs/PLUGINS_DEV.md)**: How to create and register new tools using Native Function Calling.
 - 📁 **[Project Structure Map](docs/ARCHITECTURE_MAP.md)**: Complete file-by-file breakdown of the repository.
