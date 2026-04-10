@@ -12,6 +12,7 @@ Zentra Core is built on a **Modular Object-Oriented Architecture** designed for 
 - **OS Agnostic Architecture**: Version 0.11.0 abstracts all operating system dependent workflows via the new `OSAdapter` (`core/system/os_adapter.py`).
 - **Mandatory HTTPS & Auth Security**: Version 0.15.2 implements standard Flask-Login authentication over AES sessions and SQLite SQLite PBKDF2 hashing (`core/auth/auth_manager.py`). The Native UI is completely locked from unauthorized accesses.
 - **Extension Architecture & Lazy Loading (JIT)**: Plugins can encapsulate complex feature sets (e.g., Code Editors) into `extensions/`. These are lazy-loaded dynamically via `core/system/extension_loader.py` ONLY when accessed, zeroing their RAM/CPU footprint during normal startup operations.
+- **Hermetic Path Management**: Version 0.15.2 centralizes all operational file paths in `zentra/core/constants.py`. Hardcoding paths like `logs/` or `snapshots/` in the project root is strictly prohibited. All data must reside within the `zentra/` directory.
 
 ---
 

@@ -1,12 +1,12 @@
 @echo off
 @chcp 65001 >nul
 title ZENTRA PROCESS MANAGER
-cd /d "%~dp0"
+cd /d "%~dp0.."
 color 0D
 
 echo.
 set ZENTRA_VERSION=Unknown
-if exist core\version set /p ZENTRA_VERSION=<core\version
+if exist zentra\core\version set /p ZENTRA_VERSION=<zentra\core\version
 echo  ==============================================================
 echo   ZENTRA PROCESS MANAGER v%ZENTRA_VERSION%
 echo  ==============================================================
@@ -20,7 +20,7 @@ if exist "venv\Scripts\activate.bat" (
 echo [*] Starting standalone process monitor...
 echo.
 
-python zentra_proc_manager.py
+python scripts\utils\zentra_proc_manager.py
 
 echo.
 echo [!] Process terminated.

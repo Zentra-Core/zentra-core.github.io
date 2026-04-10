@@ -19,6 +19,7 @@ Zentra-Core/
 │   ├── agent/            # Agentic Loop (Chain of Thought, SSE Traces)
 │   ├── audio/            # TTS (Piper) and STT voice systems
 │   ├── auth/             # AES Session & SQLite Auth Manager
+│   ├── constants.py      # CENTRALIZED PATHS (LOGS_DIR, SNAPSHOTS_DIR)
 │   ├── i18n/             # Internationalization (IT/EN/ES)
 │   ├── llm/              # Unified AI backends (Ollama, Kobold, Cloud)
 │   │   └── vision/       # Multimodal adapters
@@ -31,36 +32,13 @@ Zentra-Core/
 │   ├── TECHNICAL_GUIDE.md
 │   └── ARCHITECTURE_MAP.md
 │
-├── logs/                 # Active system runtime and technical logs
-│   ├── zentra.log        # Core logging output
-│   └── webui_heartbeat.json # Frontend status tracking
-│
-├── memory/               # Persistent AI storage (SQLite)
-│   ├── caveau/           # Long-term semantic memories
-│   └── history/          # Conversation context
-│
-├── personality/          # AI Persona and Dynamic Prompts (.txt files)
-│
-├── plugins/              # Modular Plugin System
-│   ├── dashboard/        # Hardware HUD
-│   ├── domotica/         # IoT control
-│   ├── drive/            # Zentra Drive (HTTP File Manager)
-│   ├── executor/         # AST Code Sandbox (Zentra Code Jail)
-│   ├── file_manager/     # OS file operations (AI tools)
-│   ├── help/             # Documentation assistant
-│   ├── image_gen/        # AI Image Generation
-│   ├── media/            # Audio/Video playback
-│   ├── memory/           # Memory tools
-│   ├── models/           # Real-time model macros
-│   ├── system/           # OS management
-│   ├── web/              # Internet browsing
-│   ├── web_ui/           # Native Web Interface (Chat + Config)
-│   ├── webcam/           # Vision sensor
-│   └── plugins_disabled/ # Inactive modules
-│
-├── config/               # Centralized YAML Configuration
-│   ├── system.yaml       # Core system settings
-│   └── audio.yaml        # Audio & Voice settings
+├── zentra/               # Main self-contained application package
+│   ├── logs/             # Active system runtime and technical logs
+│   ├── memory/           # Persistent AI storage (SQLite)
+│   ├── personality/      # AI Persona and Dynamic Prompts (.txt files)
+│   ├── snapshots/        # Captured images and AI generated assets
+│   ├── config/           # Centralized YAML Configuration
+│   └── ... (core modules)
 │
 ├── .env                  # API Keys & Sensitive Data
 ├── main.py               # Application Entry Point
@@ -73,4 +51,5 @@ Zentra-Core/
 * **`core/`**: The engine room. Version 0.15.2 introduces native Auth systems, **Zentra PKI** for self-hosted HTTPS, and Agentic reasoning.
 * **`plugins/`**: Modular heart. Now includes **Lazy Loading** for zero-boot impact, **Zentra Drive** for file management, and **Remote Client Camera** support for mobile devices.
 * **`config/`**: Centralized repository for all system parameters, replacing old scattered JSONs.
+* **`core/constants.py`**: Mandatory single source of truth for all operational paths (Logs, Snapshots, Memories).
 * **`scripts/`**: Internationalized launchers (.bat/.sh) in standard English.

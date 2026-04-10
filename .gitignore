@@ -185,8 +185,18 @@ zentra/logs/
 zentra/memory/
 zentra/snapshots/
 zentra/certs/
-zentra/config/data/system.yaml
-zentra/config/data/*.bak
+
+# Config data: all personal settings and generated config files
+zentra/config/data/
+
+# API Keys - CRITICAL: never push these to git
+zentra/config/keys.yaml
+config/keys.yaml
+
+# Generated images from AI (Image Gen plugin)
+zentra/assets/generated/
+*.generated.png
+*.generated.jpg
 
 # Temporary and build files
 tmp/
@@ -194,5 +204,14 @@ brain/
 *.log
 *.wav
 *.mp3
+*.db
 .env
+
+# Root Level Protection (prevent leakage outside zentra/)
+/snapshots/
+/logs/
+/data/
+/data/images/
+/zentra/core/snapshots/
+/zentra/core/logs/
 

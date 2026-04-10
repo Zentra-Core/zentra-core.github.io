@@ -119,17 +119,17 @@
       "notes": "Affects terminal logs, UI labels, and voice responses."
     },
     {
-      "id": "api_failover_engine",
-      "description": "Autonomous error recovery logic for LLM calls. Transparently switches API keys upon 400/401/403/429 errors without breaking the chat session.",
-      "risk": "medium",
-      "available_in": ["ai"],
+      "id": "path_standardization",
+      "description": "Hermetic path management system. Ensures all operational data (logs, snapshots, media) is contained within the 'zentra/' directory by using centralized constants.",
+      "risk": "low",
+      "available_in": ["cli", "web", "ai", "plugin"],
       "implementation": {
-        "core_files": ["core/llm/client.py", "core/keys/key_manager.py"],
-        "entry_points": ["Retry loop in core/llm/client.py -> generate()"],
+        "core_files": ["zentra/core/constants.py"],
+        "entry_points": ["Importing constants.py in any module"],
         "config_keys": []
       },
-      "verification_step": "Invalidate an active key, try a prompt, check if system automatically fails over to the next one.",
-      "notes": "Crucial for system robustness during long sessions."
+      "verification_step": "Check that no 'logs/', 'snapshots/', or 'data/' folders are created in the project root after execution.",
+      "notes": "Introduced in v0.15.2 to improve repository cleanliness and privacy."
     }
   ]
 }

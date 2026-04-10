@@ -1,12 +1,12 @@
 @echo off
 @chcp 65001 >nul
 title ZENTRA CORE - NVIDIA AI ACCELERATED
-cd /d "%~dp0"
+cd /d "%~dp0.."
 color 0E
 
 echo.
 set ZENTRA_VERSION=Unknown
-if exist core\version set /p ZENTRA_VERSION=<core\version
+if exist zentra\core\version set /p ZENTRA_VERSION=<zentra\core\version
 echo  ==============================================================
 echo   ZENTRA CORE NVIDIA RUNNER v%ZENTRA_VERSION%
 echo  ==============================================================
@@ -24,7 +24,7 @@ echo.
 :: Force CUDA usage if available via environment variables (optional)
 set CUDA_VISIBLE_DEVICES=0
 
-python monitor.py
+python zentra\monitor.py
 
 echo.
 echo [!] Process terminated.
