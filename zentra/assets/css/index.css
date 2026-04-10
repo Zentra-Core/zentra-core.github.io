@@ -34,6 +34,7 @@ header {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 60px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -41,7 +42,7 @@ header {
 }
 
 .logo {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -49,7 +50,7 @@ header {
 }
 
 .logo img {
-  height: 32px;
+  height: 28px;
   width: auto;
   filter: drop-shadow(0 0 8px rgba(108,140,255,0.2));
 }
