@@ -134,7 +134,7 @@
         "is_lazy": true
     },
     "REMOTE_TRIGGERS": {
-        "description": "Attivazione PTT da periferiche hardware e dispositivi remoti",
+        "description": "PTT activation from hardware devices and remote clients",
         "commands": {
             "info": "Method"
         },
