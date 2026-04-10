@@ -4,7 +4,7 @@
 # Spostati nella root directory
 cd "$(dirname "$0")"
 
-VERSION=$(cat core/version 2>/dev/null || echo "Unknown")
+VERSION=$(cat zentra/core/version 2>/dev/null || echo "Unknown")
 
 echo -e "\033[1;32m==============================================================\033[0m"
 echo -e "\033[1;32m  ZENTRA NATIVE WEB INTERFACE v${VERSION}\033[0m"
@@ -31,7 +31,7 @@ if [ -z "$LAN_IP" ]; then
 fi
 
 # Recupera lo schema HTTP/HTTPS da system.yaml
-SCHEME=$(python3 -c "import yaml; print('https' if yaml.safe_load(open('config/system.yaml')).get('plugins',{}).get('WEB_UI',{}).get('https_enabled',False) else 'http')" 2>/dev/null)
+SCHEME=$(python3 -c "import yaml; print('https' if yaml.safe_load(open('zentra/config/data/system.yaml')).get('plugins',{}).get('WEB_UI',{}).get('https_enabled',False) else 'http')" 2>/dev/null)
 if [ -z "$SCHEME" ]; then
     SCHEME="http"
 fi
@@ -48,7 +48,7 @@ echo -e "\033[1;36m=============================================================
 echo ""
 
 # Starting the monitor passing the standalone web server module.
-python3 monitor.py --script plugins.web_ui.server
+python3 zentra/monitor.py --script zentra.plugins.web_ui.server
 
 echo ""
 echo "[!] Watchdog terminated."

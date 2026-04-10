@@ -15,6 +15,7 @@ import threading
 import queue
 import time
 import logging
+from zentra.core.constants import LOGS_DIR, SNAPSHOTS_DIR
 
 _sessions      = {}
 _sessions_lock = threading.Lock()
@@ -131,9 +132,8 @@ def generate_voice_file(text: str, voice_cfg: dict) -> str:
         noise_w          = voice_cfg.get("noise_w", 0.8)
         sentence_silence = voice_cfg.get("sentence_silence", 0.2)
 
-        root = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
-        # rispota.wav in zentra/logs/
-        out = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "logs", "risposta.wav"))
+        # risposta.wav in zentra/logs/
+        out = os.path.join(LOGS_DIR, "risposta.wav")
 
         import subprocess
         clean_text = text.replace('"', '').replace('\n', ' ')
@@ -239,9 +239,7 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
     @app.route("/snapshots/<path:filename>")
     def serve_snapshots(filename):
         """Serves captured images from the snapshots directory inside the package."""
-        # Anchored to zentra/snapshots/
-        save_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "snapshots"))
-        return send_from_directory(save_dir, filename)
+        return send_from_directory(SNAPSHOTS_DIR, filename)
 
     @app.route("/")
     def root_redirect():
@@ -416,8 +414,8 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
         The AI can reference images with [[IMG:filename.ext]] syntax.
         """
         from flask import send_from_directory, jsonify
-        # Anchored to zentra/snapshots/images/
-        images_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "snapshots", "images"))
+        # Use SNAPSHOTS_DIR relative images folder
+        images_dir = os.path.join(SNAPSHOTS_DIR, "images")
         os.makedirs(images_dir, exist_ok=True)
         img_path = os.path.join(images_dir, filename)
         if os.path.exists(img_path):

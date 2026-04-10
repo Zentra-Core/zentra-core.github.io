@@ -16,6 +16,7 @@ from zentra.core.audio import voice
 from zentra.ui import interface
 from zentra.core.system.version import VERSION, COPYRIGHT, get_version_string
 from zentra.core.i18n import translator
+from zentra.core.constants import LOGS_DIR, SNAPSHOTS_DIR, ZENTRA_DIR
 
 VERDE = '\033[92m'
 ROSSO = '\033[91m'
@@ -44,20 +45,20 @@ def print_and_speak(video_text, voice_text=None):
 def check_folders():
     # Directories that should be inside the package
     package_folders = ["plugins", "core", "ui", "app"]
-    # Directories that should be in the user workspace (root)
-    user_folders = ["logs", "memory", "personality"]
+    # Directories that should be in the user workspace (inside zentra/)
+    user_folders = [LOGS_DIR, SNAPSHOTS_DIR, os.path.join(ZENTRA_DIR, "memory"), os.path.join(ZENTRA_DIR, "personality")]
     
     missing = []
     for f in package_folders:
         # Check if they exist inside zentra/ (relative to root)
-        if not os.path.exists(os.path.join("zentra", f)):
+        if not os.path.exists(os.path.join(ZENTRA_DIR, f)):
             missing.append(f"zentra/{f}")
             
-    for f in user_folders:
-        if not os.path.exists(f):
-            # Auto-create if missing in workspace
-            try: os.makedirs(f, exist_ok=True)
-            except: missing.append(f)
+    for f_path in user_folders:
+        if not os.path.exists(f_path):
+            # Auto-create if missing
+            try: os.makedirs(f_path, exist_ok=True)
+            except: missing.append(os.path.basename(f_path))
             
     return missing
 

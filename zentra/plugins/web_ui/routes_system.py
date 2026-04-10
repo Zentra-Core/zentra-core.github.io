@@ -4,6 +4,7 @@ import time
 import threading
 import sys
 from flask import request, jsonify
+from zentra.core.constants import LOGS_DIR
 
 def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
     def _sm():
@@ -14,7 +15,7 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
         try:
             data = request.get_json(force=True) or {}
             page_type = data.get("type", "unknown")
-            hb_file = os.path.join(root_dir, "logs", "webui_heartbeat.json")
+            hb_file = os.path.join(LOGS_DIR, "webui_heartbeat.json")
             hb_data = {}
             if os.path.exists(hb_file):
                 try:
@@ -180,9 +181,8 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
         def generate():
             # Get current log file paths (dynamic based on date)
             today = datetime.now().strftime('%Y-%m-%d')
-            logs_dir = os.path.join(root_dir, "logs")
-            info_path  = os.path.join(logs_dir, f"zentra_info_{today}.log")
-            debug_path = os.path.join(logs_dir, f"zentra_debug_{today}.log")
+            info_path  = os.path.join(LOGS_DIR, f"zentra_info_{today}.log")
+            debug_path = os.path.join(LOGS_DIR, f"zentra_debug_{today}.log")
             
             files = {
                 'info':  {'path': info_path,  'pos': 0, 'label': 'INFO'},

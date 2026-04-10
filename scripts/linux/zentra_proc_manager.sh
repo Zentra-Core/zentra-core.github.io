@@ -2,9 +2,9 @@
 # ZENTRA PROCESS MANAGER
 
 # Spostati nella cartella in cui si trova questo script
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../.."
 
-VERSION=$(cat core/version 2>/dev/null || echo "Unknown")
+VERSION=$(cat zentra/core/version 2>/dev/null || echo "Unknown")
 
 echo -e "\033[1;35m==============================================================\033[0m"
 echo -e "\033[1;35m ZENTRA PROCESS MANAGER v${VERSION}\033[0m"
@@ -19,7 +19,7 @@ fi
 echo -e "[*] Starting standalone process monitor..."
 echo ""
 
-python3 zentra_proc_manager.py
+python3 scripts/utils/zentra_proc_manager.py
 
 echo ""
 echo "[!] Process terminated."

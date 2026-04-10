@@ -1,8 +1,8 @@
 import os
 
 # Base directory for the Zentra Core internal structure
-# Calculated relative to zentra/core/constants.py (2 levels up)
-ZENTRA_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
+# Calculated relative to zentra/core/constants.py (1 level up)
+ZENTRA_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 
 # Main storage directories (relative to ZENTRA_DIR)
 LOGS_DIR = os.path.join(ZENTRA_DIR, "logs")

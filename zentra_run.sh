@@ -4,7 +4,7 @@
 # Spostati nella cartella in cui si trova questo script
 cd "$(dirname "$0")"
 
-VERSION=$(cat core/version 2>/dev/null || echo "Unknown")
+VERSION=$(cat zentra/core/version 2>/dev/null || echo "Unknown")
 
 echo -e "\033[1;36m==============================================================\033[0m"
 echo -e "\033[1;36m ZENTRA CORE NATIVE TERMINAL v${VERSION}\033[0m"
@@ -20,7 +20,7 @@ echo -e "[*] Starting interactive terminal..."
 echo -e "[*] Press \033[1;33mF9\033[0m for a Safe Restart of the program."
 echo ""
 
-python3 monitor.py
+python3 zentra/monitor.py
 
 echo ""
 echo "[!] Process terminated."
