@@ -44,32 +44,31 @@
 
   function startListening() {
     log('START signal received → activating microphone');
-    if (typeof window._webpttStartRecording === 'function') {
+    window.isTouchHold = true; // Simulate button hold
+    if (typeof window.startWebAudioRecording === 'function') {
+      window.startWebAudioRecording();
+    } else if (typeof window._webpttStartRecording === 'function') {
       window._webpttStartRecording();
-    } else if (typeof window.togglePTT === 'function') {
-      if (!window._zenrtIsRecording) {
-        window.togglePTT();
-        window._zenrtIsRecording = true;
-      }
     }
   }
 
   function stopListening() {
     log('STOP signal received → deactivating microphone');
-    if (typeof window._webpttStopRecording === 'function') {
+    window.isTouchHold = false;
+    window.isLockedMode = false;
+    if (typeof window.stopWebAudioRecording === 'function') {
+      window.stopWebAudioRecording();
+    } else if (typeof window._webpttStopRecording === 'function') {
       window._webpttStopRecording();
-      window._zenrtIsRecording = false;
-    } else if (typeof window.togglePTT === 'function' && window._zenrtIsRecording) {
-      window.togglePTT();
-      window._zenrtIsRecording = false;
     }
   }
 
   function toggleListening() {
     log('TOGGLE signal received');
-    if (window._zenrtIsRecording) {
+    if (window.isWebAudioRecording) {
       stopListening();
     } else {
+      window.isLockedMode = true; // Simulate tap/lock
       startListening();
     }
   }
@@ -154,11 +153,14 @@
     }
 
     document.addEventListener('keydown', function (e) {
-      if (e.keyCode === 175 || e.key === 'AudioVolumeUp') {
+      const isUp   = (e.keyCode === 175 || e.keyCode === 24 || e.key === 'AudioVolumeUp' || e.key === 'VolumeUp');
+      const isDown = (e.keyCode === 174 || e.keyCode === 25 || e.key === 'AudioVolumeDown' || e.key === 'VolumeDown');
+
+      if (isUp) {
         e.preventDefault();
         log('Key: Volume UP → PTT START');
         startListening();
-      } else if (e.keyCode === 174 || e.key === 'AudioVolumeDown') {
+      } else if (isDown) {
         e.preventDefault();
         log('Key: Volume DOWN → PTT STOP');
         stopListening();
