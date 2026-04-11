@@ -213,7 +213,10 @@ class PluginRemoteTriggers(BaseModel):
     lazy_load: bool = False
     settings: Dict[str, Any] = Field(default_factory=lambda: {
         "enable_mediasession": True,
-        "enable_volume_keys": True
+        "enable_volume_keys": True,
+        "enable_volume_loop": False,
+        "feedback_sounds": True,
+        "visual_indicator": True
     })
 
 class PluginDrive(BaseModel):

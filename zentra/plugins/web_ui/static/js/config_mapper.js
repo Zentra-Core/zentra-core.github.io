@@ -296,6 +296,9 @@ function populateRemoteTriggersUI() {
     const settings = c.plugins.REMOTE_TRIGGERS.settings || {};
     setCheck('rt-enable-mediasession', settings.enable_mediasession ?? true);
     setCheck('rt-enable-volume-keys', settings.enable_volume_keys ?? true);
+    setCheck('rt-enable-volume-loop', settings.enable_volume_loop ?? false);
+    setCheck('rt-feedback-sounds', settings.feedback_sounds ?? true);
+    setCheck('rt-visual-indicator', settings.visual_indicator ?? true);
 }
 
 function buildRemoteTriggersPayload() {
@@ -306,7 +309,10 @@ function buildRemoteTriggersPayload() {
             REMOTE_TRIGGERS: {
                 settings: {
                     enable_mediasession: document.getElementById('rt-enable-mediasession').checked,
-                    enable_volume_keys: document.getElementById('rt-enable-volume-keys').checked
+                    enable_volume_keys: document.getElementById('rt-enable-volume-keys').checked,
+                    enable_volume_loop: document.getElementById('rt-enable-volume-loop').checked,
+                    feedback_sounds: document.getElementById('rt-feedback-sounds').checked,
+                    visual_indicator: document.getElementById('rt-visual-indicator').checked
                 }
             }
         }
