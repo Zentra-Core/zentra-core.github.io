@@ -29,7 +29,7 @@ def set_last_audio_path(path: str):
     _chat_log.info(f"[Audio] Global _last_audio_path updated to: {path}")
 
 
-def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr, images=None):
+def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr, images=None, user_id="admin"):
     sess = _sessions.get(session_id)
     if not sess:
         return
@@ -60,7 +60,7 @@ def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr, i
             })
         # ─────────────────────────────────────────────────────────────────────
 
-        agent = AgentExecutor(config=cfg_mgr.config, config_manager=cfg_mgr, state_manager=sm, trace_callback=_session_trace)
+        agent = AgentExecutor(config=cfg_mgr.config, config_manager=cfg_mgr, state_manager=sm, trace_callback=_session_trace, current_user_id=user_id)
         
         # ── SSE Connection Buffer ─────────────────────────────────────────────
         # The browser receives session_id from POST /api/chat, then must open a
@@ -265,17 +265,21 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
     @app.route("/api/chat", methods=["POST"])
     def api_chat():
         from flask import request, jsonify
+        from flask_login import current_user
         data     = request.get_json(force=True) or {}
         user_msg = data.get("message", "").strip()
         history  = data.get("history", [])
         images   = data.get("images", [])
         if not user_msg and not images:
             return jsonify({"ok": False, "error": "Empty message"}), 400
+            
+        uid = current_user.username if current_user.is_authenticated else "admin"
+        
         sid  = str(uuid.uuid4())
-        sess = {"queue": queue.Queue(), "history": list(history), "done": False}
+        sess = {"queue": queue.Queue(), "history": list(history), "done": False, "user_id": uid}
         with _sessions_lock:
             _sessions[sid] = sess
-        threading.Thread(target=_run_inference, args=(sid, user_msg, history, cfg_mgr, images), daemon=True).start()
+        threading.Thread(target=_run_inference, args=(sid, user_msg, history, cfg_mgr, images, uid), daemon=True).start()
         return jsonify({"ok": True, "session_id": sid})
 
     @app.route("/api/stream/<session_id>")
@@ -319,9 +323,11 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
     @app.route("/api/history")
     def api_history():
         from flask import request, jsonify
-        sid  = request.args.get("session_id", "")
-        sess = _sessions.get(sid)
-        return jsonify(sess["history"] if sess else [])
+        from flask_login import current_user
+        from zentra.memory.brain_interface import get_history
+        uid = current_user.username if current_user.is_authenticated else "admin"
+        hist = get_history(user_id=uid)
+        return jsonify([{"role": role, "content": msg} for role, msg in hist])
 
     @app.route("/api/audio")
     def api_audio():

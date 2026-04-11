@@ -128,7 +128,7 @@ def generate_self_awareness(personality_name):
         logger.debug("BRAIN", f"Self-awareness error: {e}")
         return ""
 
-def generate_response(user_text, external_config=None, tag=None, images=None, agent_context=None, save_history=True):
+def generate_response(user_text, external_config=None, tag=None, images=None, agent_context=None, save_history=True, user_id="admin"):
     logger.debug("BRAIN", f"=== START generate_response ===")
     logger.debug("BRAIN", f"User text: '{user_text}'")
     logger.debug("BRAIN", f"external_config provided: {external_config is not None}")
@@ -174,7 +174,7 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
     # Calculate clean name for identity context
     clean_name = personality_name.replace(".yaml", "").replace("_", " ") if personality_name else "Zentra"
     
-    memory_context = brain_interface.get_context(config, dynamic_name=clean_name) if cog.get('include_identity_context', True) else ""
+    memory_context = brain_interface.get_context(config, dynamic_name=clean_name, user_id=user_id) if cog.get('include_identity_context', True) else ""
     logger.debug("BRAIN", f"Memory: {len(memory_context)} characters")
     
     logger.debug("BRAIN", "Self-awareness generation...")
@@ -185,7 +185,7 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
     history_block = ""
     if cog.get('memory_enabled', True) and cog.get('episodic_memory', True):
         max_h = int(cog.get('max_history_messages', 20))
-        history_rows = brain_interface.get_history(limit=max_h, config=config)
+        history_rows = brain_interface.get_history(limit=max_h, config=config, user_id=user_id)
         if history_rows:
             history_block = "\n[RECENT CONVERSATION HISTORY]\n"
             for role, msg in history_rows:
@@ -352,12 +352,12 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
         is_error = True
     
     if not is_error and save_history:
-        brain_interface.save_message("user", user_text, config=config)
+        brain_interface.save_message("user", user_text, config=config, user_id=user_id)
         
         # Structured response management (String or Message with tool_calls)
         if isinstance(response, str):
             logger.debug("BRAIN", f"Response received from backend: {len(response)} characters")
-            brain_interface.save_message("assistant", response, config=config)
+            brain_interface.save_message("assistant", response, config=config, user_id=user_id)
         else:
             # It's a Message object (used a tool)
             logger.debug("BRAIN", "Response is a tool call object.")

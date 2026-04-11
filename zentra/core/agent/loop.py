@@ -13,10 +13,11 @@ class AgentExecutor:
     Orchestrates the repeated multi-turn connection between Brain and Plugins.
     """
     
-    def __init__(self, config=None, config_manager=None, state_manager=None, max_iterations=None, trace_callback=None):
+    def __init__(self, config=None, config_manager=None, state_manager=None, max_iterations=None, trace_callback=None, current_user_id="admin"):
         self.config = config
         self.config_manager = config_manager
         self.state_manager = state_manager
+        self.current_user_id = current_user_id
         # Optional direct callback for WebUI session traces.
         # Signature: trace_callback(msg: str, level: str) -> None
         self.trace_callback = trace_callback
@@ -85,7 +86,8 @@ class AgentExecutor:
                 external_config=current_cfg, 
                 agent_context=agent_context,
                 save_history=save_hist,
-                images=images
+                images=images,
+                user_id=self.current_user_id
             )
             
             # 2. Extract tools using the processor utility
@@ -139,9 +141,9 @@ class AgentExecutor:
                 # ────────────────────────────────────────────────────────────────────
 
                 # IMPORTANT: If it took loops, we must save the FINAL response to history manually.
-                if iteration > 1:
+                 if iteration > 1:
                      from zentra.memory import brain_interface
-                     brain_interface.save_message("assistant", extracted_text, config=self.config)
+                     brain_interface.save_message("assistant", extracted_text, config=self.config, user_id=self.current_user_id)
                 
                 # Proceed to voice/video cleaning
                 # DEBUG: log what we pass to clean_final_output
