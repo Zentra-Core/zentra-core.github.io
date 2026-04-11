@@ -13,7 +13,12 @@ function addBubble(role, text, id) {
   avatar.className = `msg-avatar`;
   
   if (isUser) {
-    avatar.textContent = '👤';
+    const usrSrc = window.ZentraUserAvatar;
+    if (usrSrc) {
+        avatar.innerHTML = `<img src="${usrSrc}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.outerHTML='👤'">`;
+    } else {
+        avatar.textContent = '👤';
+    }
   } else {
     const avatarSrc = window.ZentraAvatar || "/assets/Zentra_Core_Logo_NBG.png";
     const imgStyle = window.ZentraAvatar ? 

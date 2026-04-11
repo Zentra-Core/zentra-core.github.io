@@ -14,6 +14,12 @@ from zentra.core.system.plugin_loader import get_tools_schema, get_legacy_schema
 from zentra.config import load_yaml
 from zentra.config.schemas.routing_schema import RoutingOverrides
 
+# --- NEW IMPORTS FOR FASE 6 ---
+import re
+import base64
+from zentra.core.auth.auth_manager import auth_mgr
+from zentra.memory.user_vault_manager import get_vault_path
+
 # --- PROJECT ROOT CALCULATION ---
 # Anchored to zentra/ folder
 _ZENTRA_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -135,15 +141,10 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
     
     # --- FASE 6: AI Vision - Avatar Auto-Injection ---
     if user_text and isinstance(user_text, str):
-        import re
         identity_keywords = r'\b(who am i|what do i look like|my face|my photo|my picture|my avatar|chi sono|come sono|il mio viso|la mia foto|il mio aspetto)\b'
         if re.search(identity_keywords, user_text, re.IGNORECASE):
-            from zentra.core.auth.auth_manager import auth_mgr
             profile = auth_mgr.get_profile(user_id)
             if profile and profile.get("avatar_path"):
-                from zentra.memory.user_vault_manager import get_vault_path
-                import base64
-                import os
                 vault = get_vault_path(user_id)
                 avatar_file = os.path.join(vault, "avatar.jpg")
                 if os.path.exists(avatar_file):

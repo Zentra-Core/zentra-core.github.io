@@ -82,6 +82,7 @@
 <script>
   // Expose the global history to window so the renderer can read it
   window.historyList = [];
+  window.ZentraUserAvatar = "{{ profile.avatar_path if (profile and profile.avatar_path) else '' }}";
 </script>
 <script src="/static/js/chat_renderer.js?v=2"></script>
 <script src="/static/js/agent/agent_traces.js?v=4"></script>

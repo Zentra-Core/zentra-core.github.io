@@ -254,8 +254,11 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
     @app.route("/chat")
     def chat_ui():
         from flask import render_template, make_response
+        from flask_login import current_user
+        from zentra.core.auth.auth_manager import auth_mgr
         try:
-            resp = make_response(render_template("chat.html"))
+            profile = auth_mgr.get_profile(current_user.username) if current_user.is_authenticated else None
+            resp = make_response(render_template("chat.html", profile=profile))
             resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
             resp.headers["Pragma"] = "no-cache"
             return resp

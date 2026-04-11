@@ -141,9 +141,9 @@ class AgentExecutor:
                 # ────────────────────────────────────────────────────────────────────
 
                 # IMPORTANT: If it took loops, we must save the FINAL response to history manually.
-                 if iteration > 1:
-                     from zentra.memory import brain_interface
-                     brain_interface.save_message("assistant", extracted_text, config=self.config, user_id=self.current_user_id)
+                if iteration > 1:
+                    from zentra.memory import brain_interface
+                    brain_interface.save_message("assistant", extracted_text, config=self.config, user_id=self.current_user_id)
                 
                 # Proceed to voice/video cleaning
                 # DEBUG: log what we pass to clean_final_output

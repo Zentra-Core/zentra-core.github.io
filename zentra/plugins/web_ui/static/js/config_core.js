@@ -43,6 +43,11 @@ async function fetchWithTimeout(resource, options = {}) {
     return response;
   } catch (error) {
     clearTimeout(id);
+    if (error.name === 'AbortError') {
+        console.warn("Fetch aborted:", resource);
+        // Return a mock response so the caller doesn't break if it expects one
+        return { ok: false, json: async () => ({ ok: false, error: 'Aborted' }) };
+    }
     throw error;
   }
 }
