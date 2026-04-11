@@ -4,6 +4,7 @@
     "lazy_load": true,
     "is_class_based": true,
     "status": "ONLINE",
+    "routing_instructions": "[IMAGE_GEN: generate_image:description] - Generate an image from a textual prompt. Only use this if the user explicitly asks to create, draw, or generate an image.",
     "commands": {
         "generate_image": "Generates an image from a text description. Uses the configured provider."
     },

@@ -3,7 +3,7 @@
   <img src="https://raw.githubusercontent.com/Zentra-Core/zentra-core.github.io/main/zentra/assets/Zentra_Core_Logo.jpg" width="400" alt="Zentra Logo">
 </p>
 
-# Zentra Core - Version 0.15.2 (Runtime Alpha)
+# Zentra Core - Version 0.16.0 (Runtime Alpha)
 Language: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP.md)
 
 # 🤖 Zentra Core
@@ -12,17 +12,19 @@ Language: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_E
 ---
 
 > [!WARNING]
-> **Runtime Alpha Status**: Zentra Core is currently in `v0.15.2`. This repository contains the engine, backend, AI reasoning modules, and the main native WebUI. Features may change, and the system is not yet considered stable. Use with caution.
+> **Runtime Alpha Status**: Zentra Core is currently in `v0.16.0`. This repository contains the engine, backend, AI reasoning modules, and the main native WebUI. Features may change, and the system is not yet considered stable. Use with caution.
 
 ## 🚀 Overview
 **Zentra Core** is a local-first AI assistant platform that runs entirely on your machine.
 It combines local LLMs, voice interaction, system automation, and a modular plugin architecture to create a fully customizable AI companion.
 
-Now fully migrated to a **stable Native Plugin architecture**, Zentra 0.15.2 offers a dedicated Web Interface (Chat + Config) and complete Internationalization. Powered by **LiteLLM**, it supports Ollama, KoboldCpp, and major cloud providers with real-time streaming and local TTS.
+Now fully migrated to a **stable Native Plugin architecture**, Zentra 0.16.0 offers a dedicated Web Interface (Chat + Config) and complete Internationalization. Powered by **LiteLLM**, it supports Ollama, KoboldCpp, and major cloud providers with real-time streaming and local TTS.
 
 ---
 
-## ✨ Key Features (v0.15.2)
+## ✨ Key Features (v0.16.0)
+* 🧭 **3-Tier Hybrid Configuration** — A powerful layered override system: Plugin Manifest defaults → User YAML Overrides (`routing_overrides.yaml`) → Core Fallback. Customize AI routing behavior per-plugin without ever touching source code.
+* 📝 **In-WebUI Routing Editor** — A new built-in key-value editor in the **Routing** tab lets you add, edit, and delete plugin-specific routing instructions directly from the browser. One click to open the full YAML file in the Zentra Code Editor.
 * 🤖 **Autonomous Agentic Loop** — Zentra can now reason step-by-step (Chain of Thought), dynamically select tools, and solve complex multi-step problems autonomously.
 * 🛡️ **Zentra Code Jail (AST Sandbox)** — A native, highly secure Python sandbox that allows the AI to execute algorithms, math, and data logic safely.
 * 👁️ **Native Vision Support** — Multimodal AI capabilities for Gemini, OpenAI, and Ollama (LLaVA). Analyze images, photos, and screenshots directly in chat.
@@ -73,10 +75,15 @@ pip install -r requirements.txt
 ```bash
 python main.py
 ```
-2. Open your browser and navigate to the local HTTPS/HTTP port highlighted in the console (usually `https://127.0.0.1:7070`).
+### 4. Configuration & First Run
+Zentra is designed for a professional "download-and-play" experience.
+- On your first run, the system will detect that `system.yaml` and `routing_overrides.yaml` are missing.
+- It will **automatically generate** these files by copying the templates from `zentra/config/data/*.example`.
+- You can find your personal configuration in `zentra/config/data/system.yaml` (main settings) and `routing_overrides.yaml` (AI routing rules).
+- **Pro Tip**: Use the built-in [In-WebUI Routing Editor] to safely modify these rules without touching code.
 
-### 🔐 First Login & Authentication
-Zentra v0.15.2 introduced mandatory Auth. On your very first access, the system generates a default Master Admin:
+### 🔐 Login & Authentication
+Zentra v0.16.0 requires mandatory Auth. The default first-time login is:
 - **Username:** `admin`
 - **Password:** `zentra`
 
@@ -159,11 +166,16 @@ Official Email: zentra.core.systems@gmail.com
 
 ---
 
-## 📚 Technical Documentation
-Detailed technical guides for developers and advanced users:
-- 🏗️ **[Technical Architecture Guide](docs/TECHNICAL_GUIDE.md)**: Deep dive into the OOP structure, data flow, and core engines.
-- 🔌 **[Plugin Development Guide](docs/PLUGINS_DEV.md)**: How to create and register new tools using Native Function Calling.
-- 📁 **[Project Structure Map](docs/ARCHITECTURE_MAP.md)**: Complete file-by-file breakdown of the repository.
+## 📚 Documentation
+Zentra Core uses a modular documentation system localized in EN, IT, and ES.
+
+### Local Access (Modular)
+Detailed guides are located in the `docs/` folder:
+- 📖 **[User Guide](docs/user/)**: Operational instructions and feature walkthroughs.
+- 🏗️ **[Technical Guide](docs/tech/)**: (Admin/Dev) System architecture and OOP details.
+
+### Online Access
+The documentation is also synchronized with the **[GitHub Wiki](https://github.com/Zentra-Core/zentra-core.github.io/wiki)**.
 
 ---
 

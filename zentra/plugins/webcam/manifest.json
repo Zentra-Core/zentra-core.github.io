@@ -4,6 +4,7 @@
     "lazy_load": true,
     "is_class_based": true,
     "status": "ONLINE (Optical Vision)",
+    "routing_instructions": "WEBCAM ROUTING RULE: When the user says 'phone', 'smartphone', 'mobile', 'il telefono', 'browser', or any remote device, you MUST call WEBCAM take_snapshot with target='client'. NEVER use target='server' when the user is asking from a phone.",
     "commands": {
         "take_snapshot": "Takes a photo. Use target='server' for PC webcam, target='client' for the user's own phone or browser."
     },

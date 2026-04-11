@@ -10,7 +10,9 @@ from zentra.memory import brain_interface
 from zentra.core.llm import client
 from zentra.core.i18n import translator
 from zentra.core.llm.manager import manager
-from zentra.core.system.plugin_loader import get_tools_schema, get_legacy_schema
+from zentra.core.system.plugin_loader import get_tools_schema, get_legacy_schema, get_active_tags
+from zentra.config import load_yaml
+from zentra.config.schemas.routing_schema import RoutingOverrides
 
 # --- PROJECT ROOT CALCULATION ---
 # Anchored to zentra/ folder
@@ -19,6 +21,58 @@ CONFIG_PATH = os.path.join(_ZENTRA_DIR, "config", "data", "system.yaml")
 REGISTRY_PATH = os.path.join(_ZENTRA_DIR, "core", "registry.json")
 PERSONALITY_DIR = os.path.join(_ZENTRA_DIR, "personality")
 CORE_DIR = os.path.join(_ZENTRA_DIR, "core")
+ROUTING_OVERRIDES_PATH = os.path.join(_ZENTRA_DIR, "config", "data", "routing_overrides.yaml")
+
+class RoutingManager:
+    """
+    Manages the 3-tier hybrid routing system:
+    1. Plugin Manifest (Default)
+    2. User Overrides (YAML)
+    3. Core Defaults (Fallback)
+    """
+    @staticmethod
+    def get_dynamic_instructions(config):
+        try:
+            # 1. Load active plugin tags
+            active_tags = get_active_tags()
+            
+            # 2. Load instructions from registry
+            registry_data = {}
+            if os.path.exists(REGISTRY_PATH):
+                with open(REGISTRY_PATH, "r", encoding="utf-8") as f:
+                    registry_data = json.load(f)
+            
+            # 3. Load user overrides
+            overrides = {}
+            if os.path.exists(ROUTING_OVERRIDES_PATH):
+                try:
+                    overrides_model = load_yaml(ROUTING_OVERRIDES_PATH, RoutingOverrides)
+                    overrides = overrides_model.overrides
+                except Exception as e:
+                    logger.debug(f"BRAIN: Error loading routing overrides: {e}")
+
+            # 4. Merge logic
+            merged_instructions = []
+            for tag in active_tags:
+                tag_upper = tag.upper()
+                # Priority: YAML Override > Registry (Manifest)
+                instruction = overrides.get(tag_upper)
+                
+                if not instruction and tag_upper in registry_data:
+                    instruction = registry_data[tag_upper].get("routing_instructions")
+                
+                if instruction:
+                    merged_instructions.append(f"- [{tag_upper}] {instruction}")
+
+            if merged_instructions:
+                block = "\n### DYNAMIC ROUTING RULES ###\n"
+                block += "These rules define how to choose targets or modes for specific tools. FOLLOW THEM STRICTLY.\n"
+                block += "\n".join(merged_instructions) + "\n"
+                return block
+            return ""
+        except Exception as e:
+            logger.error(f"BRAIN: Routing Manager error: {e}")
+            return ""
 
 def load_config():
     try:
@@ -56,7 +110,7 @@ def generate_self_awareness(personality_name):
         active_plugins = get_active_tags()
         
         # Simplified listing to save tokens
-        souls_count = len([f for f in os.listdir(PERSONALITY_DIR) if f.endswith('.txt')])
+        souls_count = len([f for f in os.listdir(PERSONALITY_DIR) if f.endswith('.yaml')])
         core_count  = len([f for f in os.listdir(CORE_DIR) if f.endswith('.py')])
         
         awareness = f"\n{translator.t('structural_self_awareness')}\n"
@@ -95,17 +149,19 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
     logger.debug("BRAIN", f"Config loaded. Backend type: {config.get('backend', {}).get('type', 'unspecified')}")
 
     # 1. Retrieve personality
-    personality_name = config.get('ai', {}).get('active_personality', 'zentra.txt')
+    personality_name = config.get('ai', {}).get('active_personality', 'Zentra_System_Soul.yaml')
     if not personality_name:
-        personality_name = "zentra.txt"
+        personality_name = "Zentra_System_Soul.yaml"
     logger.debug("BRAIN", f"Active personality: {personality_name}")
     
     personality_path = os.path.join(PERSONALITY_DIR, personality_name)
     personality_prompt = "You are Zentra, an advanced AI."
     if os.path.exists(personality_path):
         try:
+            import yaml as pyyaml
             with open(personality_path, "r", encoding="utf-8") as f:
-                personality_prompt = f.read()
+                persona_data = pyyaml.safe_load(f)
+                personality_prompt = persona_data.get("system_prompt", "You are Zentra, an advanced AI.")
             logger.debug("BRAIN", f"Personality loaded: {len(personality_prompt)} characters")
         except Exception as e:
             logger.error(f"BRAIN: Personality reading error: {e}")
@@ -116,7 +172,7 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
     logger.debug("BRAIN", "Memory loading...")
     
     # Calculate clean name for identity context
-    clean_name = personality_name.replace(".txt", "").replace("_", " ") if personality_name else "Zentra"
+    clean_name = personality_name.replace(".yaml", "").replace("_", " ") if personality_name else "Zentra"
     
     memory_context = brain_interface.get_context(config, dynamic_name=clean_name) if cog.get('include_identity_context', True) else ""
     logger.debug("BRAIN", f"Memory: {len(memory_context)} characters")
@@ -179,8 +235,6 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
         "- [SYSTEM: explore:folder] - Open folder graphically\n"
         "- [FILE_MANAGER: list:folder] - List files for analysis\n"
         "- [DASHBOARD: resources] - Get hardware telemetry\n"
-        "- [IMAGE_GEN: generate_image:description] - Generate an AI image, art, or a fake photo (e.g., 'foto di un gatto', 'foto di te').\n"
-        "- WEBCAM ROUTING RULE: When the user asks to take a REAL photo or look at something through the camera, call WEBCAM. If they say 'phone', 'smartphone', 'il telefono', 'browser', use target='client'. NEVER use WEBCAM to arbitrarily generate pictures of animals or characters.\n"
     )
 
 
@@ -246,6 +300,7 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
         f"{file_manager_rules}"
         f"{force_clause}"
         f"{plugin_guidelines}"
+        f"{RoutingManager.get_dynamic_instructions(config)}"
         f"{tag_instructions}"
         f"{special_instructions_block}"
         f"{vision_note}"

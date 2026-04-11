@@ -111,6 +111,7 @@ def update_capability_registry(config=None, debug_log=True):
                                 "commands": manifest_data.get("commands", {}),
                                 "status": "ONLINE (DORMANT)",
                                 "example": manifest_data.get("example", ""),
+                                "routing_instructions": manifest_data.get("routing_instructions", ""),
                                 "is_class_based": manifest_data.get("is_class_based", True),
                                 "is_lazy": True
                             }
@@ -166,6 +167,7 @@ def update_capability_registry(config=None, debug_log=True):
                         "commands": commands,
                         "status": status,
                         "example": "",
+                        "routing_instructions": getattr(tools_instance, "routing_instructions", ""),
                         "is_class_based": True
                     }
                     logger.debug("LOADER", f"Class-based Plugin {plugin_dir} loaded with tag {tag}")
@@ -192,7 +194,8 @@ def update_capability_registry(config=None, debug_log=True):
                         "description": plugin_info.get('desc') or plugin_info.get('description', ''),
                         "commands": plugin_info.get('comandi') or plugin_info.get('commands', {}),
                         "status": status,
-                        "example": plugin_info.get("esempio") or plugin_info.get("example", "")
+                        "example": plugin_info.get("esempio") or plugin_info.get("example", ""),
+                        "routing_instructions": plugin_info.get("routing_instructions", "")
                     }
                     logger.debug("LOADER", f"Plugin {plugin_dir} loaded with tag {tag}")
 

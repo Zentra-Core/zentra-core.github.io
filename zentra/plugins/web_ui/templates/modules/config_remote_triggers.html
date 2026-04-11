@@ -1,0 +1,34 @@
+<!-- REMOTE TRIGGERS PANEL -->
+<div id="tab-remote-triggers" class="panel">
+  <div class="card">
+    <div class="card-title">📱 Remote Triggers — PTT & Hardware</div>
+    <p style="color:var(--muted); font-size:13px; margin-bottom:18px;">
+      Enable remote PTT activation via Bluetooth headphones, smartphone media keys, or external HTTP webhooks (Arduino/ESP32).
+    </p>
+
+    <div class="field">
+      <label class="switch-container">
+        <input type="checkbox" id="rt-enable-mediasession">
+        <span class="label-text">Enable MediaSession (Bluetooth/iPhone Play-Pause)</span>
+      </label>
+      <div class="field-desc">Allows hijacking headphone buttons. Note: Claims media priority on your device (you might see a "Zentra" notification).</div>
+    </div>
+
+    <div class="field">
+      <label class="switch-container">
+        <input type="checkbox" id="rt-enable-volume-keys">
+        <span class="label-text">Enable Volume Keys PTT (Android Chrome)</span>
+      </label>
+      <div class="field-desc">Allows using Volume Up/Down as PTT start/stop when the page is in focus.</div>
+    </div>
+
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:16px; margin-top:20px;">
+      <div style="font-size:12px; color:var(--accent); font-weight:600; text-transform:uppercase; margin-bottom:8px;">Webhook Endpoints</div>
+      <div style="font-family:'JetBrains Mono', monospace; font-size:11px; line-height:1.6; color:#c0c0d0;">
+        <div>PTT Start: <span style="color:var(--green)">GET /api/remote-triggers/ptt/start</span></div>
+        <div>PTT Stop: <span style="color:var(--red)">GET /api/remote-triggers/ptt/stop</span></div>
+        <div>PTT Toggle: <span style="color:var(--muted)">GET /api/remote-triggers/ptt/toggle</span></div>
+      </div>
+    </div>
+  </div>
+</div>

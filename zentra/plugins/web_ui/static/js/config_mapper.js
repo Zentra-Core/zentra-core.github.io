@@ -72,8 +72,19 @@ function populateUI() {
     setVal('route-models', rm.legacy_models || '');
 
     populateSelect('ia-personality', sysOptions.personalities || [], c.ai?.active_personality, true);
+    setVal('ia-avatar-size', c.ai?.avatar_size || 'medium');
     setVal('ia-instructions', c.ai?.special_instructions || '');
+
     setCheck('ia-save-instructions', c.ai?.save_special_instructions || false);
+    
+    // Load the avatar preview for the currently selected persona
+    if (typeof window.loadPersonaAvatar === 'function') {
+        const personaEl = document.getElementById('ia-personality');
+        if (personaEl && personaEl.value) {
+            window.loadPersonaAvatar(personaEl.value);
+        }
+    }
+
 
     const br = c.bridge || {};
     setCheck('br-processor', br.use_processor ?? false);
@@ -101,6 +112,9 @@ function populateUI() {
     // 5. Drive Module Dispatch
     populateDriveUI();
 
+    // 6. Remote Triggers Dispatch
+    populateRemoteTriggersUI();
+
     renderPlugins(c.plugins || {});
     console.log("UI Populated successfully.");
   } catch (err) {
@@ -123,7 +137,8 @@ function renderPlugins(plugins) {
     WEBCAM:      I18N.plugin_desc_webcam,
     WEB_UI:      I18N.plugin_desc_webui,
     IMAGE_GEN:   'Generazione Immagini AI (Pollinations)',
-    DRIVE:       I18N.webui_conf_plugin_desc_drive || 'Gestore File HTTP (Zentra Drive)'
+    DRIVE:       I18N.webui_conf_plugin_desc_drive || 'Gestore File HTTP (Zentra Drive)',
+    REMOTE_TRIGGERS: 'PTT via Media Keys (iPhone), Bluetooth & Webhooks'
   };
   let html = '';
   for (const [tag, pCfg] of Object.entries(plugins)) {
@@ -180,7 +195,9 @@ function buildPayload() {
 
     out.ai = out.ai || {};
     out.ai.active_personality = document.getElementById('ia-personality').value;
+    out.ai.avatar_size = document.getElementById('ia-avatar-size').value;
     out.ai.special_instructions = document.getElementById('ia-instructions').value;
+
     out.ai.save_special_instructions = document.getElementById('ia-save-instructions').checked;
 
     out.bridge = out.bridge || {};
@@ -231,6 +248,13 @@ function buildPayload() {
       out.plugins[tag].enabled = cb.checked;
     });
 
+    // Remote Triggers Payload Part
+    const rtPart = buildRemoteTriggersPayload();
+    if (rtPart && rtPart.plugins && rtPart.plugins.REMOTE_TRIGGERS) {
+        out.plugins['REMOTE_TRIGGERS'] = out.plugins['REMOTE_TRIGGERS'] || {};
+        out.plugins['REMOTE_TRIGGERS'].settings = rtPart.plugins.REMOTE_TRIGGERS.settings;
+    }
+
     document.querySelectorAll('[data-plugin-lazy]').forEach(cb => {
       const tag = cb.dataset.pluginLazy;
       if (out.plugins[tag]) {
@@ -261,6 +285,29 @@ function buildDrivePayload() {
                 root_dir: rootEl.value.trim(),
                 max_upload_mb: parseInt(document.getElementById('drive-max-upload-mb').value) || 100,
                 allowed_extensions: document.getElementById('drive-allowed-ext').value.trim()
+            }
+        }
+    };
+}
+
+function populateRemoteTriggersUI() {
+    const c = window.cfg;
+    if (!c || !c.plugins || !c.plugins.REMOTE_TRIGGERS) return;
+    const settings = c.plugins.REMOTE_TRIGGERS.settings || {};
+    setCheck('rt-enable-mediasession', settings.enable_mediasession ?? true);
+    setCheck('rt-enable-volume-keys', settings.enable_volume_keys ?? true);
+}
+
+function buildRemoteTriggersPayload() {
+    const el = document.getElementById('rt-enable-mediasession');
+    if (!el) return {};
+    return {
+        plugins: {
+            REMOTE_TRIGGERS: {
+                settings: {
+                    enable_mediasession: document.getElementById('rt-enable-mediasession').checked,
+                    enable_volume_keys: document.getElementById('rt-enable-volume-keys').checked
+                }
             }
         }
     };

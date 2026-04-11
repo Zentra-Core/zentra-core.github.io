@@ -8,12 +8,25 @@ function addBubble(role, text, id) {
   const msg = document.createElement('div');
   msg.className = `msg ${isUser?'user':'ai'}`;
   if(id) msg.id = id;
+
   const avatar = document.createElement('div');
-  avatar.className = 'msg-avatar';
+  avatar.className = `msg-avatar`;
+  
   if (isUser) {
     avatar.textContent = '👤';
   } else {
-    avatar.innerHTML = `<img src="/assets/Zentra_Core_Logo_NBG.png" style="width:24px; height:24px; filter:drop-shadow(0 0 5px rgba(108,140,255,0.4));">`;
+    const avatarSrc = window.ZentraAvatar || "/assets/Zentra_Core_Logo_NBG.png";
+    const imgStyle = window.ZentraAvatar ? 
+      "object-fit:cover; border-radius:50%;" : 
+      "filter:drop-shadow(0 0 5px rgba(108,140,255,0.4));";
+    
+    // Wrap in a zoomable container
+    avatar.innerHTML = `
+      <div class="avatar-zoom-wrapper" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;" onclick="window.openAvatarFull('${avatarSrc}')">
+        <img src="${avatarSrc}" onerror="this.src='/assets/Zentra_Core_Logo_NBG.png';" style="${imgStyle}">
+        <div class="avatar-zoom-icon">🔍</div>
+      </div>`;
+
   }
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble';
@@ -33,6 +46,20 @@ function addBubble(role, text, id) {
   }
   return { msg, bubble };
 }
+
+// Fullscreen Avatar View
+window.openAvatarFull = function(src) {
+  let lb = document.getElementById('avatar-lightbox');
+  if (!lb) {
+    lb = document.createElement('div');
+    lb.id = 'avatar-lightbox';
+    lb.onclick = () => lb.classList.remove('active');
+    document.body.appendChild(lb);
+  }
+  lb.innerHTML = `<img src="${src}">`;
+  setTimeout(() => lb.classList.add('active'), 10);
+};
+
 
 function renderMarkdown(text) {
   let html = text
@@ -131,15 +158,23 @@ async function tryLoadAudio(bubble) {
     });
   };
 
+  window.ZentraTTSPlayer.onplay = () => {
+      fetch('/api/audio/speaking/start', { method: 'POST' }).catch(() => {});
+  };
+
+  window.ZentraTTSPlayer.onpause = () => {
+      fetch('/api/audio/speaking/stop', { method: 'POST' }).catch(() => {});
+  };
+
   window.ZentraTTSPlayer.onended = () => { 
       window.currentAudio = null; 
       showStopVoiceBtn(false); 
-      // Important to explicitly tell the OS we finished playing so 
-      // other media apps (Spotify) can resume 
+      fetch('/api/audio/speaking/stop', { method: 'POST' }).catch(() => {});
   };
   window.ZentraTTSPlayer.onerror = () => {
     console.error("[Audio] Player error:", window.ZentraTTSPlayer.error ? window.ZentraTTSPlayer.error.code : 'unknown');
     window.currentAudio = null; showStopVoiceBtn(false);
+    fetch('/api/audio/speaking/stop', { method: 'POST' }).catch(() => {});
   };
 }
 

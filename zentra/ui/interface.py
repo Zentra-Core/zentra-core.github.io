@@ -137,7 +137,7 @@ def show_complete_ui(config, voice_status, listening_status, system_status="READ
 
     soul = config.get('ai', {}).get('active_personality', 'N/D')
     if soul:
-        soul = str(soul).replace('.txt', '')
+        soul = str(soul).replace('.yaml', '')
     else:
         soul = "N/D"
 
@@ -241,7 +241,7 @@ def update_status_bar_in_place(config, voice_status, listening_status, system_st
     
     # 2. Rebuild the Status Bar row
     backend_type, model = ModelManager.get_effective_model_info(config)
-    soul = config.get('ai', {}).get('active_personality', 'N/D').replace('.txt', '')
+    soul = config.get('ai', {}).get('active_personality', 'N/D').replace('.yaml', '')
     
     mic_str = "ON" if listening_status else f"{Fore.RED}OFF{Fore.WHITE}"
     spk_str = "ON" if voice_status else f"{Fore.RED}OFF{Fore.WHITE}"
@@ -338,7 +338,7 @@ def show_personality_menu(file_list, current):
     print(f"\n{MAGENTA}{head}{RESET}")
     for i, f in enumerate(file_list, 1):
         pref = f"{GREEN} >> " if f == current else "    "
-        print(f"{pref}{i}. {f.replace('.txt', '')}{RESET}")
+        print(f"{pref}{i}. {f.replace('.yaml', '')}{RESET}")
     print(f"{MAGENTA}{'═' * len(head)}{RESET}")
     print(f"{YELLOW}{translator.t('help_footer')}{RESET}")
 
@@ -349,11 +349,201 @@ def show_help():
     # Clear the screen to make space for the extended guide
     setup_console()
     
-    # Centered Header
-    header_text = f"{CYAN}╔════════════════ {translator.t('help_title')} ════════════════╗{RESET}"
-    print(f"\n{header_text.center(90)}")
-    print(f"{WHITE}{translator.t('help_scanning')}{RESET}".center(90))
-    print()
+    L = 90
+    
+    lang = translator.get_translator().language
+    lines = []
+    
+    if lang == 'it':
+        # ─── HEADER ─────────────────────────────────────────────────────────────────
+        lines.append(f"{CYAN}╔════════════════════════════════════════════════════════════════════════════════════════╗{RESET}")
+        lines.append(f"{CYAN}║{WHITE}                      ZENTRA CORE — GUIDA UTENTE (F1)                                   {CYAN}║{RESET}")
+        lines.append(f"{CYAN}╚════════════════════════════════════════════════════════════════════════════════════════╝{RESET}")
+        lines.append("")
+        lines.append(f"{WHITE}Benvenuto! Zentra è un sistema IA modulare. Puoi comunicare usando il linguaggio")
+        lines.append(f"naturale: non devi imparare comandi o sintassi complesse.{RESET}")
+        lines.append("")
+
+        # ─── SEZIONE 1: COME USARLO ─────────────────────────────────────────────────
+        lines.append(f"{YELLOW}━━━ 1. COME PARLARE CON ZENTRA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{RESET}")
+        lines.append("")
+        lines.append(f"{WHITE}  ■ Modalità Testuale:{RESET} Scrivi qualunque cosa nel prompt in basso e premi INVIO.")
+        lines.append(f"    Es: {CYAN}\"Ciao, come stai?\"{RESET} oppure {CYAN}\"Mostrami i dati della CPU\"{RESET}")
+        lines.append("")
+        lines.append(f"{WHITE}  ■ Modalità Vocale (PC):{RESET} Tieni premuto {GREEN}CTRL+SHIFT{RESET} per attivare il microfono.")
+        lines.append(f"    Parla, poi rilascia i tasti per inviare. Zentra ti risponderà a voce.")
+        lines.append("")
+        lines.append(f"{WHITE}  ■ Modalità Vocale (WebUI/Mobile):{RESET} Usa il pulsante 🎙️ nella chat WebUI.")
+        lines.append(f"    Es: (Tap to talk) {CYAN}\"Abbassa il volume al 20%\"{RESET}")
+        lines.append("")
+
+        # ─── SEZIONE 2: TASTI FUNZIONE ──────────────────────────────────────────────
+        lines.append(f"{YELLOW}━━━ 2. TASTI FUNZIONE RAPIDI (Console locale) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{RESET}")
+        lines.append("")
+        lines.append(f"{GREEN}  F1{RESET} → Mostra questa Guida Utente")
+        lines.append(f"{GREEN}  F2{RESET} → Cambia il modello AI in uso (es. GPT-4, Llama locale, Gemini)")
+        lines.append(f"{GREEN}  F3{RESET} → Carica una \"Personalità\" o sistema base (es. Urania, MacGyver)")
+        lines.append(f"{GREEN}  F4{RESET} → Attiva o Disattiva il microfono di sistema (Privacy mute)")
+        lines.append(f"{GREEN}  F5{RESET} → Aggiorna l'interfaccia (Forza il ridisegno locale)")
+        lines.append(f"{GREEN}  F6{RESET} → Attiva/Disattiva la risposta Parlata (Text-to-Speech)")
+        lines.append(f"{GREEN}  F7{RESET} → Editor Backend (Modifica IP, porte API, database)")
+        lines.append(f"{GREEN}  F8{RESET} → Attiva/Disattiva la modalità 'Push To Talk'")
+        lines.append(f"{GREEN}  F9{RESET} → Riavvia immediatamente Zentra Core")
+        lines.append("")
+
+        # ─── SEZIONE 3: COSA PUOI CHIEDERE ───────────────────────────────────────
+        lines.append(f"{YELLOW}━━━ 3. ESEMPI DI UTILIZZO E COMANDI COMUNI ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{RESET}")
+        lines.append("")
+        lines.append(f"  🗣️  {CYAN}CONVERSARE E IMPARARE{RESET}")
+        lines.append(f"     \"{GREEN}Spiegami in parole semplici la fisica quantistica{RESET}\"")
+        lines.append(f"     \"{GREEN}Scrivi un'email di scuse per un ritardo{RESET}\"")
+        lines.append(f"     \"{GREEN}Traduci questa frase in finlandese{RESET}\"")
+        lines.append("")
+        lines.append(f"  🖥️  {CYAN}CONTROLLO DEL COMPUTER E FILE{RESET}")
+        lines.append(f"     \"{GREEN}Elenca i file che si trovano sul mio Desktop{RESET}\"")
+        lines.append(f"     \"{GREEN}Apri il Blocco Note / Apri Discord{RESET}\"")
+        lines.append(f"     \"{GREEN}Mostrami graficamente come va la CPU{RESET}\"")
+        lines.append("")
+        lines.append(f"  🌐  {CYAN}INTERNET E INFORMAZIONI{RESET}")
+        lines.append(f"     \"{GREEN}Cerca in rete le ultime notizie su SpaceX{RESET}\"")
+        lines.append(f"     \"{GREEN}Che giorno è oggi? / Che ore sono?{RESET}\"")
+        lines.append("")
+        lines.append(f"  🎵  {CYAN}CONTROLLO MEDIA E VOLUME{RESET}")
+        lines.append(f"     \"{GREEN}Abbassa il volume del computer al 30%{RESET}\"")
+        lines.append(f"     \"{GREEN}Metti in pausa la musica{RESET}\"")
+        lines.append("")
+        lines.append(f"  📸  {CYAN}FOTOCAMERA E VISIONE{RESET}")
+        lines.append(f"     \"{GREEN}Scatta una foto con la webcam e dimmi cosa vedi{RESET}\"")
+        lines.append(f"     \"{GREEN}Fai una foto col telefono{RESET}\" (se connesso via WebUI su mobile)")
+        lines.append("")
+        lines.append(f"  🎨  {CYAN}GENERAZIONE IMMAGINI AI{RESET}")
+        lines.append(f"     \"{GREEN}Genera l'immagine di un cane nello spazio, stile fotorealistico{RESET}\"")
+        lines.append("")
+        lines.append(f"  🐍  {CYAN}ZENTRA SANDBOX (CODICE PYTHON){RESET}")
+        lines.append(f"     Zentra può scrivere e autovalutare codice per risolvere calcoli o logica.")
+        lines.append(f"     \"{GREEN}Calcola matematicamente la radice di 5612 in Python{RESET}\"")
+        lines.append("")
+
+        # ─── SEZIONE 4: REGOLE E OVERRIDE ───────────────────────────────────────────
+        lines.append(f"{YELLOW}━━━ 4. PERSONALIZZAZIONI AVANZATE E REGOLE COMPORTAMENTALI ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{RESET}")
+        lines.append("")
+        lines.append(f"  {WHITE}■ Istruzioni Comportamentali (Special AI Instructions):{RESET}")
+        lines.append(f"    Per cambiare dinamicamente il modo in cui Zentra chatta (il tono base),")
+        lines.append(f"    apri la WebUI, vai in {CYAN}Configurazione > Persona{RESET} e scrivi per esempio:")
+        lines.append(f"    \"{GREEN}Da ora in poi rispondimi sempre in rima{RESET}\" oppure \"{GREEN}Usa un tono sarcastico{RESET}\".")
+        lines.append("")
+        lines.append(f"  {WHITE}■ Plugin Routing Overrides (Novità v0.16.x):{RESET}")
+        lines.append(f"    Puoi forzare in modo potente il modo in cui Zentra usa i suoi strumenti.")
+        lines.append(f"    Apri la WebUI, vai in {CYAN}Configurazione > Routing > Custom Plugin Overrides{RESET}.")
+        lines.append(f"    Aggiungi una regola associata a un Tag, es:")
+        lines.append(f"    Tag: {RED}WEBCAM{RESET} -> \"{GREEN}Non usare la webcam sul PC, usa sempre target='client'{RESET}\".")
+        lines.append("")
+
+        # ─── SEZIONE 5: DOCUMENTAZIONE ONLINE ───────────────────────────────────────
+        lines.append(f"{YELLOW}━━━ 5. DOCUMENTAZIONE ONLINE E WIKI ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{RESET}")
+        lines.append("")
+        lines.append(f"{WHITE}  📖 Guida Utente Unificata:{RESET}  {CYAN}http://localhost:7070/zentra/docs/user{RESET}")
+        lines.append(f"{WHITE}  💻 Guida Tecnica (Admin):{RESET}   {CYAN}http://localhost:7070/zentra/docs/tech{RESET}")
+        lines.append(f"{WHITE}  🌐 GitHub Wiki:{RESET}             {CYAN}https://github.com/zentra-core/zentra-core/wiki{RESET}")
+        lines.append("")
+
+        # ─── SEZIONE 6: MODULI SISTEMA ──────────────────────────────────────────────
+        lines.append(f"{YELLOW}━━━ 6. STATO DIAGNOSTICO DEI MODULI (TOOL ATTIVI) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{RESET}")
+        lines.append("")
+    else:
+        # ─── HEADER ─────────────────────────────────────────────────────────────────
+        lines.append(f"{CYAN}╔════════════════════════════════════════════════════════════════════════════════════════╗{RESET}")
+        lines.append(f"{CYAN}║{WHITE}                      ZENTRA CORE — USER GUIDE (F1)                                     {CYAN}║{RESET}")
+        lines.append(f"{CYAN}╚════════════════════════════════════════════════════════════════════════════════════════╝{RESET}")
+        lines.append("")
+        lines.append(f"{WHITE}Welcome! Zentra is a modular AI system. You can communicate using natural language:")
+        lines.append(f"you don't need to learn complex commands or syntax.{RESET}")
+        lines.append("")
+
+        # ─── SECTION 1: HOW TO USE ─────────────────────────────────────────────────
+        lines.append(f"{YELLOW}━━━ 1. TALKING WITH ZENTRA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{RESET}")
+        lines.append("")
+        lines.append(f"{WHITE}  ■ Text Mode:{RESET} Type anything in the prompt below and press ENTER.")
+        lines.append(f"    Ex: {CYAN}\"Hello, how are you?\"{RESET} or {CYAN}\"Show me the CPU stats\"{RESET}")
+        lines.append("")
+        lines.append(f"{WHITE}  ■ Voice Mode (PC):{RESET} Hold {GREEN}CTRL+SHIFT{RESET} to activate the microphone.")
+        lines.append(f"    Speak, then release the keys to send. Zentra will reply by voice.")
+        lines.append("")
+        lines.append(f"{WHITE}  ■ Voice Mode (WebUI/Mobile):{RESET} Use the 🎙️ button in the WebUI chat.")
+        lines.append(f"    Ex: (Tap to talk) {CYAN}\"Lower volume to 20%\"{RESET}")
+        lines.append("")
+
+        # ─── SECTION 2: FUNCTION KEYS ──────────────────────────────────────────────
+        lines.append(f"{YELLOW}━━━ 2. QUICK FUNCTION KEYS (Local Console) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{RESET}")
+        lines.append("")
+        lines.append(f"{GREEN}  F1{RESET} → Show this User Guide")
+        lines.append(f"{GREEN}  F2{RESET} → Change the active AI model (e.g., GPT-4, Local Llama, Gemini)")
+        lines.append(f"{GREEN}  F3{RESET} → Load a \"Personality\" or system core (e.g., Urania, MacGyver)")
+        lines.append(f"{GREEN}  F4{RESET} → Enable or Disable the system microphone (Privacy mute)")
+        lines.append(f"{GREEN}  F5{RESET} → Refresh interface (Force local redraw)")
+        lines.append(f"{GREEN}  F6{RESET} → Enable/Disable spoken responses (Text-to-Speech)")
+        lines.append(f"{GREEN}  F7{RESET} → Backend Editor (Modify IPs, API ports, database)")
+        lines.append(f"{GREEN}  F8{RESET} → Enable/Disable 'Push To Talk' mode")
+        lines.append(f"{GREEN}  F9{RESET} → Immediately Reboot Zentra Core")
+        lines.append("")
+
+        # ─── SECTION 3: WHAT CAN YOU ASK ───────────────────────────────────────
+        lines.append(f"{YELLOW}━━━ 3. USAGE EXAMPLES AND COMMON COMMANDS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{RESET}")
+        lines.append("")
+        lines.append(f"  🗣️  {CYAN}CONVERSE AND LEARN{RESET}")
+        lines.append(f"     \"{GREEN}Explain quantum physics in simple words{RESET}\"")
+        lines.append(f"     \"{GREEN}Write an apology email for a delay{RESET}\"")
+        lines.append(f"     \"{GREEN}Translate this sentence into Finnish{RESET}\"")
+        lines.append("")
+        lines.append(f"  🖥️  {CYAN}COMPUTER AND FILE CONTROL{RESET}")
+        lines.append(f"     \"{GREEN}List the files on my Desktop{RESET}\"")
+        lines.append(f"     \"{GREEN}Open Notepad / Open Discord{RESET}\"")
+        lines.append(f"     \"{GREEN}Show me a graph of my CPU usage{RESET}\"")
+        lines.append("")
+        lines.append(f"  🌐  {CYAN}INTERNET AND INFORMATION{RESET}")
+        lines.append(f"     \"{GREEN}Search the web for the latest SpaceX news{RESET}\"")
+        lines.append(f"     \"{GREEN}What's today's date? / What time is it?{RESET}\"")
+        lines.append("")
+        lines.append(f"  🎵  {CYAN}MEDIA AND VOLUME CONTROL{RESET}")
+        lines.append(f"     \"{GREEN}Lower the computer volume to 30%{RESET}\"")
+        lines.append(f"     \"{GREEN}Pause the music{RESET}\"")
+        lines.append("")
+        lines.append(f"  📸  {CYAN}CAMERA AND VISION{RESET}")
+        lines.append(f"     \"{GREEN}Take a photo with the webcam and tell me what you see{RESET}\"")
+        lines.append(f"     \"{GREEN}Take a photo with my phone{RESET}\" (if connected via mobile WebUI)")
+        lines.append("")
+        lines.append(f"  🎨  {CYAN}AI IMAGE GENERATION{RESET}")
+        lines.append(f"     \"{GREEN}Generate an image of a dog in space, photorealistic style{RESET}\"")
+        # ─── SECTION 4: RULES AND OVERRIDES ───────────────────────────────────────────
+        lines.append(f"{YELLOW}━━━ 4. ADVANCED CUSTOMIZATIONS AND BEHAVIORAL RULES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{RESET}")
+        lines.append("")
+        lines.append(f"  {WHITE}■ Behavioral Instructions (Special AI Instructions):{RESET}")
+        lines.append(f"    To dynamically change how Zentra chats (the base tone),")
+        lines.append(f"    open the WebUI, go to {CYAN}Configuration > Persona{RESET} and write for example:")
+        lines.append(f"    \"{GREEN}From now on, always answer me in rhyme{RESET}\" or \"{GREEN}Use a sarcastic tone{RESET}\".")
+        lines.append("")
+        lines.append(f"  {WHITE}■ Plugin Routing Overrides (New v0.16.x):{RESET}")
+        lines.append(f"    You can powerfully force how Zentra uses its tools.")
+        lines.append(f"    Open the WebUI, go to {CYAN}Configuration > Routing > Custom Plugin Overrides{RESET}.")
+        lines.append(f"    Add a rule associated with a Tag, e.g.:")
+        lines.append(f"    Tag: {RED}WEBCAM{RESET} -> \"{GREEN}Don't use PC webcam, always use target='client'{RESET}\".")
+        lines.append("")
+
+        # ─── SECTION 5: ONLINE DOCUMENTATION ───────────────────────────────────────
+        lines.append(f"{YELLOW}━━━ 5. ONLINE DOCUMENTATION AND WIKI ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{RESET}")
+        lines.append("")
+        lines.append(f"{WHITE}  📖 Unified User Guide:{RESET}     {CYAN}http://localhost:7070/zentra/docs/user{RESET}")
+        lines.append(f"{WHITE}  💻 Technical Guide (Admin):{RESET}  {CYAN}http://localhost:7070/zentra/docs/tech{RESET}")
+        lines.append(f"{WHITE}  🌐 GitHub Wiki:{RESET}             {CYAN}https://github.com/zentra-core/zentra-core/wiki{RESET}")
+        lines.append("")
+
+        # ─── SECTION 6: SYSTEM MODULES ──────────────────────────────────────────────
+        lines.append(f"{YELLOW}━━━ 6. SYSTEM MODULE DIAGNOSTICS (ACTIVE TOOLS) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{RESET}")
+        lines.append("")
+
+    for l in lines:
+        print(l)
+        
     
     try:
         data = generate_dynamic_guide()
@@ -379,21 +569,17 @@ def show_help():
                 print(f"{border}│{RESET}  {WHITE}{translator.t('help_role')}{RESET} {desc}")
                 
                 if commands:
-                    print(f"{border}│{RESET}  {YELLOW}{translator.t('help_commands')}{RESET}")
                     for cmd, explanation in commands.items():
                         print(f"{border}│{RESET}    • {cmd} -> {explanation}")
                         
-                if example:
-                    print(f"{border}│{RESET}  {MAGENTA}{translator.t('help_example')}{RESET} {Fore.WHITE}'{example}'{RESET}")
-                    
                 print(f"{border}│{RESET}")
                 
     except Exception as e:
         print(f"{RED}Fatal error generating dynamic guide: {e}{RESET}")
         
-    closure = f"{CYAN}╚════════════════════════════════════════════════════════════╝{RESET}"
-    print(f"{closure.center(90)}")
-    print(f"\n{YELLOW}{translator.t('help_footer')}{RESET}".center(90))
+    closure = f"{CYAN}╚════════════════════════════════════════════════════════════════════════════════════════╝{RESET}"
+    print(closure)
+    print(f"\n{YELLOW}{translator.t('help_footer')}{RESET}".center(L))
     
     # Flush old keystrokes before blocking
     while msvcrt.kbhit(): msvcrt.getch()
@@ -509,11 +695,11 @@ def stop_thinking():
     sys.stdout.flush()
     
 def list_personalities():
-    """Scans the personality folder to find real .txt files."""
+    """Scans the personality folder to find real .yaml files."""
     # Look inside the package for v0.15.2
     folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), "personality")
     if not os.path.exists(folder): os.makedirs(folder, exist_ok=True)
-    return [os.path.basename(f) for f in glob.glob(os.path.join(folder, "*.txt"))]
+    return [os.path.basename(f) for f in glob.glob(os.path.join(folder, "*.yaml"))]
 
 def show_soul_menu(available_souls):
     """Shows a menu for personality selection."""
