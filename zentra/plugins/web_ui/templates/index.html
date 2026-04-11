@@ -99,8 +99,8 @@
     <button class="tab" onclick="showTab('system')">System</button>
     <button class="tab" onclick="showTab('drive'); loadDriveConfig()">🗂️ Drive</button>
     {% if current_user.is_authenticated and current_user.role == 'admin' %}
-    <button class="tab" onclick="showTab('users'); loadUsersData()">Users</button>
-    <button class="tab" onclick="showTab('security')">🔒 Security</button>
+    <button class="tab" onclick="showTab('users'); loadUsersData()">{{ t('webui_conf_tab_users') }}</button>
+    <button class="tab" onclick="showTab('security')">{{ t('webui_conf_tab_security') }}</button>
     {% endif %}
     <button class="tab" onclick="showTab('payload'); loadPayloadData()">Payload</button>
     <button class="tab" onclick="showTab('plugins')">Plugins</button>
