@@ -28,16 +28,25 @@ T = TypeVar("T", bound=BaseModel)
 # INTERNAL HELPERS
 # ──────────────────────────────────────────────────────────────────────────────
 
-def _deep_merge(base: dict, patch: dict) -> dict:
+def _deep_merge(base: dict, patch: dict, delete_extra: bool = False) -> dict:
     """
     Merge *patch* into *base* recursively.
     Keys in *patch* that are dicts are merged with the corresponding key in
     *base* (if it is also a dict); otherwise the value is overwritten.
+    
+    If delete_extra is True, keys in base that are not in patch are removed.
     Returns *base* (mutated in place).
     """
+    # 1. Synchronization: remove keys not in patch if delete_extra is enabled
+    if delete_extra:
+        to_remove = [k for k in base if k not in patch]
+        for k in to_remove:
+            del base[k]
+
+    # 2. Update/Add from patch
     for k, v in patch.items():
         if isinstance(v, dict) and isinstance(base.get(k), dict):
-            _deep_merge(base[k], v)
+            _deep_merge(base[k], v, delete_extra=delete_extra)
         else:
             base[k] = v
     return base
@@ -103,7 +112,7 @@ def save_yaml(path: str, model: BaseModel) -> bool:
                     data = ryaml.load(f) or {}
                 if not isinstance(data, dict):
                     data = {}
-                _deep_merge(data, new_data) # Preserves CommentedMap keys
+                _deep_merge(data, new_data, delete_extra=True) # Preserves CommentedMap keys and syncs
                 with open(path, "w", encoding="utf-8") as f:
                     ryaml.dump(data, f)
             else:
