@@ -15,7 +15,7 @@ import threading
 import queue
 import time
 import logging
-from zentra.core.constants import LOGS_DIR, SNAPSHOTS_DIR
+from zentra.core.constants import LOGS_DIR, SNAPSHOTS_DIR, IMAGES_DIR, AUDIO_DIR
 
 _sessions      = {}
 _sessions_lock = threading.Lock()
@@ -29,7 +29,7 @@ def set_last_audio_path(path: str):
     _chat_log.info(f"[Audio] Global _last_audio_path updated to: {path}")
 
 
-def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr, images=None):
+def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr, images=None, user_id="admin"):
     sess = _sessions.get(session_id)
     if not sess:
         return
@@ -60,7 +60,7 @@ def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr, i
             })
         # ─────────────────────────────────────────────────────────────────────
 
-        agent = AgentExecutor(config=cfg_mgr.config, config_manager=cfg_mgr, state_manager=sm, trace_callback=_session_trace)
+        agent = AgentExecutor(config=cfg_mgr.config, config_manager=cfg_mgr, state_manager=sm, trace_callback=_session_trace, current_user_id=user_id)
         
         # ── SSE Connection Buffer ─────────────────────────────────────────────
         # The browser receives session_id from POST /api/chat, then must open a
@@ -132,8 +132,8 @@ def generate_voice_file(text: str, voice_cfg: dict) -> str:
         noise_w          = voice_cfg.get("noise_w", 0.8)
         sentence_silence = voice_cfg.get("sentence_silence", 0.2)
 
-        # risposta.wav in zentra/logs/
-        out = os.path.join(LOGS_DIR, "risposta.wav")
+        # risposta.wav in zentra/media/audio/
+        out = os.path.join(AUDIO_DIR, "risposta.wav")
 
         import subprocess
         clean_text = text.replace('"', '').replace('\n', ' ')
@@ -236,9 +236,14 @@ def _maybe_generate_tts(text: str, cfg_mgr):
 def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
     from flask import send_from_directory
     
-    @app.route("/snapshots/<path:filename>")
+    @app.route("/media/screenshots/<path:filename>")
     def serve_snapshots(filename):
-        """Serves captured images from the snapshots directory inside the package."""
+        """Serves captured images from the centralized media/screenshots directory."""
+        return send_from_directory(SNAPSHOTS_DIR, filename)
+
+    @app.route("/snapshots/<path:filename>")
+    def serve_snapshots_legacy(filename):
+        """Legacy route kept for backward compatibility with old snapshot paths."""
         return send_from_directory(SNAPSHOTS_DIR, filename)
 
     @app.route("/")
@@ -249,8 +254,12 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
     @app.route("/chat")
     def chat_ui():
         from flask import render_template, make_response
+        from flask_login import current_user
+        from zentra.core.auth.auth_manager import auth_mgr
         try:
-            resp = make_response(render_template("chat.html"))
+            profile = auth_mgr.get_profile(current_user.username) if current_user.is_authenticated else None
+            # Pass Zentra config as 'zconfig' to avoid conflict with Flask's 'config'
+            resp = make_response(render_template("chat.html", profile=profile, zconfig=cfg_mgr.config))
             resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
             resp.headers["Pragma"] = "no-cache"
             return resp
@@ -260,17 +269,21 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
     @app.route("/api/chat", methods=["POST"])
     def api_chat():
         from flask import request, jsonify
+        from flask_login import current_user
         data     = request.get_json(force=True) or {}
         user_msg = data.get("message", "").strip()
         history  = data.get("history", [])
         images   = data.get("images", [])
         if not user_msg and not images:
             return jsonify({"ok": False, "error": "Empty message"}), 400
+            
+        uid = current_user.username if current_user.is_authenticated else "admin"
+        
         sid  = str(uuid.uuid4())
-        sess = {"queue": queue.Queue(), "history": list(history), "done": False}
+        sess = {"queue": queue.Queue(), "history": list(history), "done": False, "user_id": uid}
         with _sessions_lock:
             _sessions[sid] = sess
-        threading.Thread(target=_run_inference, args=(sid, user_msg, history, cfg_mgr, images), daemon=True).start()
+        threading.Thread(target=_run_inference, args=(sid, user_msg, history, cfg_mgr, images, uid), daemon=True).start()
         return jsonify({"ok": True, "session_id": sid})
 
     @app.route("/api/stream/<session_id>")
@@ -314,9 +327,11 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
     @app.route("/api/history")
     def api_history():
         from flask import request, jsonify
-        sid  = request.args.get("session_id", "")
-        sess = _sessions.get(sid)
-        return jsonify(sess["history"] if sess else [])
+        from flask_login import current_user
+        from zentra.memory.brain_interface import get_history
+        uid = current_user.username if current_user.is_authenticated else "admin"
+        hist = get_history(user_id=uid)
+        return jsonify([{"role": role, "content": msg} for role, msg in hist])
 
     @app.route("/api/audio")
     def api_audio():
@@ -410,14 +425,12 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
     @app.route("/api/images/<filename>")
     def serve_ai_image(filename):
         """
-        Serve images from the snapshots/images/ directory.
+        Serve images from the centralized media/images/ directory.
         The AI can reference images with [[IMG:filename.ext]] syntax.
         """
         from flask import send_from_directory, jsonify
-        # Use SNAPSHOTS_DIR relative images folder
-        images_dir = os.path.join(SNAPSHOTS_DIR, "images")
-        os.makedirs(images_dir, exist_ok=True)
-        img_path = os.path.join(images_dir, filename)
+        os.makedirs(IMAGES_DIR, exist_ok=True)
+        img_path = os.path.join(IMAGES_DIR, filename)
         if os.path.exists(img_path):
-            return send_from_directory(images_dir, filename)
+            return send_from_directory(IMAGES_DIR, filename)
         return jsonify({"error": "Image not found"}), 404

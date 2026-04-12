@@ -94,6 +94,21 @@
         "is_class_based": true,
         "is_lazy": true
     },
+    "MCP_BRIDGE": {
+        "description": "Bridge to Model Context Protocol (MCP) servers",
+        "commands": {
+            "call_tool": "Executes an MCP tool.",
+            "get_mcp_schemas": "Hook used by Zentra's plugin_docs.py to merge tools.",
+            "list": "Method",
+            "reload": "Method",
+            "search": "Search for MCP servers on Smithery or MCPSkills (mcp-get).",
+            "status": "Method"
+        },
+        "status": "No MCP servers connected.",
+        "example": "",
+        "routing_instructions": "",
+        "is_class_based": true
+    },
     "MEDIA": {
         "description": "Hardware volume and mute control.",
         "commands": {
@@ -132,16 +147,6 @@
         "routing_instructions": "",
         "is_class_based": true,
         "is_lazy": true
-    },
-    "REMOTE_TRIGGERS": {
-        "description": "PTT activation from hardware devices and remote clients",
-        "commands": {
-            "info": "Method"
-        },
-        "status": "online",
-        "example": "",
-        "routing_instructions": "",
-        "is_class_based": true
     },
     "ROLEPLAY": {
         "description": "Manages roleplay mode: loads characters and scenes for immersive conversations.",
@@ -245,5 +250,65 @@
         "example": "",
         "routing_instructions": "",
         "is_class_based": true
+    },
+    "MCP_EVERYTHING": {
+        "description": "External Tool Provider (everything) via Model Context Protocol.",
+        "commands": {
+            "<dynamic_tools>": "Tools are dynamically discovered upon connection."
+        },
+        "status": "EXTERNAL",
+        "example": "",
+        "routing_instructions": "Native LLM Function Calling exposed seamlessly.",
+        "is_class_based": false,
+        "is_mcp": true,
+        "server_name": "everything"
+    },
+    "MCP_WIKIPEDIA": {
+        "description": "External Tool Provider (wikipedia) via Model Context Protocol.",
+        "commands": {
+            "<dynamic_tools>": "Tools are dynamically discovered upon connection."
+        },
+        "status": "EXTERNAL",
+        "example": "",
+        "routing_instructions": "Native LLM Function Calling exposed seamlessly.",
+        "is_class_based": false,
+        "is_mcp": true,
+        "server_name": "wikipedia"
+    },
+    "MCP_EXA_MCP_SERVER": {
+        "description": "External Tool Provider (exa_mcp_server) via Model Context Protocol.",
+        "commands": {
+            "<dynamic_tools>": "Tools are dynamically discovered upon connection."
+        },
+        "status": "EXTERNAL",
+        "example": "",
+        "routing_instructions": "Native LLM Function Calling exposed seamlessly.",
+        "is_class_based": false,
+        "is_mcp": true,
+        "server_name": "exa_mcp_server"
+    },
+    "MCP_MCP_WEB_SEARCH": {
+        "description": "External Tool Provider (mcp_web_search) via Model Context Protocol.",
+        "commands": {
+            "<dynamic_tools>": "Tools are dynamically discovered upon connection."
+        },
+        "status": "EXTERNAL",
+        "example": "",
+        "routing_instructions": "Native LLM Function Calling exposed seamlessly.",
+        "is_class_based": false,
+        "is_mcp": true,
+        "server_name": "mcp_web_search"
+    },
+    "MCP_IMAGESORCERY_MCP": {
+        "description": "External Tool Provider (imagesorcery_mcp) via Model Context Protocol.",
+        "commands": {
+            "<dynamic_tools>": "Tools are dynamically discovered upon connection."
+        },
+        "status": "EXTERNAL",
+        "example": "",
+        "routing_instructions": "Native LLM Function Calling exposed seamlessly.",
+        "is_class_based": false,
+        "is_mcp": true,
+        "server_name": "imagesorcery_mcp"
     }
 }

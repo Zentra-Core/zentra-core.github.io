@@ -16,6 +16,8 @@ class AIConfig(BaseModel):
     save_special_instructions: bool = False
     special_instructions: str = ""
     avatar_size: str = "medium" # small, medium, large
+    roleplay_mode: bool = False
+    roleplay_disclaimer: str = ""
 
 
 
@@ -213,7 +215,10 @@ class PluginRemoteTriggers(BaseModel):
     lazy_load: bool = False
     settings: Dict[str, Any] = Field(default_factory=lambda: {
         "enable_mediasession": True,
-        "enable_volume_keys": True
+        "enable_volume_keys": True,
+        "enable_volume_loop": False,
+        "feedback_sounds": True,
+        "visual_indicator": True
     })
 
 class PluginDrive(BaseModel):
@@ -230,6 +235,17 @@ class PluginDrive(BaseModel):
         "spell_check": False
     })
 
+class MCPServerConfig(BaseModel):
+    command: str
+    args: List[str] = []
+    env: Dict[str, str] = {}
+    enabled: bool = True
+
+class PluginMCPBridge(BaseModel):
+    enabled: bool = False
+    lazy_load: bool = False
+    servers: Dict[str, MCPServerConfig] = Field(default_factory=dict)
+
 class PluginsConfig(BaseModel):
     DASHBOARD: PluginDashboard = Field(default_factory=PluginDashboard)
     FILE_MANAGER: PluginFileManager = Field(default_factory=PluginFileManager)
@@ -245,6 +261,7 @@ class PluginsConfig(BaseModel):
     EXECUTOR: PluginExecutor = Field(default_factory=PluginExecutor)
     DRIVE: PluginDrive = Field(default_factory=PluginDrive)
     REMOTE_TRIGGERS: PluginRemoteTriggers = Field(default_factory=PluginRemoteTriggers)
+    MCP_BRIDGE: PluginMCPBridge = Field(default_factory=PluginMCPBridge)
     extra_dirs: List[str] = []
 
 

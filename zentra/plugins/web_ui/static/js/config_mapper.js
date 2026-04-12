@@ -1,27 +1,64 @@
 // config_mapper.js
 // Extracts DOM mapping and Payload Building from config_core.js
 
+const RESTART_FIELDS = [
+  'system-port',
+  'system-api-port',
+  'sys-https-enabled'
+];
+
 /**
  * Utility to populate a <select> element
  */
 function populateSelect(id, list, currentValue, isFilenameOnly = false) {
   const el = document.getElementById(id);
   if (!el) return;
+  
+  // Clear existing
   el.innerHTML = '';
-  if (!Array.isArray(list)) list = [];
+  
+  // Convert object { "name": "id" } to array [ { "id": "id", "name": "name" } ]
+  let items = list;
+  if (list && typeof list === 'object' && !Array.isArray(list)) {
+      items = Object.entries(list).map(([name, id]) => ({ id, name }));
+  }
+
+  // Basic validation
+  if (!items || (Array.isArray(items) && items.length === 0)) {
+    if (typeof isInitialLoading !== 'undefined' && isInitialLoading) {
+      const opt = document.createElement('option');
+      opt.textContent = "Loading...";
+      opt.disabled = true;
+      el.appendChild(opt);
+    }
+    return;
+  }
   
   let cleanValue = currentValue;
   if (isFilenameOnly && currentValue && (currentValue.includes('\\') || currentValue.includes('/'))) {
     cleanValue = currentValue.split(/[\\/]/).pop();
   }
 
-  list.forEach(item => {
+  const itemsArr = Array.isArray(items) ? items : [items];
+  itemsArr.forEach(item => {
     const opt = document.createElement('option');
-    const shortItem = (isFilenameOnly && (item.includes('\\') || item.includes('/'))) ? item.split(/[\\/]/).pop() : item;
     
-    opt.value = item;
-    opt.textContent = shortItem;
-    if (cleanValue && (item === cleanValue || item.endsWith(cleanValue))) opt.selected = true;
+    // Determine value and text based on type
+    let val, text;
+    if (typeof item === 'object' && item !== null) {
+        val = item.id || item.value || '';
+        text = item.name || item.text || val;
+    } else {
+        val = item;
+        text = item;
+    }
+
+    const shortText = (isFilenameOnly && (text.includes('\\') || text.includes('/'))) ? text.split(/[\\/]/).pop() : text;
+    const shortVal = (isFilenameOnly && (val.includes('\\') || val.includes('/'))) ? val.split(/[\\/]/).pop() : val;
+    
+    opt.value = val;
+    opt.textContent = shortText;
+    if (cleanValue && (val === cleanValue || val.endsWith(cleanValue) || shortVal === cleanValue)) opt.selected = true;
     el.appendChild(opt);
   });
 }
@@ -74,8 +111,10 @@ function populateUI() {
     populateSelect('ia-personality', sysOptions.personalities || [], c.ai?.active_personality, true);
     setVal('ia-avatar-size', c.ai?.avatar_size || 'medium');
     setVal('ia-instructions', c.ai?.special_instructions || '');
-
     setCheck('ia-save-instructions', c.ai?.save_special_instructions || false);
+
+    setCheck('ia-roleplay-mode', c.ai?.roleplay_mode || false);
+    setVal('ia-roleplay-disclaimer', c.ai?.roleplay_disclaimer || '');
     
     // Load the avatar preview for the currently selected persona
     if (typeof window.loadPersonaAvatar === 'function') {
@@ -115,11 +154,71 @@ function populateUI() {
     // 6. Remote Triggers Dispatch
     populateRemoteTriggersUI();
 
+    // Sync all standalone plugin toggles
+    document.querySelectorAll('[data-plugin]').forEach(cb => {
+        const tag = cb.dataset.plugin;
+        if (c.plugins && c.plugins[tag]) {
+            cb.checked = c.plugins[tag].enabled !== false;
+        }
+    });
+
     renderPlugins(c.plugins || {});
+    initRestartIndicators();
     console.log("UI Populated successfully.");
   } catch (err) {
     console.error("UI Population failed:", err);
   }
+}
+
+function initRestartIndicators() {
+  console.log("[CONFIG] Initializing Restart Indicators for:", RESTART_FIELDS);
+  RESTART_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) {
+      console.warn("[CONFIG] Element not found for restart indicator:", id);
+      return;
+    }
+
+    // Create badge if not exists
+    let badge = document.getElementById('badge-' + id);
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.id = 'badge-' + id;
+      badge.className = 'restart-badge';
+      badge.textContent = 'Restart Required';
+      
+      // Smart placement
+      const parentField = el.closest('.field');
+      const parentToggle = el.closest('.toggle-row');
+      
+      if (parentField) {
+        const label = parentField.querySelector('label');
+        if (label) label.appendChild(badge);
+        else parentField.appendChild(badge);
+      } else if (parentToggle) {
+        const info = parentToggle.querySelector('.toggle-info');
+        if (info) info.appendChild(badge);
+        else parentToggle.appendChild(badge);
+      } else {
+        el.parentElement.appendChild(badge);
+      }
+    }
+
+    const initialValue = el.type === 'checkbox' ? el.checked : el.value;
+    console.debug(`[CONFIG] Monitoring ${id}, initial:`, initialValue);
+
+    const check = () => {
+      const current = el.type === 'checkbox' ? el.checked : el.value;
+      if (current !== initialValue) {
+        badge.classList.add('visible');
+      } else {
+        badge.classList.remove('visible');
+      }
+    };
+
+    el.addEventListener('change', check);
+    el.addEventListener('input', check);
+  });
 }
 
 function renderPlugins(plugins) {
@@ -138,7 +237,8 @@ function renderPlugins(plugins) {
     WEB_UI:      I18N.plugin_desc_webui,
     IMAGE_GEN:   'Generazione Immagini AI (Pollinations)',
     DRIVE:       I18N.webui_conf_plugin_desc_drive || 'Gestore File HTTP (Zentra Drive)',
-    REMOTE_TRIGGERS: 'PTT via Media Keys (iPhone), Bluetooth & Webhooks'
+    REMOTE_TRIGGERS: 'PTT via Media Keys (iPhone), Bluetooth & Webhooks',
+    MCP_BRIDGE:  'Universal Protocol Hub (Connect external AI tools via MCP)'
   };
   let html = '';
   for (const [tag, pCfg] of Object.entries(plugins)) {
@@ -197,8 +297,9 @@ function buildPayload() {
     out.ai.active_personality = document.getElementById('ia-personality').value;
     out.ai.avatar_size = document.getElementById('ia-avatar-size').value;
     out.ai.special_instructions = document.getElementById('ia-instructions').value;
-
     out.ai.save_special_instructions = document.getElementById('ia-save-instructions').checked;
+    out.ai.roleplay_mode = document.getElementById('ia-roleplay-mode').checked;
+    out.ai.roleplay_disclaimer = document.getElementById('ia-roleplay-disclaimer').value;
 
     out.bridge = out.bridge || {};
     out.bridge.use_processor        = document.getElementById('br-processor').checked;
@@ -296,6 +397,9 @@ function populateRemoteTriggersUI() {
     const settings = c.plugins.REMOTE_TRIGGERS.settings || {};
     setCheck('rt-enable-mediasession', settings.enable_mediasession ?? true);
     setCheck('rt-enable-volume-keys', settings.enable_volume_keys ?? true);
+    setCheck('rt-enable-volume-loop', settings.enable_volume_loop ?? false);
+    setCheck('rt-feedback-sounds', settings.feedback_sounds ?? true);
+    setCheck('rt-visual-indicator', settings.visual_indicator ?? true);
 }
 
 function buildRemoteTriggersPayload() {
@@ -306,11 +410,18 @@ function buildRemoteTriggersPayload() {
             REMOTE_TRIGGERS: {
                 settings: {
                     enable_mediasession: document.getElementById('rt-enable-mediasession').checked,
-                    enable_volume_keys: document.getElementById('rt-enable-volume-keys').checked
+                    enable_volume_keys: document.getElementById('rt-enable-volume-keys').checked,
+                    enable_volume_loop: document.getElementById('rt-enable-volume-loop').checked,
+                    feedback_sounds: document.getElementById('rt-feedback-sounds').checked,
+                    visual_indicator: document.getElementById('rt-visual-indicator').checked
                 }
             }
         }
     };
+}
+
+function isRestartNeeded() {
+  return document.querySelectorAll('.restart-badge.visible').length > 0;
 }
 
 // Global Exports
@@ -320,3 +431,4 @@ window.setVal = setVal;
 window.setCheck = setCheck;
 window.renderPlugins = renderPlugins;
 window.buildPayload = buildPayload;
+window.isRestartNeeded = isRestartNeeded;

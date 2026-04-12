@@ -21,10 +21,6 @@
 
   const LOG_TAG = '[RemoteTriggers]';
 
-  function log(msg) {
-    console.log(LOG_TAG, msg);
-  }
-
   /**
    * Helper to safely get plugin settings from the global Zentra config.
    * Returns default if not found.
@@ -39,140 +35,214 @@
     return defaultValue;
   }
 
-  // ── Core PTT Bridge ────────────────────────────────────────────────────────
-  // Interacts with the native WebUI audio recorder.
+  function log(msg) {
+    console.log(LOG_TAG, msg);
+    if (!window._zenrtDebugLog) window._zenrtDebugLog = [];
+    window._zenrtDebugLog.push(`${new Date().toISOString()} ${msg}`);
+  }
+
+  function beep(freq, dur) {
+    if (getSetting('feedback_sounds', true)) {
+      if (window._webptt_beep) window._webptt_beep(freq, dur);
+    }
+  }
+
+  function updateVisualIndicator(active) {
+    if (!getSetting('visual_indicator', true)) return;
+    let el = document.getElementById('zenrt-indicator');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'zenrt-indicator';
+      el.style = 'position:fixed; top:10px; right:10px; width:12px; height:12px; background:red; border-radius:50%; z-index:9999; display:none; box-shadow:0 0 10px rgba(255,0,0,0.8); pointer-events:none;';
+      document.body.appendChild(el);
+    }
+    el.style.display = active ? 'block' : 'none';
+    if (active) {
+      el.animate([ { opacity: 0.4 }, { opacity: 1 } ], { duration: 500, iterations: Infinity });
+    }
+  }
 
   function startListening() {
     log('START signal received → activating microphone');
-    if (typeof window._webpttStartRecording === 'function') {
-      window._webpttStartRecording();
-    } else if (typeof window.togglePTT === 'function') {
-      if (!window._zenrtIsRecording) {
-        window.togglePTT();
-        window._zenrtIsRecording = true;
-      }
+    beep(880, 0.1); 
+    updateVisualIndicator(true);
+    window.isTouchHold = true;
+    if (typeof window.startWebAudioRecording === 'function') {
+      window.startWebAudioRecording();
+    }
+    if (navigator.mediaSession) {
+      navigator.mediaSession.playbackState = 'playing';
     }
   }
 
   function stopListening() {
     log('STOP signal received → deactivating microphone');
-    if (typeof window._webpttStopRecording === 'function') {
-      window._webpttStopRecording();
-      window._zenrtIsRecording = false;
-    } else if (typeof window.togglePTT === 'function' && window._zenrtIsRecording) {
-      window.togglePTT();
-      window._zenrtIsRecording = false;
+    beep(440, 0.1);
+    updateVisualIndicator(false);
+    window.isTouchHold = false;
+    window.isLockedMode = false;
+    if (typeof window.stopWebAudioRecording === 'function') {
+      window.stopWebAudioRecording();
+    }
+    if (navigator.mediaSession) {
+      navigator.mediaSession.playbackState = 'paused';
     }
   }
 
   function toggleListening() {
-    log('TOGGLE signal received');
-    if (window._zenrtIsRecording) {
-      stopListening();
-    } else {
-      startListening();
-    }
+    if (window.isWebAudioRecording) stopListening();
+    else { window.isLockedMode = true; startListening(); }
   }
 
-  window._zenrtIsRecording = false;
+  // ── 2. Volume Loop hack (Android) ────────────────────────────────────────
+  function setupVolumeLoop() {
+    if (!getSetting('enable_volume_loop', false)) return;
+    
+    log('Initializing Volume Loop hack...');
+    const audio = document.createElement('audio');
+    audio.loop = true;
+    audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFRm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
+    document.body.appendChild(audio);
 
-  // ── 1. SSE Listener — Backend Webhooks ─────────────────────────────────────
-  // Listens for PTT events broadcasted by the Flask backend.
-  function handleRemotePttEvent(data) {
-    const action = data.action || 'toggle';
-    if (action === 'start') startListening();
-    else if (action === 'stop') stopListening();
-    else toggleListening();
+    let lastVol = 0.5;
+    audio.volume = lastVol;
+
+    const onVol = () => {
+      const cur = audio.volume;
+      log(`Volume: ${cur}`);
+      if (cur > lastVol) startListening();
+      else if (cur < lastVol) stopListening();
+      
+      setTimeout(() => { audio.volume = 0.5; lastVol = 0.5; }, 100);
+    };
+
+    audio.addEventListener('volumechange', onVol);
+    window.addEventListener('volumechange', onVol);
+
+    const unlock = () => {
+      audio.play().then(() => log('Volume Loop Audio Playing')).catch(e => log('Play failed: ' + e));
+      if (navigator.mediaSession) navigator.mediaSession.playbackState = 'playing';
+      document.removeEventListener('click', unlock);
+    };
+    document.addEventListener('click', unlock);
   }
 
-  if (!window._zentraSSEHandlers) window._zentraSSEHandlers = {};
-  window._zentraSSEHandlers['remote_ptt'] = handleRemotePttEvent;
-  log('SSE handler registered for type: remote_ptt');
-
-  // ── 2. MediaSession API — Bluetooth/Headphone Buttons ─────────────────────
-  // Intercepts Play/Pause from hardware buttons (e.g. iPhone).
+  // ── 3. MediaSession API ───────────────────────────────────────────────────
   function setupMediaSession() {
     if (!('mediaSession' in navigator)) {
       log('MediaSession API not available.');
       return;
     }
 
-    if (!getSetting('enable_mediasession', true)) {
-      log('MediaSession feature disabled in settings.');
-      return;
-    }
+    const unlock = () => {
+      log('User interaction detected → Warming up audio/mic');
+      if (window._zenrtAudioCtx && window._zenrtAudioCtx.state === 'suspended') {
+        window._zenrtAudioCtx.resume().then(() => log('AudioContext resumed'));
+      }
+      // WARMUP MICROPHONE FOR iOS
+      if (typeof window.initWebAudio === 'function') {
+        window.initWebAudio().then(ok => log(`Mic Warmup status: ${ok}`));
+      }
+      document.removeEventListener('touchstart', unlock);
+      document.removeEventListener('click', unlock);
+    };
+    document.addEventListener('touchstart', unlock);
+    document.addEventListener('click', unlock);
 
-    // Create a silent audio node to "own" the media session
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-      gainNode.gain.setValueAtTime(0, ctx.currentTime); 
-      oscillator.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      oscillator.start();
-      ctx.suspend();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, ctx.currentTime); 
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
       window._zenrtAudioCtx = ctx;
-    } catch (e) {
-      log('AudioContext initialization failed: ' + e);
-    }
-
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: 'Zentra',
-      artist: 'Remote Trigger Enabled',
-      album: 'AI Assistant',
-    });
-
-    navigator.mediaSession.setActionHandler('play', function () {
-      log('Hardware: PLAY pressed → PTT START');
-      if (window._zenrtAudioCtx) window._zenrtAudioCtx.resume();
-      startListening();
-    });
-
-    navigator.mediaSession.setActionHandler('pause', function () {
-      log('Hardware: PAUSE pressed → PTT STOP');
-      stopListening();
-    });
-
-    try {
-      navigator.mediaSession.setActionHandler('nexttrack', function () {
-        log('Hardware: NEXT pressed → PTT TOGGLE');
-        toggleListening();
-      });
     } catch (e) {}
 
+    navigator.mediaSession.metadata = new MediaMetadata({ title: 'Zentra PTT', artist: 'Remote Trigger' });
+    navigator.mediaSession.setActionHandler('play', startListening);
+    navigator.mediaSession.setActionHandler('pause', stopListening);
+    
+    // Set initial state to paused to prevent auto-triggering on mobile
     navigator.mediaSession.playbackState = 'paused';
     log('MediaSession handlers installed.');
   }
 
-  // ── 3. Volume Key Interception ───────────────────────────────────────────
-  // Intercepts volume keys on focus (Android Chrome primarily).
-  function setupVolumeKeys() {
-    if (!getSetting('enable_volume_keys', true)) {
-      log('Volume key interception disabled in settings.');
-      return;
-    }
-
-    document.addEventListener('keydown', function (e) {
-      if (e.keyCode === 175 || e.key === 'AudioVolumeUp') {
-        e.preventDefault();
-        log('Key: Volume UP → PTT START');
-        startListening();
-      } else if (e.keyCode === 174 || e.key === 'AudioVolumeDown') {
-        e.preventDefault();
-        log('Key: Volume DOWN → PTT STOP');
-        stopListening();
+  // ── Debug Overlay ─────────────────────────────────────────────────────────
+  function setupDebugOverlay() {
+    const btn = document.getElementById('web-ptt-btn');
+    if (!btn) return;
+    
+    let clicks = 0;
+    btn.addEventListener('click', () => {
+      clicks++;
+      if (clicks === 4) {
+        showDebugOverlay();
+        clicks = 0;
       }
-    }, { passive: false });
-    log('Volume key listener attached.');
+      setTimeout(() => { clicks = 0; }, 2000);
+    });
+  }
+
+  function showDebugOverlay() {
+    let overlay = document.getElementById('zenrt-debug-overlay');
+    if (overlay) { overlay.remove(); return; }
+
+    overlay = document.createElement('div');
+    overlay.id = 'zenrt-debug-overlay';
+    overlay.style = 'position:fixed; bottom:80px; left:10px; right:10px; background:rgba(0,0,0,0.85); color:#0f0; font-family:monospace; font-size:10px; padding:10px; border-radius:8px; z-index:10000; max-height:200px; overflow-y:auto; border:1px solid #060;';
+    
+    const update = () => {
+      const logs = (window._zenrtDebugLog || []).slice(-15);
+      overlay.innerHTML = '<b>RT DEBUG (4-clicks PTT)</b><br>' + logs.join('<br>');
+    };
+    
+    document.body.appendChild(overlay);
+    setInterval(update, 1000);
+    update();
+  }
+
+  // ── 4. Volume Key Interception ───────────────────────────────────────────
+  function setupVolumeKeys() {
+    const handler = function (e) {
+      const code = e.keyCode || e.which;
+      const isUp   = (code === 24 || e.key === 'AudioVolumeUp' || e.key === 'VolumeUp' || code === 175);
+      const isDown = (code === 25 || e.key === 'AudioVolumeDown' || e.key === 'VolumeDown' || code === 174);
+
+      if (isUp || isDown) {
+        log(`Key detected: ${e.key} (code: ${code})`);
+        if (window.showToast) window.showToast(`[RT] Key: ${e.key} (c:${code})`);
+        
+        if (getSetting('enable_volume_keys', true)) {
+          // IMPORTANT: don't prevent if we are in Call Mode? No, should keep it.
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          if (isUp) startListening(); else stopListening();
+        }
+      }
+    };
+    window.addEventListener('keydown', handler, { capture: true, passive: false });
+    document.addEventListener('keydown', handler, { capture: true, passive: false });
+    log('Volume key listeners attached.');
   }
 
   // ── Boot ───────────────────────────────────────────────────────────────────
   function boot() {
-    log('Initializing...');
+    // Safety check: do not initialize if plugin is disabled in config
+    if (window.cfg && window.cfg.plugins && window.cfg.plugins.REMOTE_TRIGGERS) {
+      if (window.cfg.plugins.REMOTE_TRIGGERS.enabled === false) {
+        log('Plugin is DISABLED in config. Aborting boot.');
+        return;
+      }
+    }
+
+    log('Booting Remote Triggers 2.0...');
     setupMediaSession();
     setupVolumeKeys();
-    log('Plugin ready.');
+    setupVolumeLoop();
+    setupDebugOverlay();
+    log('Boot complete.');
   }
 
   if (document.readyState === 'loading') {
@@ -180,5 +250,4 @@
   } else {
     boot();
   }
-
 })();

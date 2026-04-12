@@ -21,6 +21,81 @@ drive_bp = Blueprint(
 )
 
 
+def _get_quick_links(root_dir: str) -> list:
+    """
+    Scans well-known Zentra directories and returns a list of groups,
+    each with a title, icon, and a list of {name, path} items.
+    """
+    SCAN_GROUPS = [
+        {
+            "id":    "system",
+            "title": "⚙️ System Config",
+            "dirs":  ["zentra/config/data"],
+            "exts":  {".yaml", ".yml", ".json"},
+            "exclude": {".example"}, 
+        },
+        {
+            "id":    "souls",
+            "title": "🧠 Personality Souls",
+            "dirs":  ["zentra/personality"],
+            "exts":  {".yaml", ".yml"},
+        },
+        {
+            "id":    "rp_chars",
+            "title": "🎭 Roleplay Characters",
+            "dirs":  ["zentra/plugins/roleplay/characters"],
+            "exts":  {".yaml", ".yml", ".json"},
+        },
+        {
+            "id":    "rp_scenes",
+            "title": "🎬 Roleplay Scenes",
+            "dirs":  ["zentra/plugins/roleplay/scenes"],
+            "exts":  {".yaml", ".yml", ".json"},
+        },
+        {
+            "id":    "routing",
+            "title": "🔀 Routing & Overrides",
+            "dirs":  ["zentra/config"],
+            "exts":  {".yaml", ".yml"},
+            "recursive": False, 
+        },
+        {
+            "id":    "env",
+            "title": "🔒 Environment & Keys",
+            "dirs":  ["zentra"],
+            "exts":  {".env"},
+            "recursive": False,
+        },
+    ]
+
+    groups = []
+    for grp in SCAN_GROUPS:
+        items = []
+        exclude_suffixes = grp.get("exclude", set())
+        recursive = grp.get("recursive", True)
+
+        for rel_dir in grp["dirs"]:
+            abs_dir = os.path.normpath(os.path.join(root_dir, rel_dir))
+            if not os.path.isdir(abs_dir):
+                continue
+
+            walk_iter = os.walk(abs_dir) if recursive else [(abs_dir, [], os.listdir(abs_dir))]
+            for dirpath, _, filenames in walk_iter:
+                for fname in sorted(filenames):
+                    ext = os.path.splitext(fname)[1].lower()
+                    if ext not in grp["exts"]:
+                        continue
+                    if any(fname.endswith(s) for s in exclude_suffixes):
+                        continue
+                    abs_file = os.path.join(dirpath, fname).replace("\\", "/")
+                    items.append({"name": fname, "path": abs_file})
+
+        if items:
+            groups.append({"id": grp["id"], "title": grp["title"], "items": items})
+
+    return groups
+
+
 def _safe_path(root: str, rel_path: str) -> str | None:
     """
     Resolves a relative path against the drive root, OR accepts an absolute path 
@@ -87,6 +162,20 @@ def init_drive_routes(app, logger_instance=None):
 def drive_page():
     """Renders the Zentra Drive HTML page."""
     return render_template("drive.html")
+
+
+# ─── QUICK LINKS ───────────────────────────────────────────────────────────
+
+@drive_bp.route("/drive/api/quick_links")
+@login_required
+def drive_quick_links():
+    """Returns JSON list of system quick links."""
+    # We use the Zentra project root for scanning system files.
+    # routes.py is in zentra/plugins/drive/ - we need to go up 3 levels.
+    _dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(_dir)))
+    links = _get_quick_links(project_root)
+    return jsonify({"ok": True, "groups": links})
 
 
 # ─── LIST ──────────────────────────────────────────────────────────────────

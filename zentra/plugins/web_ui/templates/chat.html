@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ config.language or 'en' }}">
+<html lang="{{ zconfig.language or 'en' }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
@@ -82,6 +82,8 @@
 <script>
   // Expose the global history to window so the renderer can read it
   window.historyList = [];
+  window.ZentraUserAvatar = "{{ profile.avatar_path if (profile and profile.avatar_path) else '' }}";
+  window.cfg = {{ zconfig | tojson }};
 </script>
 <script src="/static/js/chat_renderer.js?v=2"></script>
 <script src="/static/js/agent/agent_traces.js?v=4"></script>
@@ -101,6 +103,8 @@
 <script src="/static/js/mobile/mobile_logic.js?v=1"></script>
 <script src="/static/js/pull_to_refresh.js"></script>
 <!-- Remote Triggers (Media keys, Arduino Hooks) -->
+{% if zconfig.plugins.REMOTE_TRIGGERS and zconfig.plugins.REMOTE_TRIGGERS.enabled != False %}
 <script src="/remote_triggers_static/js/remote_triggers.js"></script>
+{% endif %}
 </body>
 </html>

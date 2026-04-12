@@ -17,9 +17,33 @@
     <div class="field">
       <label class="switch-container">
         <input type="checkbox" id="rt-enable-volume-keys">
-        <span class="label-text">Enable Volume Keys PTT (Android Chrome)</span>
+        <span class="label-text">Enable Volume Keys PTT (Standard Keydown)</span>
       </label>
-      <div class="field-desc">Allows using Volume Up/Down as PTT start/stop when the page is in focus.</div>
+      <div class="field-desc">Uses standard button events. Often blocked on Android.</div>
+    </div>
+    
+    <div class="field">
+      <label class="switch-container">
+        <input type="checkbox" id="rt-enable-volume-loop">
+        <span class="label-text">Advanced Mobile Interception (Volume Loop)</span>
+      </label>
+      <div class="field-desc">High precision hack for Android: detects volume changes even if keys are blocked.</div>
+    </div>
+
+    <div class="field">
+      <label class="switch-container">
+        <input type="checkbox" id="rt-feedback-sounds">
+        <span class="label-text">Audio Feedback (Beeps)</span>
+      </label>
+      <div class="field-desc">Short beeps on PTT start and stop.</div>
+    </div>
+
+    <div class="field">
+      <label class="switch-container">
+        <input type="checkbox" id="rt-visual-indicator">
+        <span class="label-text">Visual Status Overlay</span>
+      </label>
+      <div class="field-desc">Shows a floating recording indicator.</div>
     </div>
 
     <div style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:16px; margin-top:20px;">

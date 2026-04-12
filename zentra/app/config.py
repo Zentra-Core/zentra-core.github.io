@@ -50,7 +50,11 @@ class ConfigManager:
         # Files to check and auto-generate if missing
         files_to_check = [
             "system.yaml",
-            "routing_overrides.yaml"
+            "routing_overrides.yaml",
+            "audio.yaml",
+            "agent.yaml",
+            "media.yaml",
+            "keys.yaml"
         ]
         
         for filename in files_to_check:
@@ -63,6 +67,17 @@ class ConfigManager:
                     logger.info(f"[CONFIG] Auto-generated {filename} from template.")
                 except Exception as e:
                     logger.error(f"[CONFIG] Failed to auto-generate {filename}: {e}")
+
+        # Check for .env in zentra/ folder
+        env_file = _os.path.join(_ZENTRA_DIR, ".env")
+        env_example = env_file + ".example"
+        if not _os.path.exists(env_file) and _os.path.exists(env_example):
+            try:
+                shutil.copy2(env_example, env_file)
+                logger.info("[CONFIG] Auto-generated .env from template.")
+            except Exception as e:
+                logger.error(f"[CONFIG] Failed to auto-generate .env: {e}")
+
 
     # ──────────────────────────────────────────────────────────────────────────
     # INTERNAL
@@ -99,6 +114,10 @@ class ConfigManager:
     def _sync_dict(self):
         """Keep self.config dict in sync with the underlying Pydantic model."""
         self.config = self._model.model_dump()
+
+    @property
+    def yaml_path(self):
+        return self._yaml_path
 
     # ──────────────────────────────────────────────────────────────────────────
     # PUBLIC API
@@ -237,9 +256,20 @@ class ConfigManager:
 
             personality_dict = {str(i + 1): name for i, name in enumerate(files)}
             current = self.get("ai", "available_personalities")
+            
+            # --- ROBUST FALLBACK CHECK ---
+            active = self.get("ai", "active_personality")
+            if active not in files:
+                logger.warning(f"[CONFIG] Active personality '{active}' not found in filesystem. Reverting to Zentra_System_Soul.yaml.")
+                self.set("Zentra_System_Soul.yaml", "ai", "active_personality")
+                # No early save needed here as we save below if dictionary changed or if we just set it
+
             if personality_dict != current:
                 self.set(personality_dict, "ai", "available_personalities")
                 self.save()
                 logger.info("[CONFIG] Personality list synchronized with filesystem.")
+            elif active not in files:
+                # Discrepancy found (missing active) but list was same (unlikely but safe)
+                self.save()
 
         return files

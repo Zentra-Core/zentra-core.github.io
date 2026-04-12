@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ config.language or 'en' }}">
+<html lang="{{ zconfig.language or 'en' }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -99,11 +99,13 @@
     <button class="tab" onclick="showTab('system')">System</button>
     <button class="tab" onclick="showTab('drive'); loadDriveConfig()">🗂️ Drive</button>
     {% if current_user.is_authenticated and current_user.role == 'admin' %}
-    <button class="tab" onclick="showTab('users'); loadUsersData()">Users</button>
-    <button class="tab" onclick="showTab('security')">🔒 Security</button>
+    <button class="tab" onclick="showTab('users'); loadUsersData()">{{ t('webui_conf_tab_users') }}</button>
+    <button class="tab" onclick="showTab('security')">{{ t('webui_conf_tab_security') }}</button>
     {% endif %}
     <button class="tab" onclick="showTab('payload'); loadPayloadData()">Payload</button>
     <button class="tab" onclick="showTab('plugins')">Plugins</button>
+    <button class="tab" onclick="showTab('studio')">🛠️ Studio</button>
+    <button class="tab" onclick="showTab('mcp')">🔌 MCP Bridge</button>
     <button class="tab" onclick="showTab('remote-triggers')">📱 Remote Triggers</button>
     <button class="tab" onclick="showTab('logs'); startLogStream();">Logs</button>
   </div>
@@ -126,6 +128,8 @@
     {% endif %}
     {% include 'modules/config_payload.html' %}
     {% include 'modules/config_plugins.html' %}
+    {% include 'modules/config_plugin_studio.html' %}
+    {% include 'modules/config_mcp.html' %}
     {% include 'modules/config_remote_triggers.html' %}
     {% include 'modules/config_drive.html' %}
     {% include 'modules/config_logs.html' %}

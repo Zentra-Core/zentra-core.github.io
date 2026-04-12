@@ -9,7 +9,7 @@ def init_config_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
     @app.route("/zentra/config/ui")
     def config_ui():
         try:
-            return render_template("index.html")
+            return render_template("index.html", zconfig=cfg_mgr.config)
         except Exception as e:
             return f"<h1>Errore: index.html non trovato</h1><p>{str(e)}</p>", 500
 
@@ -47,8 +47,8 @@ def init_config_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
                 try:
                     from zentra.core.processing import processore
                     from zentra.core.system import plugin_loader
-                    processore.configure(incoming)
-                    plugin_loader.update_capability_registry(incoming, debug_log=False)
+                    processore.configure(cfg_mgr.config)
+                    plugin_loader.update_capability_registry(cfg_mgr.config, debug_log=False)
                 except Exception as e:
                     logger.debug(f"[WebUI] Processor runtime sync error: {e}")
                     

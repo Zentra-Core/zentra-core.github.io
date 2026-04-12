@@ -28,6 +28,16 @@ editor_bp = Blueprint(
     static_url_path="/editor_static"
 )
 
+@editor_bp.after_request
+def add_no_cache(response):
+    """Prevent the browser from caching editor statics (CSS/JS) between versions."""
+    if "/editor_static/" in response.headers.get("Content-Location", ""):
+        pass  # headers already set by Flask for these
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
 # === Constants ===
 # File extensions that Monaco can provide syntax highlighting for
 EDITABLE_EXTENSIONS = {

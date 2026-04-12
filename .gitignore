@@ -181,23 +181,36 @@ cython_debug/
 .cursorindexingignore
 
 # Zentra Core - Black Box Protection
-zentra/logs/
-zentra/memory/
-zentra/snapshots/
-zentra/certs/
+# Ignore only data/private folders, NOT the entire directories to avoid losing code
+zentra/logs/*
+!zentra/logs/.gitkeep
 
-# Config data: all personal settings and generated config files
-zentra/config/data/
+# Memory: Ignore databases and user-specific data, keep source code
+zentra/memory/*.db
+zentra/memory/*.db-journal
+zentra/memory/users/
+zentra/memory/vaults/
+zentra/memory/core_identity.json
+zentra/memory/user_profile.json
+
+# Media: Ignore generated content
+zentra/media/audio/*
+!zentra/media/audio/.gitkeep
+zentra/media/images/*
+!zentra/media/images/.gitkeep
+
+# Certs: Ignore generated certificates
+zentra/certs/*
+!zentra/certs/.gitkeep
+
+# Config data: Ignore active configs, keep templates
+zentra/config/data/*
 !zentra/config/data/*.example
 
 # API Keys - CRITICAL: never push these to git
 zentra/config/keys.yaml
 config/keys.yaml
-
-# Generated images from AI (Image Gen plugin)
-zentra/assets/generated/
-*.generated.png
-*.generated.jpg
+zentra/config/data/keys.yaml
 
 # Temporary and build files
 tmp/
@@ -215,4 +228,5 @@ brain/
 /data/images/
 /zentra/core/snapshots/
 /zentra/core/logs/
+
 

@@ -3,7 +3,7 @@
   <img src="https://raw.githubusercontent.com/Zentra-Core/zentra-core.github.io/main/zentra/assets/Zentra_Core_Logo.jpg" width="400" alt="Zentra Logo">
 </p>
 
-# Zentra Core - Version 0.16.0 (Runtime Alpha)
+# Zentra Core - Version 0.17.0 (Runtime Alpha)
 Language: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP.md)
 
 # 🤖 Zentra Core
@@ -12,19 +12,24 @@ Language: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_E
 ---
 
 > [!WARNING]
-> **Runtime Alpha Status**: Zentra Core is currently in `v0.16.0`. This repository contains the engine, backend, AI reasoning modules, and the main native WebUI. Features may change, and the system is not yet considered stable. Use with caution.
+> **Runtime Alpha Status**: Zentra Core is currently in `v0.17.0`. This repository contains the engine, backend, AI reasoning modules, and the main native WebUI. Features may change, and the system is not yet considered stable. Use with caution.
 
 ## 🚀 Overview
 **Zentra Core** is a local-first AI assistant platform that runs entirely on your machine.
 It combines local LLMs, voice interaction, system automation, and a modular plugin architecture to create a fully customizable AI companion.
 
-Now fully migrated to a **stable Native Plugin architecture**, Zentra 0.16.0 offers a dedicated Web Interface (Chat + Config) and complete Internationalization. Powered by **LiteLLM**, it supports Ollama, KoboldCpp, and major cloud providers with real-time streaming and local TTS.
+Now fully migrated to a **stable Native Plugin architecture**, Zentra 0.17.0 offers a dedicated Web Interface (Chat + Config) and complete Internationalization. Powered by **LiteLLM**, it supports Ollama, KoboldCpp, and major cloud providers with real-time streaming and local TTS.
 
 ---
 
-## ✨ Key Features (v0.16.0)
-* 🧭 **3-Tier Hybrid Configuration** — A powerful layered override system: Plugin Manifest defaults → User YAML Overrides (`routing_overrides.yaml`) → Core Fallback. Customize AI routing behavior per-plugin without ever touching source code.
-* 📝 **In-WebUI Routing Editor** — A new built-in key-value editor in the **Routing** tab lets you add, edit, and delete plugin-specific routing instructions directly from the browser. One click to open the full YAML file in the Zentra Code Editor.
+## ✨ Key Features (v0.17.0)
+* 🔌 **Universal Tool Hub (MCP Bridge)** — Zentra now natively supports the **Model Context Protocol**. Connect to thousands of external AI tools (Brave Search, GitHub, Google Maps, etc.) with a single click. Discover and manage tools via the new **MCP Bridge** dashboard with real-time inventory.
+* 🔎 **Multi-Registry MCP Discovery** — Effortlessly find and install new tools directly from the UI. Zentra integrates with major MCP registries:
+    - **Smithery.ai**: The primary hub for MCP servers.
+    - **MCPSkills**: Community-driven tool repository.
+    - **GitHub & Hugging Face**: Direct installation from source repositories.
+* 👥 **Multi-User & Identity Profiles** — Complete support for multiple accounts with isolated memories. Every user has their own personal profile, custom avatar, and private "Bio Notes" (contextual memories) that the AI uses to identify them exactly.
+* 💾 **Isolated Per-User Vaults** — Personal files, avatars, and memories are stored in secure, separated "Vaults" (`memory/vaults/username`), ensuring maximum privacy in shared environments.
 * 🤖 **Autonomous Agentic Loop** — Zentra can now reason step-by-step (Chain of Thought), dynamically select tools, and solve complex multi-step problems autonomously.
 * 🛡️ **Zentra Code Jail (AST Sandbox)** — A native, highly secure Python sandbox that allows the AI to execute algorithms, math, and data logic safely.
 * 👁️ **Native Vision Support** — Multimodal AI capabilities for Gemini, OpenAI, and Ollama (LLaVA). Analyze images, photos, and screenshots directly in chat.
@@ -41,6 +46,8 @@ Now fully migrated to a **stable Native Plugin architecture**, Zentra 0.16.0 off
 * 🎙️ **Integrated Voice Chat** — Native Chat UI with Piper TTS integration and automatic audio playback.
 * 🔌 **Plugin Macro Buttons** — Sidebar plugin list now features clickable macros to inject specialized commands instantly.
 * 💾 **Persistent Memory** — SQLite-based long-term memory with shared context across WebUI and Terminal.
+* 👥 **Multi-User & Profile Management** — Complete support for multiple accounts with isolated memories. Every user has their own personal profile, custom avatar, and private "Bio Notes" (contextual memories) that the AI uses to identify them.
+* 💾 **Isolated Per-User Vaults** — Personal files, avatars, and memories are stored in secure, separated "Vaults" (`memory/vaults/username`), ensuring maximum privacy in shared environments.
 * 🗂️ **Zentra Drive (File Manager)** — Native HTTP file manager integrated into the WebUI to upload, download, and organize your system files through a seamless dual-panel interface.
 * 🚀 **Professional English Launchers** — All startup scripts (`.bat` and `.sh`) are now fully internationalized in English, providing clear instructions for Windows and Linux users alike.
 
@@ -171,8 +178,9 @@ Zentra Core uses a modular documentation system localized in EN, IT, and ES.
 
 ### Local Access (Modular)
 Detailed guides are located in the `docs/` folder:
-- 📖 **[User Guide](docs/user/)**: Operational instructions and feature walkthroughs.
+- 📖 **[Unified Guide](docs/UNIFIED_GUIDE_EN.md)**: Everything you need to know about v0.17.0.
 - 🏗️ **[Technical Guide](docs/tech/)**: (Admin/Dev) System architecture and OOP details.
+
 
 ### Online Access
 The documentation is also synchronized with the **[GitHub Wiki](https://github.com/Zentra-Core/zentra-core.github.io/wiki)**.

@@ -15,14 +15,7 @@ function pathId(path) {
   return "n" + [...(path || "ROOT")].reduce((h, c) => (Math.imul(31, h) + c.charCodeAt(0)) | 0, 0).toString(16).replace("-", "m");
 }
 
-// ─── Init ────────────────────────────────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", () => {
-  initDropzone();
-  const urlParams = new URLSearchParams(window.location.search);
-  const startRoot = urlParams.get("root") || "";
-  loadDir(startRoot); // kick off from configured root or custom absolute root
-  loadDrives(); // populate drive selector
-});
+// ─── Init is now at the end of the file
 
 // ─── Load directory ──────────────────────────────────────────────────────────
 async function loadDir(path) {
@@ -77,9 +70,15 @@ async function loadDrives() {
     const data = await res.json();
     if (!data.ok || !data.drives || !data.drives.length) return;
 
-    const bar  = document.getElementById("path-bar");
-    const sel  = document.createElement("select");
-    sel.id     = "drive-select";
+    const tool = document.getElementById("toolbar");
+    let sel    = document.getElementById("drive-select");
+    if (!sel) {
+      sel = document.createElement("select");
+      sel.id = "drive-select";
+      tool.insertBefore(sel, tool.children[2]); // after ⬆ button
+    } else {
+      sel.innerHTML = ""; // Clear existing options
+    }
     sel.title  = "Cambio disco / periferica";
     sel.style.cssText = `
       background: rgba(102,252,241,0.08);
@@ -110,10 +109,6 @@ async function loadDrives() {
       // Cleanest: just open /drive and update the UI root via a new query.
       window.location.href = `/drive?root=${encodeURIComponent(sel.value)}`;
     });
-
-    // Insert the selector BEFORE the path bar's content
-    const toolbar = document.getElementById("toolbar");
-    toolbar.insertBefore(sel, toolbar.children[2]); // after ⬆ button
 
     // Pre-select current drive if we know it
     if (currentRootLabel) {
@@ -442,7 +437,67 @@ function esc(str) {
 let _msgT;
 function showMsg(text, type) {
   const el = document.getElementById("drive-msg");
+  if (!el) return;
   el.textContent = text; el.className = type;
   clearTimeout(_msgT);
   _msgT = setTimeout(() => { el.className = ""; el.textContent = ""; }, 5000);
 }
+
+
+// ─── Quick Links ─────────────────────────────────────────────────────────────
+async function loadQuickLinks() {
+  const body = document.getElementById("quick-links-body");
+  try {
+    const res  = await fetch("/drive/api/quick_links");
+    const data = await res.json();
+
+    if (!data.ok || !data.groups || !data.groups.length) {
+      body.innerHTML = `<div class="sb-empty">Nessun link disponibile.</div>`;
+      return;
+    }
+
+    let html = "";
+    data.groups.forEach(grp => {
+      html += `<div class="ql-group">
+        <div class="ql-group-title">${esc(grp.title)}</div>
+        ${grp.items.map(item => `
+          <div class="ql-item" onclick="openQuickLink('${esc(item.path)}', ${item.path.includes('.')})">
+            <span class="ql-icon">${esc(grp.icon || '📄')}</span>
+            <span class="ql-name" title="${esc(item.name)}">${esc(item.name)}</span>
+            ${item.path.includes('.') && isEditable(item.name) 
+              ? `<span class="ql-edit" title="Modifica" onclick="event.stopPropagation(); openEditor('${esc(item.path)}')">✏️</span>` 
+              : ''}
+          </div>
+        `).join("")}
+      </div>`;
+    });
+    body.innerHTML = html;
+  } catch (e) {
+    console.error("[Drive] Quick Links error:", e);
+    body.innerHTML = `<div class="sb-empty" style="color:var(--danger)">Errore caricamento.</div>`;
+  }
+}
+
+function openQuickLink(path, isFile) {
+  if (isFile) {
+    // If it's a file, open in editor if supported
+    if (isEditable(path)) {
+      openEditor(path);
+    } else {
+      showMsg("⚠️ Estensione non supportata dall'editor.", "err");
+    }
+  } else {
+    // If it's a directory, navigate to it
+    navigateTo(path);
+  }
+}
+
+// Update DOMContentLoaded to include Quick Links
+document.addEventListener("DOMContentLoaded", () => {
+  initDropzone();
+  const urlParams = new URLSearchParams(window.location.search);
+  const startRoot = urlParams.get("root") || "";
+  loadDir(startRoot); 
+  loadDrives(); 
+  loadQuickLinks(); // Load quick links on startup
+});
