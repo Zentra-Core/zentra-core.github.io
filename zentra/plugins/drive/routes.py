@@ -59,6 +59,13 @@ def _get_quick_links(root_dir: str) -> list:
             "exts":  {".yaml", ".yml"},
             "recursive": False, 
         },
+        {
+            "id":    "env",
+            "title": "🔒 Environment & Keys",
+            "dirs":  ["zentra"],
+            "exts":  {".env"},
+            "recursive": False,
+        },
     ]
 
     groups = []
