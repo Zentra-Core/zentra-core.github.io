@@ -59,6 +59,30 @@ class AgentExecutor:
         """
         # Privacy-oriented log: avoid echoing private user text on the server physical console.
         self._emit(f"Analyzing incoming user request...", level="info")
+        
+        # --- GLOBAL DIRECT COMMANDS INTERCEPTOR (BYPASS LLM) ---
+        testo_pulito = user_text.strip()
+        if testo_pulito.lower().startswith(("/img ", "/image ", "/photo ", "/foto ")):
+            try:
+                prompt_bypass = testo_pulito.split(" ", 1)[1].strip()
+                self._emit(f"Direct Command Intercepted: {testo_pulito[:10]}...", level="info")
+                
+                from zentra.plugins.image_gen.main import tools as image_gen_tools
+                result = image_gen_tools.generate_image(prompt_bypass)
+                
+                # Save to memory to keep the context consistent
+                from zentra.memory import brain_interface
+                brain_interface.save_message("user", testo_pulito, config=self.config_manager.config if self.config_manager else self.config, user_id=self.current_user_id)
+                brain_interface.save_message("assistant", result, config=self.config_manager.config if self.config_manager else self.config, user_id=self.current_user_id)
+                
+                # Format for output (video/voice)
+                return processore.clean_final_output(result, [], result, voice_status)
+            except Exception as e:
+                logger.error(f"[AGENT] Direct Bypass Error: {e}")
+                err_msg = f"❌ Error: {e}"
+                return processore.clean_final_output(err_msg, [], err_msg, voice_status)
+        # -------------------------------------------------------
+
         if not self.is_enabled:
             logger.info("[AGENT] Agentic Loop is disabled in config. Running single iteration.")
             self.max_iterations = 1

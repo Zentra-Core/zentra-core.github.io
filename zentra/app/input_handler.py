@@ -61,14 +61,6 @@ class InputHandler:
             
         testo_pulito = testo.strip()
         
-        # --- NEW: Direct Image Commands (Bypass AI) ---
-        if testo_pulito.lower().startswith(("/img ", "/foto ")):
-            prompt = testo_pulito[5:].strip()
-            if prompt:
-                self._handle_direct_image(prompt, prefisso)
-                return "PROCESSED", ""
-        # ----------------------------------------------
-
         if testo_pulito.startswith("/istruzione") or testo_pulito.startswith("/instruction"):
             istruzione = testo_pulito.replace("/istruzione", "").replace("/instruction", "").strip()
             self.config.set(istruzione, 'ai', 'special_instructions')
