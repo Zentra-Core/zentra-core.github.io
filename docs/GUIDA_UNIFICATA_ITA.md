@@ -45,8 +45,7 @@ Zentra genera i propri certificati SSL per abilitare il "Lucchetto Verde" sulla 
 
 ### ⚡ Comandi Diretti (Bypass IA)
 Se vuoi eseguire azioni rapide o generare immagini saltando i filtri morali/sicurezza dell'IA (es. Gemini):
-- `/img [descrizione]`: Genera un'immagine direttamente tramite il provider (HuggingFace/Flux, ecc.).
-- `/foto [descrizione]`: Versione italiana del comando d'immagine.
+- `/img`, `/image`, `/photo`, `/foto [descrizione]`: Genera un'immagine direttamente tramite il provider (HuggingFace/Flux, ecc.).
 
 ---
 

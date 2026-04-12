@@ -27,7 +27,7 @@ Zentra requires mandatory authentication to protect your data:
 
 ### ⚡ Direct Commands (AI Bypass)
 To perform fast actions or bypass LLM safety filters for images:
-- `/img [prompt]`: Triggers direct image generation via provider (Hugging Face, Pollinations, etc.).
+- `/img`, `/image`, `/photo`, `/foto [prompt]`: Triggers direct image generation via provider (Hugging Face, Pollinations, etc.).
 
 ---
 
