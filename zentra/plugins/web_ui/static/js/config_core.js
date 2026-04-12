@@ -55,9 +55,9 @@ async function fetchWithTimeout(resource, options = {}) {
 /**
  * Master Initialization
  */
-async function initAll() {
+async function initAll(attempt = 1) {
   isInitialLoading = true;
-  console.log("Initializing Configuration...");
+  console.log(`Initializing Configuration (Attempt ${attempt})...`);
   const start = Date.now();
   setSaveMsg(I18N.msg_loading || 'Loading...', 'muted');
 
@@ -70,6 +70,11 @@ async function initAll() {
       fetchWithTimeout('/zentra/api/config/media')
     ]);
     
+    // Check if critical endpoints failed
+    if (!rOpts.ok || !rCfg.ok) {
+        throw new Error(`Critical fetch failed: Options=${rOpts.status}, Config=${rCfg.status}`);
+    }
+
     sysOptions = await rOpts.json();
     cfg = await rCfg.json();
     
@@ -101,8 +106,16 @@ async function initAll() {
     setTimeout(() => { if (document.getElementById('save-msg').textContent.includes(now)) setSaveMsg('', ''); }, 5000);
 
   } catch(e) {
-    console.error("Init error:", e);
-    setSaveMsg((I18N.msg_err || 'Error') + ': ' + e, 'err');
+    console.warn(`Init attempt ${attempt} failed:`, e);
+    if (attempt < 3) {
+        const delay = 2000;
+        setSaveMsg(`Retrying in ${delay/1000}s...`, 'muted');
+        setTimeout(() => initAll(attempt + 1), delay);
+    } else {
+        console.error("Master Init failed after 3 attempts.");
+        setSaveMsg((I18N.msg_err || 'Error') + ': ' + e.message, 'err');
+        isInitialLoading = false; // Allow user to try manual saving if they fix things
+    }
   }
 }
 

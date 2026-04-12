@@ -13,8 +13,20 @@ const RESTART_FIELDS = [
 function populateSelect(id, list, currentValue, isFilenameOnly = false) {
   const el = document.getElementById(id);
   if (!el) return;
+  
+  // Clear existing
   el.innerHTML = '';
-  if (!Array.isArray(list)) list = [];
+  
+  // Basic validation
+  if (!Array.isArray(list) || list.length === 0) {
+    if (isInitialLoading) {
+      const opt = document.createElement('option');
+      opt.textContent = "Loading...";
+      opt.disabled = true;
+      el.appendChild(opt);
+    }
+    return;
+  }
   
   let cleanValue = currentValue;
   if (isFilenameOnly && currentValue && (currentValue.includes('\\') || currentValue.includes('/'))) {
