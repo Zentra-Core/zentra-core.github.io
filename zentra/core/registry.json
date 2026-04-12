@@ -273,5 +273,29 @@
         "is_class_based": false,
         "is_mcp": true,
         "server_name": "wikipedia"
+    },
+    "MCP_ASTRO": {
+        "description": "External Tool Provider (astro) via Model Context Protocol.",
+        "commands": {
+            "<dynamic_tools>": "Tools are dynamically discovered upon connection."
+        },
+        "status": "EXTERNAL",
+        "example": "",
+        "routing_instructions": "Native LLM Function Calling exposed seamlessly.",
+        "is_class_based": false,
+        "is_mcp": true,
+        "server_name": "astro"
+    },
+    "MCP_EXA": {
+        "description": "External Tool Provider (exa) via Model Context Protocol.",
+        "commands": {
+            "<dynamic_tools>": "Tools are dynamically discovered upon connection."
+        },
+        "status": "EXTERNAL",
+        "example": "",
+        "routing_instructions": "Native LLM Function Calling exposed seamlessly.",
+        "is_class_based": false,
+        "is_mcp": true,
+        "server_name": "exa"
     }
 }

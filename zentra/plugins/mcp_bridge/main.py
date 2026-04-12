@@ -28,6 +28,8 @@ class MCPProxy:
         self.msg_id = 1
         self.tools = []
         self._lock = threading.Lock()
+        self._stop_event = None
+        self._stderr_thread = None
 
     def start(self):
         try:
@@ -42,12 +44,19 @@ class MCPProxy:
                 bufsize=1,
                 env=self.env
             )
-            # Initialize connection (LSP/MCP handshake style if needed, but simple is ok for now)
+            # Start stderr reader
+            self._stop_event = threading.Event()
+            self._stderr_thread = threading.Thread(target=self._read_stderr, daemon=True)
+            self._stderr_thread.start()
+
+            # Initialize connection
             self._fetch_tools()
         except Exception as e:
             logger.error(f"[MCP:{self.name}] Failed to start: {e}")
 
     def _fetch_tools(self):
+        # Small sleep to allow server to print initial startup banners
+        time.sleep(2)
         for i in range(5):
             res = self.call("tools/list")
             if res and "result" in res:
@@ -63,6 +72,9 @@ class MCPProxy:
         if not self.process or not self.process.stdin or not self.process.stdout: 
             return None
         with self._lock:
+            if self.process.poll() is not None:
+                logger.error(f"[MCP:{self.name}] Cannot call method '{method}': Process exited with code {self.process.returncode}")
+                return None
             try:
                 req = {
                     "jsonrpc": "2.0",
@@ -74,14 +86,38 @@ class MCPProxy:
                 self.process.stdin.write(json.dumps(req) + "\n")
                 self.process.stdin.flush()
                 
-                line = self.process.stdout.readline()
-                if not line: return None
-                return json.loads(line)
+                # Consume lines until we find a JSON response
+                # This skips "noise" from CLI wrappers like @smithery/cli or npx
+                for _ in range(20): # Limit to 20 lines of noise
+                    line = self.process.stdout.readline()
+                    if not line: return None
+                    line = line.strip()
+                    if not line: continue
+                    if line.startswith("{"):
+                        try:
+                            return json.loads(line)
+                        except json.JSONDecodeError:
+                            logger.debug(f"[MCP:{self.name}] Skipped non-JSON line: {line}")
+                            continue
+                    else:
+                        logger.debug(f"[MCP:{self.name}] Skipped startup noise: {line}")
+                return None
             except Exception as e:
                 logger.error(f"[MCP:{self.name}] Call error: {e}")
                 return None
 
+    def _read_stderr(self):
+        """Monitors stderr in a background thread and logs it."""
+        if not self.process or not self.process.stderr: return
+        while self.process.poll() is None and self._stop_event and not self._stop_event.is_set():
+            line = self.process.stderr.readline()
+            if not line: break
+            line = line.strip()
+            if line:
+                logger.warning(f"[MCP:{self.name}:stderr] {line}")
+
     def stop(self):
+        if self._stop_event: self._stop_event.set()
         p = self.process
         if p:
             try:
