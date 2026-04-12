@@ -55,6 +55,22 @@
       </div>
     </div>
   </div>
+
+  <div class="config-section" style="margin-top: 30px; border-top: 1px solid #1f2833; padding-top: 20px;">
+    <h3>🔍 MCP Explorer (Smithery Discovery)</h3>
+    <p style="font-size: 11px; color: var(--muted); margin-bottom: 15px;">Search and discover hundreds of external tools on Smithery.ai without leaving Zentra.</p>
+    
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+      <input type="text" id="mcp-explore-query" class="input-dark" placeholder="e.g. google, notion, search, spotify..." style="flex: 1; padding: 10px; border-radius: 8px;">
+      <button type="button" class="btn btn-primary" onclick="searchSmithery()" id="mcp-explore-btn">Search</button>
+    </div>
+
+    <div id="mcp-explore-results" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 15px; min-height: 50px;">
+      <!-- Results will appear here -->
+      <p style="color: var(--muted); font-size: 12px; grid-column: 1/-1; text-align: center;">Enter a search term to discover new capabilities.</p>
+    </div>
+  </div>
+
   <div class="config-section" style="margin-top: 30px; border-top: 1px solid #1f2833; padding-top: 20px;">
     <h3>🛠️ Discovered Tools Inventory</h3>
     <p style="font-size: 11px; color: var(--muted); margin-bottom: 15px;">Real-time list of capabilities available through active MCP servers.</p>
@@ -255,12 +271,96 @@
     }
   }
 
+  async function searchSmithery() {
+    const qEl = document.getElementById('mcp-explore-query');
+    const btn = document.getElementById('mcp-explore-btn');
+    const container = document.getElementById('mcp-explore-results');
+    
+    const query = qEl.value.trim();
+    if (!query) return;
+
+    btn.disabled = true;
+    btn.innerText = 'Searching...';
+    container.innerHTML = '<p style="color:var(--muted); font-size:12px; grid-column:1/-1; text-align:center;">🔍 Contacting Smithery.ai Registry...</p>';
+
+    try {
+      const response = await fetch(`/api/mcp/explore?q=${encodeURIComponent(query)}`);
+      const data = await response.json();
+      
+      if (!data.ok) {
+        container.innerHTML = `<p style="color:#f88; font-size:12px; grid-column:1/-1; text-align:center;">Error: ${data.error || 'Failed to fetch results'}</p>`;
+        return;
+      }
+
+      if (!data.results || data.results.length === 0) {
+        container.innerHTML = '<p style="color:var(--muted); font-size:12px; grid-column:1/-1; text-align:center;">No results found for "' + query + '".</p>';
+        return;
+      }
+
+      let html = '';
+      data.results.forEach(res => {
+        // Prepare data for the Add button
+        const cardData = {
+          name: res.qualifiedName || res.name,
+          cmd: 'npx',
+          args: `-y ${res.qualifiedName || res.name}`
+        };
+        const dataStr = btoa(JSON.stringify(cardData));
+
+        html += `
+          <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border: 1px solid rgba(102, 252, 241, 0.1); display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px;">
+                <span style="color:#66fcf1; font-weight:bold; font-size:13px; font-family:'JetBrains Mono', monospace;">${res.name}</span>
+                <span style="font-size:10px; color:rgba(255,255,255,0.3);">Used ${res.useCount || 0}x</span>
+              </div>
+              <p style="font-size:11px; color:#c5c6c7; line-height:1.4; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${res.description || 'No description available.'}</p>
+            </div>
+            <button type="button" class="btn btn-secondary" style="width:100%; font-size:11px; padding: 6px;" onclick="addFromExplore('${dataStr}')">Add to Zentra</button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+
+    } catch (e) {
+      container.innerHTML = '<p style="color:#f88; font-size:12px; grid-column:1/-1; text-align:center;">Network error. Make sure Zentra is online.</p>';
+    } finally {
+      btn.disabled = false;
+      btn.innerText = 'Search';
+    }
+  }
+
+  function addFromExplore(encodedData) {
+    try {
+      const data = JSON.parse(atob(encodedData));
+      document.getElementById('mcp-new-name').value = data.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      document.getElementById('mcp-new-cmd').value = data.cmd;
+      document.getElementById('mcp-new-args').value = data.args;
+      
+      // Highlight the add section
+      const addSection = document.querySelector('h4[style*="Add New Server"]').parentNode;
+      addSection.style.boxShadow = '0 0 15px rgba(102, 252, 241, 0.4)';
+      setTimeout(() => { addSection.style.boxShadow = 'none'; }, 2000);
+      
+      // Auto-scroll to form
+      addSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch(e) { console.error("Failed to parse explore data", e); }
+  }
+
   // Hook into the main configuration load event
   document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         renderMCPServers();
         fetchMCPInventory();
     }, 1000);
+
+    // Support Enter key in search box
+    const qEl = document.getElementById('mcp-explore-query');
+    if (qEl) {
+      qEl.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchSmithery();
+      });
+    }
     
     // Periodic refresh
     setInterval(renderMCPServers, 5000);
