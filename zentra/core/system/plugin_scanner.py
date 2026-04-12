@@ -152,7 +152,8 @@ def update_capability_registry(config=None, debug_log=True):
                         continue
 
                     _loaded_plugins[tag] = module
-                    status = getattr(tools_instance, "status", "ONLINE")
+                    _s = getattr(tools_instance, "status", "ONLINE")
+                    status = _s() if callable(_s) else _s
 
                     # Extract commands by inspecting public methods
                     import inspect
