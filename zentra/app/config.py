@@ -50,7 +50,11 @@ class ConfigManager:
         # Files to check and auto-generate if missing
         files_to_check = [
             "system.yaml",
-            "routing_overrides.yaml"
+            "routing_overrides.yaml",
+            "audio.yaml",
+            "agent.yaml",
+            "media.yaml",
+            "keys.yaml"
         ]
         
         for filename in files_to_check:
@@ -63,6 +67,17 @@ class ConfigManager:
                     logger.info(f"[CONFIG] Auto-generated {filename} from template.")
                 except Exception as e:
                     logger.error(f"[CONFIG] Failed to auto-generate {filename}: {e}")
+
+        # Check for .env in zentra/ folder
+        env_file = _os.path.join(_ZENTRA_DIR, ".env")
+        env_example = env_file + ".example"
+        if not _os.path.exists(env_file) and _os.path.exists(env_example):
+            try:
+                shutil.copy2(env_example, env_file)
+                logger.info("[CONFIG] Auto-generated .env from template.")
+            except Exception as e:
+                logger.error(f"[CONFIG] Failed to auto-generate .env: {e}")
+
 
     # ──────────────────────────────────────────────────────────────────────────
     # INTERNAL
