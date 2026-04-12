@@ -14,6 +14,15 @@ Go to **Configuration -> MCP Bridge** to manage your servers.
 - **Custom Servers**: Add your own by specifying the command (usually `npx`) and arguments.
 - **Auto-Discovery**: Zentra automatically scans connected servers and lists available tools in real-time.
 
+## 🔎 Multi-Registry Discovery
+Zentra makes it easy to find new tools without leaving the application. Go to the **Discovery** tab in the MCP Bridge to search across multiple registries:
+- **Smithery.ai**: Browse thousands of community-verified MCP servers.
+- **MCPSkills**: Discover specialized agents and toolsets.
+- **GitHub**: Directly install servers hosted on GitHub repositories.
+- **Hugging Face**: Access AI-ready tools and models.
+
+Simply click **"Install"** on any discovered tool, and Zentra will handle the environment setup and configuration automatically.
+
 ## Using MCP Tools
 Once a server is connected and showing as "connected" in the inventory:
 1. The AI will automatically detect the new capabilities.

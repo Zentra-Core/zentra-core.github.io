@@ -23,7 +23,11 @@ Ora completamente migrato a una **architettura stabile a Plugin Nativi**, Zentra
 ---
 
 ## ✨ Caratteristiche Principali (v0.17.0)
-* 🔌 **Universal Tool Hub (Integrazione MCP)** — Zentra ora supporta nativamente il **Model Context Protocol**. Collegati a migliaia di tool AI esterni (Brave Search, GitHub, Google Maps, ecc.) con un solo click. Scopri e gestisci i tool tramite la nuova dashboard **MCP Bridge** con inventario in tempo reale.
+* 🔌 **Universal Tool Hub (MCP Bridge)** — Zentra ora supporta nativamente il **Model Context Protocol**. Collegati a migliaia di tool AI esterni (Brave Search, GitHub, Google Maps, ecc.) con un solo click. Scopri e gestisci i tool tramite la nuova dashboard **MCP Bridge** con inventario in tempo reale.
+* 🔎 **Multi-Registry MCP Discovery** — Trova e installa nuovi strumenti con facilità direttamente dall'interfaccia. Zentra integra i principali registri MCP:
+    - **Smithery.ai**: Il portale principale per i server MCP.
+    - **MCPSkills**: Repository di tool e agenti guidato dalla community.
+    - **GitHub & Hugging Face**: Installazione diretta dai repository sorgente.
 * 👥 **Multi-User & Identity Profiles** — Supporto completo per account multipli con memorie isolate. Ogni utente ha il proprio profilo personale, avatar personalizzato e "Bio Note" private (memorie contestuali) che l'IA usa per identificarti con precisione.
 * 💾 **Vault Isolati per Utente** — File personali, avatar e memorie sono archiviati in "Vault" sicuri e separati (`memory/vaults/username`), garantendo la massima privacy in ambienti condivisi.
 * 🤖 **Agente Cognitivo Autonomo** — Zentra ora ragiona step-by-step (Chain of Thought), sceglie dinamicamente gli strumenti e risolve task complessi in autonomia.
@@ -154,8 +158,9 @@ Email Ufficiale: zentra.core.systems@gmail.com
 ---
 
 ## 📚 Documentazione
-- 📖 **[Manuale Operativo (ITA)](docs/MANUALE_OPERATIVO.md)**: Guida utente per funzionalità e pannelli.
+- 📖 **[Guida Unificata (ITA)](docs/GUIDA_UNIFICATA_ITA.md)**: Tutto ciò che devi sapere sulla v0.17.0.
 - 🏗️ **[Guida all'Architettura](docs/TECHNICAL_GUIDE.md)**
+
 - 🔌 **[Sviluppo Plugin](docs/PLUGINS_DEV.md)**
 - 📁 **[Mappa Struttura](docs/ARCHITECTURE_MAP.md)**
 

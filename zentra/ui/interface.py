@@ -1,5 +1,5 @@
 """
-MODULO: Interface & UI - Zentra Core v0.6
+MODULO: Interface & UI - Zentra Core v0.17.0
 DESCRIZIONE: Gestisce la UI del terminale, le dashboard hardware e i tasti funzione.
 
 "Nello specifico: Disegna la barra blu di stato (modello, voce, anima) e la barra 
@@ -432,7 +432,7 @@ def show_help():
         lines.append(f"    apri la WebUI, vai in {CYAN}Configurazione > Persona{RESET} e scrivi per esempio:")
         lines.append(f"    \"{GREEN}Da ora in poi rispondimi sempre in rima{RESET}\" oppure \"{GREEN}Usa un tono sarcastico{RESET}\".")
         lines.append("")
-        lines.append(f"  {WHITE}■ Plugin Routing Overrides (Novità v0.16.x):{RESET}")
+        lines.append(f"  {WHITE}■ Plugin Routing Overrides (v0.17.0):{RESET}")
         lines.append(f"    Puoi forzare in modo potente il modo in cui Zentra usa i suoi strumenti.")
         lines.append(f"    Apri la WebUI, vai in {CYAN}Configurazione > Routing > Custom Plugin Overrides{RESET}.")
         lines.append(f"    Aggiungi una regola associata a un Tag, es:")
@@ -522,7 +522,7 @@ def show_help():
         lines.append(f"    open the WebUI, go to {CYAN}Configuration > Persona{RESET} and write for example:")
         lines.append(f"    \"{GREEN}From now on, always answer me in rhyme{RESET}\" or \"{GREEN}Use a sarcastic tone{RESET}\".")
         lines.append("")
-        lines.append(f"  {WHITE}■ Plugin Routing Overrides (New v0.16.x):{RESET}")
+        lines.append(f"  {WHITE}■ Plugin Routing Overrides (v0.17.0):{RESET}")
         lines.append(f"    You can powerfully force how Zentra uses its tools.")
         lines.append(f"    Open the WebUI, go to {CYAN}Configuration > Routing > Custom Plugin Overrides{RESET}.")
         lines.append(f"    Add a rule associated with a Tag, e.g.:")
