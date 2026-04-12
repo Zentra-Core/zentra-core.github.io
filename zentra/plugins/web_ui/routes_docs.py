@@ -1,4 +1,5 @@
 import os
+import json
 from flask import render_template, request, abort, jsonify
 from flask_login import login_required, current_user
 from zentra.core.auth.decorators import admin_required
@@ -126,6 +127,57 @@ def init_docs_routes(app, cfg_mgr, root_dir, logger):
             return jsonify({"error": "Chapter not found"}), 404
             
         return jsonify({"content": content})
+
+    @app.route("/api/docs/unified/generate")
+    @login_required
+    def api_docs_unified_generate():
+        """Aggregates all chapters into a single downloadable HTML manual."""
+        group = request.args.get("group", "user")
+        lang = request.args.get("lang", "en")
+        
+        if group == "tech" and not (current_user.is_authenticated and current_user.role == 'admin'):
+            abort(403)
+            
+        chapters = list_chapters(group, lang)
+        combined_md = f"# Zentra Core - Unified {group.title()} Guide\n\n"
+        
+        for ch in chapters:
+            content = get_chapter_content(group, ch['id'], lang)
+            if content:
+                # Add horizontal rule between chapters
+                combined_md += f"\n\n---\n\n{content}\n"
+        
+        # We wrap the combined markdown in a basic standalone HTML with a Print/Save style
+        title = f"Zentra_{group}_{lang}_Master_Manual"
+        
+        html_output = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{title}</title>
+    <style>
+        body {{ font-family: sans-serif; line-height: 1.6; max-width: 900px; margin: 0 auto; padding: 40px; color: #333; }}
+        h1 {{ color: #1e1b4b; border-bottom: 2px solid #6c8cff; }}
+        h2 {{ color: #1e1b4b; margin-top: 40px; }}
+        pre {{ background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }}
+        code {{ background: #eee; padding: 2px 5px; }}
+        blockquote {{ border-left: 4px solid #6c8cff; padding-left: 20px; font-style: italic; color: #666; }}
+        hr {{ border: 0; border-top: 1px solid #eee; margin: 40px 0; }}
+        @media print {{ .no-print {{ display: none; }} }}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="no-print" style="background:#fff9c4; padding:10px; border:1px solid #fbc02d; margin-bottom:20px; border-radius:5px;">
+        <b>Unified View Generated Successfully.</b> Use Ctrl+P to save as PDF.
+    </div>
+    <div id="content"></div>
+    <script>
+        document.getElementById('content').innerHTML = marked.parse({json.dumps(combined_md)});
+    </script>
+</body>
+</html>"""
+        return html_output
 
     @app.route("/api/docs/search")
     @login_required
