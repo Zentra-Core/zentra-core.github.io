@@ -143,6 +143,16 @@ async function saveConfig(silent = false) {
     if (data.ok && audData.ok && medData.ok) {
       if (!silent) {
           setSaveMsg(I18N.msg_saved || 'Saved', 'ok');
+          
+          // Check if any critical restart-required field was changed
+          if (typeof isRestartNeeded === 'function' && isRestartNeeded()) {
+            const reboot = confirm("Hai modificato parametri critici (Porte/HTTPS). Vuoi riavviare Zentra ora per applicare i cambiamenti?\n\n(Altrimenti dovrai riavviare manualmente dopo il salvataggio)");
+            if (reboot) {
+              rebootSystem();
+              return;
+            }
+          }
+          
           setTimeout(() => location.reload(), 1500);
       }
     } else {

@@ -2,11 +2,8 @@
 // Extracts DOM mapping and Payload Building from config_core.js
 
 const RESTART_FIELDS = [
-  'backend-type',
   'system-port',
   'system-api-port',
-  'br-voice-stt',
-  'br-voice-enabled',
   'sys-https-enabled'
 ];
 
@@ -389,6 +386,10 @@ function buildRemoteTriggersPayload() {
     };
 }
 
+function isRestartNeeded() {
+  return document.querySelectorAll('.restart-badge.visible').length > 0;
+}
+
 // Global Exports
 window.populateSelect = populateSelect;
 window.populateUI = populateUI;
@@ -396,3 +397,4 @@ window.setVal = setVal;
 window.setCheck = setCheck;
 window.renderPlugins = renderPlugins;
 window.buildPayload = buildPayload;
+window.isRestartNeeded = isRestartNeeded;
