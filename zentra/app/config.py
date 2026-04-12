@@ -100,6 +100,10 @@ class ConfigManager:
         """Keep self.config dict in sync with the underlying Pydantic model."""
         self.config = self._model.model_dump()
 
+    @property
+    def yaml_path(self):
+        return self._yaml_path
+
     # ──────────────────────────────────────────────────────────────────────────
     # PUBLIC API
     # ──────────────────────────────────────────────────────────────────────────

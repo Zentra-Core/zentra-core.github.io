@@ -91,7 +91,7 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
             ptt_status = "ON" if ptt_on else "OFF"
 
             from datetime import datetime
-            config_path = os.path.join(root_dir, "config.json")
+            config_path = cfg_mgr.yaml_path
             mtime = os.path.getmtime(config_path) if os.path.exists(config_path) else 0
             ts    = datetime.fromtimestamp(mtime).strftime("%H:%M:%S") if mtime else "?"
 
