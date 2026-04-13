@@ -52,18 +52,18 @@ def get_translator():
     
     translations = {
         "it": {
-            "critical_missing": "[MONITOR] CRITICAL: {file} not found.",
-            "starting": "[MONITOR] Starting Zentra ({script})...",
-            "config_changed": "[MONITOR] system.yaml change detected. Terminating...",
-            "reset_complete": "[MONITOR] Reset complete. Restarting in 2 seconds...",
-            "error": "[MONITOR] Error: {error}"
+            "critical_missing": "CRITICAL: {file} not found.",
+            "starting": "Starting Zentra ({script})...",
+            "config_changed": "system.yaml change detected. Terminating...",
+            "reset_complete": "Reset complete. Restarting in 2 seconds...",
+            "error": "Error: {error}"
         },
         "en": {
-            "critical_missing": "[MONITOR] CRITICAL: {file} not found.",
-            "starting": "[MONITOR] Starting Zentra ({script})...",
-            "config_changed": "[MONITOR] system.yaml change detected. Terminating...",
-            "reset_complete": "[MONITOR] Reset complete. Restarting in 2 seconds...",
-            "error": "[MONITOR] Error: {error}"
+            "critical_missing": "CRITICAL: {file} not found.",
+            "starting": "Starting Zentra ({script})...",
+            "config_changed": "system.yaml change detected. Terminating...",
+            "reset_complete": "Reset complete. Restarting in 2 seconds...",
+            "error": "Error: {error}"
         }
     }
     return lambda key, **kwargs: translations.get(language, translations["en"]).get(key, key).format(**kwargs)

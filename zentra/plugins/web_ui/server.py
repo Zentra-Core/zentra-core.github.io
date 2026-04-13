@@ -16,7 +16,6 @@ from zentra.app.state_manager import StateManager
 from zentra.app.threads import AscoltoThread
 
 import sys
-print(f"[DEBUG BOOT] server.py loaded from: {__file__}", flush=True)
 _server_lock = threading.Lock()
 
 def set_state_manager(sm) -> None:
@@ -43,7 +42,6 @@ class ZentraWebUIServer:
         self.root_dir = root_dir
         self.port = port
         self.logger = logger or logging.getLogger()
-        print(f"[DEBUG BOOT] ZentraWebUIServer init. root_dir={self.root_dir}", flush=True)
         self._thread = None
 
     def start(self) -> None:

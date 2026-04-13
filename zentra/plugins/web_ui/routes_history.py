@@ -45,17 +45,12 @@ def create_session():
         title        = data.get("title")
         privacy_mode = data.get("privacy_mode", "normal")
         
-        print(f"[DEBUG-HISTORY] Creating session: title={title}, mode={privacy_mode}")
         session_id = _sm().create_session(title=title, privacy_mode=privacy_mode)
-        print(f"[DEBUG-HISTORY] Session created: {session_id}")
-        
         # Set the new session as active in the privacy manager
         _pm().set_session(session_id, privacy_mode)
-        print(f"[DEBUG-HISTORY] Privacy manager updated.")
         
         return jsonify({"ok": True, "session_id": session_id})
     except Exception as e:
-        print(f"[DEBUG-HISTORY] Error creating session: {e}")
         logger.error(f"[HISTORY] create_session error: {e}")
         return jsonify({"ok": False, "error": str(e)}), 500
 

@@ -26,8 +26,7 @@ def init_config_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
     def post_config():
         try:
             incoming = request.get_json(force=True)
-            print(f"\n[DEBUG-POST] Config payload received. Keys: {list(incoming.keys())}")
-            if "ai" in incoming: print(f"[DEBUG-POST] AI Persona: {incoming['ai'].get('active_personality')}")
+            if "ai" in incoming: pass # AI Persona check preserved if needed, but removing print
             
             if not isinstance(incoming, dict):
                 return jsonify({"ok": False, "error": "Invalid payload"}), 400
