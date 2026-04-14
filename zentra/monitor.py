@@ -113,8 +113,9 @@ def start_and_monitor(script_to_run):
             current_config_time = get_file_timestamp(CONFIG_FILE)
             if current_config_time > last_config_time + 1:
                 # Check for flag set by app to avoid unnecessary restarts
-                if os.path.exists(".config_saved_by_app"):
-                    try: os.remove(".config_saved_by_app")
+                flag_path = os.path.join(_ROOT, ".config_saved_by_app")
+                if os.path.exists(flag_path):
+                    try: os.remove(flag_path)
                     except: pass
                     last_config_time = current_config_time
                     continue

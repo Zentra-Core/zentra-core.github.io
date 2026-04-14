@@ -14,7 +14,7 @@
         <span class="config-label-desc">Mode applied to every new chat session.</span>
       </div>
       <div class="config-control">
-        <select id="pr-default-mode" class="config-select" onchange="saveConfig()">
+        <select id="pr-default-mode" class="config-select">
           <option value="normal">👁 Normal — Full history saved</option>
           <option value="auto_wipe">🔒 Auto-Wipe — Deleted when you clear the chat</option>
           <option value="incognito">🕵️ Incognito — Nothing written to disk</option>
@@ -29,8 +29,8 @@
         <span class="config-label-desc">In Auto-Wipe mode, delete messages when you start a new chat.</span>
       </div>
       <div class="config-control">
-        <label class="toggle-switch">
-          <input type="checkbox" id="pr-auto-wipe" onchange="saveConfig()">
+        <label class="switch">
+          <input type="checkbox" id="pr-auto-wipe">
           <span class="slider"></span>
         </label>
       </div>
@@ -46,8 +46,8 @@
         <span class="config-label-desc">Chat messages from the session.</span>
       </div>
       <div class="config-control">
-        <label class="toggle-switch">
-          <input type="checkbox" id="priv-wipe-messages" checked onchange="savePrivacyConfig()">
+        <label class="switch">
+          <input type="checkbox" id="priv-wipe-messages" checked>
           <span class="slider"></span>
         </label>
       </div>
@@ -58,8 +58,8 @@
         <span class="config-label-desc">Clear AI identity and context memory.</span>
       </div>
       <div class="config-control">
-        <label class="toggle-switch">
-          <input type="checkbox" id="priv-wipe-context" onchange="savePrivacyConfig()">
+        <label class="switch">
+          <input type="checkbox" id="priv-wipe-context">
           <span class="slider"></span>
         </label>
       </div>
@@ -70,8 +70,8 @@
         <span class="config-label-desc">Clear admin notes from the user profile.</span>
       </div>
       <div class="config-control">
-        <label class="toggle-switch">
-          <input type="checkbox" id="priv-wipe-profile" onchange="savePrivacyConfig()">
+        <label class="switch">
+          <input type="checkbox" id="priv-wipe-profile">
           <span class="slider"></span>
         </label>
       </div>
@@ -86,8 +86,8 @@
         <span class="config-label-desc">Show a quick incognito toggle in the chat topbar.</span>
       </div>
       <div class="config-control">
-        <label class="toggle-switch">
-          <input type="checkbox" id="pr-incognito-shortcut" checked onchange="saveConfig()">
+        <label class="switch">
+          <input type="checkbox" id="pr-incognito-shortcut" checked>
           <span class="slider"></span>
         </label>
       </div>
@@ -98,11 +98,11 @@
     <!-- Manual actions -->
     <h3 style="font-size:13px; color:var(--text-secondary); margin-bottom:12px; text-transform:uppercase; letter-spacing:1px;">Manual Actions</h3>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <button class="btn btn-secondary" onclick="privacyWipeAll()"
+      <button type="button" class="btn btn-secondary" onclick="privacyWipeAll()"
         style="border-color:#f87171; color:#f87171;">
         🗑️ Wipe All Chat History
       </button>
-      <button class="btn btn-secondary" onclick="privacyWipeOld()">
+      <button type="button" class="btn btn-secondary" onclick="privacyWipeOld()">
         🧹 Wipe History Older Than 30 Days
       </button>
     </div>
@@ -110,49 +110,3 @@
   </div>
 </div>
 
-<script>
-async function loadPrivacyConfig() {
-  try {
-    const cfg = await (await fetch('/zentra/config')).json();
-    const p = cfg.privacy || {};
-    const setVal = (id, val, type='check') => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      if (type === 'check') el.checked = val !== false;
-      else el.value = val || 'normal';
-    };
-    setVal('priv-default-mode', p.default_mode, 'val');
-    setVal('priv-auto-wipe-on-clear', p.auto_wipe_on_clear);
-    setVal('priv-wipe-messages', p.wipe_messages !== false);
-    setVal('priv-wipe-context', p.wipe_context);
-    setVal('priv-wipe-profile', p.wipe_profile);
-  } catch(e) { console.warn('[PRIVACY] Config load error:', e); }
-}
-
-async function loadPrivacyConfig() {
-  console.log('[PRIVACY] Tab loaded, syncing with global state...');
-  // The global populateUI already handles the DOM if config_mapper is updated
-}
-
-async function savePrivacyConfig() {
-  // Redirect to global save
-  if (typeof saveConfig === 'function') saveConfig();
-}
-
-async function privacyWipeAll() {
-  if (!confirm('Wipe ALL chat history? This cannot be undone.')) return;
-  const res = await fetch('/api/chat/sessions/wipe-all', { method: 'POST' });
-  const d = await res.json();
-  const msg = document.getElementById('priv-msg');
-  if (msg) msg.textContent = d.ok ? '✅ All history wiped.' : '⚠️ Error: ' + d.error;
-}
-
-async function privacyWipeOld() {
-  const res = await fetch('/api/chat/sessions/wipe-old?days=30', { method: 'POST' });
-  const d = await res.json();
-  const msg = document.getElementById('priv-msg');
-  if (msg) msg.textContent = d.ok ? '✅ Old history cleared.' : '⚠️ Error: ' + d.error;
-}
-
-document.addEventListener('DOMContentLoaded', loadPrivacyConfig);
-</script>

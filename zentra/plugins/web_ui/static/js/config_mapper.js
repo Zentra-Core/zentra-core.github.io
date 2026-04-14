@@ -2,8 +2,6 @@
 // Extracts DOM mapping and Payload Building from config_core.js
 
 const RESTART_FIELDS = [
-  'system-port',
-  'system-api-port',
   'sys-https-enabled'
 ];
 

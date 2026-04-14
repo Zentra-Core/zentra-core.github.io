@@ -151,15 +151,17 @@ function escapeHtml(text) {
 // Exports for Global Scope
 window.populateSystemUI = populateSystemUI;
 window.buildSystemPayload = buildSystemPayload;
-window.startLogStream = startLogStream;
-window.addLogWindow = addLogWindow;
-window.removeLogWindow = removeLogWindow;
-window.updateWindowSource = updateWindowSource;
-window.updateWindowLevel = updateWindowLevel;
-window.updateLogGridLayout = updateLogGridLayout;
-window.clearWindow = clearWindow;
-window.clearAllLogWindows = clearAllLogWindows;
 window.loadMemoryStatus = loadMemoryStatus;
 window.clearMemoryHistory = clearMemoryHistory;
 window.refreshModels = refreshModels;
-window.refreshLogFiles = refreshLogFiles;
+
+// Safely bridge Log Engine functions if they exist
+if (typeof startLogStream !== 'undefined') window.startLogStream = startLogStream;
+if (typeof addLogWindow !== 'undefined') window.addLogWindow = addLogWindow;
+if (typeof removeLogWindow !== 'undefined') window.removeLogWindow = removeLogWindow;
+if (typeof updateWindowSource !== 'undefined') window.updateWindowSource = updateWindowSource;
+if (typeof updateWindowLevel !== 'undefined') window.updateWindowLevel = updateWindowLevel;
+if (typeof updateLogGridLayout !== 'undefined') window.updateLogGridLayout = updateLogGridLayout;
+if (typeof clearWindow !== 'undefined') window.clearWindow = clearWindow;
+if (typeof clearAllLogWindows !== 'undefined') window.clearAllLogWindows = clearAllLogWindows;
+if (typeof refreshLogFiles !== 'undefined') window.refreshLogFiles = refreshLogFiles;

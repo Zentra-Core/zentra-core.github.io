@@ -58,20 +58,6 @@ def init_config_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
                 except Exception as e:
                     logger.debug(f"[WebUI] Processor runtime sync error: {e}")
                     
-                # Gestione dell'inibitore del Monitor in base al trigger Frontend
-                if not force_restart:
-                    # Salvataggio silenzioso: scriviamo l'inibitore così il monitor INGNORA il file cambiato
-                    try:
-                        with open(".config_saved_by_app", "w") as f:
-                            f.write("1")
-                    except Exception: pass
-                else:
-                    # Salvataggio esplicito utente: rimuoviamo l'inibitore per forzare il riavvio del processo
-                    if os.path.exists(".config_saved_by_app"):
-                        try:
-                            os.remove(".config_saved_by_app")
-                        except Exception: pass
-                        
                 print("[DEBUG-POST] Config save SUCCESS")
                 return jsonify({"ok": True})
             print("[DEBUG-POST] Config save FAILED in cfg_mgr.update_config")

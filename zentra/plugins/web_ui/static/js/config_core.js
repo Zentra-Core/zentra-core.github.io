@@ -133,7 +133,7 @@ function setViewMode(mode, silent = false) {
 }
 
 async function fetchWithTimeout(resource, options = {}) {
-  const { timeout = 10000 } = options;
+  const { timeout = 30000 } = options;
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
   try {
@@ -321,26 +321,25 @@ async function saveConfig(silent = false) {
     const audioPayload = (typeof buildAudioPayload === 'function') ? buildAudioPayload() : {};
     const mediaPayload = (typeof buildMediaPayload === 'function') ? buildMediaPayload() : {};
     
-    const [resCfg, resAud, resMed] = await Promise.all([
-        fetch('/zentra/config', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }),
-        fetch('/api/audio/config', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(audioPayload)
-        }),
-        fetch('/zentra/api/config/media', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(mediaPayload)
-        })
-    ]);
-    
+    const resCfg = await fetch('/zentra/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
     const data = await resCfg.json();
+
+    const resAud = await fetch('/api/audio/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(audioPayload)
+    });
     const audData = await resAud.json();
+
+    const resMed = await fetch('/zentra/api/config/media', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(mediaPayload)
+    });
     const medData = await resMed.json();
     
     if (data.ok && audData.ok && medData.ok) {
@@ -380,17 +379,32 @@ async function refreshStatus() {
     const r = await fetch('/zentra/status');
     const d = await r.json();
     setSpanText('s-backend', d.backend || '—');
-    setSpanText('s-cpu', d.cpu !== undefined ? d.cpu + '%' : '—');
-    setSpanText('s-ram', d.ram !== undefined ? d.ram + '%' : '—');
-    setSpanText('s-vram', (d.vram && d.vram > 0) ? d.vram + '%' : '—');
-    setSpanText('s-mic', d.mic || '—');
-    setSpanText('s-tts', d.tts || '—');
-    setSpanText('s-ptt', d.ptt || '—');
+    
+    // System Metrics with threshold coloring
+    const updateMetric = (id, val) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = val !== undefined ? val + '%' : '—';
+        el.className = 'stat-val ' + (val >= 90 ? 'val-err' : '');
+    };
+    updateMetric('s-cpu', d.cpu);
+    updateMetric('s-ram', d.ram);
+    updateMetric('s-vram', d.vram);
+    
+    // Status indicators with ON/OFF coloring
+    const updateStatus = (id, val) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = val || '—';
+        el.className = 'stat-val ' + (val === 'ON' ? 'val-ok' : 'val-err');
+    };
+    updateStatus('s-mic', d.mic);
+    updateStatus('s-tts', d.tts);
+    updateStatus('s-ptt', d.ptt);
+    
+    setSpanText('s-bridge', d.bridge || '—');
     setSpanText('s-config', d.config || '—');
-    setSpanText('hdr-model', d.model || (I18N.offline || 'Offline'));
-
-    const p = document.getElementById('s-ptt');
-    if (p) p.className = 'stat-val ' + (d.ptt === 'ON' ? 'val-ok' : 'val-warn');
+    setSpanText('hdr-model', d.model || (window.I18N?.webui_chat_offline || 'Offline'));
     
     // Conditional visibility for system metrics
     const dashEnabled = window.cfg?.plugins?.DASHBOARD?.enabled !== false;
@@ -398,7 +412,7 @@ async function refreshStatus() {
         el.style.display = dashEnabled ? '' : 'none';
     });
   } catch(e) {
-    setSpanText('hdr-model', I18N.offline || 'Offline');
+    setSpanText('hdr-model', window.I18N?.webui_chat_offline || 'Offline');
   }
 }
 
