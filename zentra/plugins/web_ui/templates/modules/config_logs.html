@@ -50,17 +50,17 @@
         </div>
         <div class="log-window-search-bar" style="display:flex; gap:5px; padding:6px 14px; background:rgba(0,0,0,0.5); border-bottom:1px solid rgba(255,255,255,0.03); align-items:center;">
           <i class="fas fa-search" style="color:var(--muted); font-size:10px;"></i>
-          <input type="text" class="w-search-term" placeholder="Testo da cercare..." style="flex:1; background:rgba(255,255,255,0.1); border:none; color:var(--text); border-radius:3px; padding:3px 6px; font-size:10px; outline:none;">
+          <input type="text" class="w-search-term" placeholder="{{ t('webui_conf_logs_search_text') }}" style="flex:1; background:rgba(255,255,255,0.1); border:none; color:var(--text); border-radius:3px; padding:3px 6px; font-size:10px; outline:none;">
           <i class="far fa-clock" style="color:var(--muted); font-size:10px; margin-left:3px;"></i>
-          <input type="text" class="w-search-time" placeholder="Ora es: 14:30" style="width:75px; background:rgba(255,255,255,0.1); border:none; color:var(--text); border-radius:3px; padding:3px 6px; font-size:10px; outline:none;">
-          <button class="btn btn-secondary w-btn-filter" style="padding:2px 8px; font-size:10px; color:#58a6ff; border-color:rgba(88,166,255,0.3);">Filtra</button>
-          <button class="btn btn-secondary w-btn-reset" style="padding:2px 8px; font-size:10px; border-color:rgba(255,255,255,0.1);" title="Rimuovi filtro"><i class="fas fa-times"></i></button>
+          <input type="text" class="w-search-time" placeholder="{{ t('webui_conf_logs_search_time') }}" style="width:75px; background:rgba(255,255,255,0.1); border:none; color:var(--text); border-radius:3px; padding:3px 6px; font-size:10px; outline:none;">
+          <button class="btn btn-secondary w-btn-filter" style="padding:2px 8px; font-size:10px; color:#58a6ff; border-color:rgba(88,166,255,0.3);">{{ t('webui_conf_logs_btn_filter') }}</button>
+          <button class="btn btn-secondary w-btn-reset" style="padding:2px 8px; font-size:10px; border-color:rgba(255,255,255,0.1);" title="{{ t('webui_conf_logs_btn_reset') }}"><i class="fas fa-times"></i></button>
         </div>
         <div class="log-window-body"></div>
         <div class="log-window-footer">
           <div style="display:flex; align-items:center; gap:12px;">
             <label><input type="checkbox" class="w-autoscroll" checked> Auto</label>
-            <label title="Attiva la visualizzazione a righe alternate (stile Excel)"><input type="checkbox" class="w-striped-btn" onchange="window.toggleStripedRows(this)"> Zebratura</label>
+            <label title="{{ t('webui_conf_logs_striped_title') }}"><input type="checkbox" class="w-striped-btn" onchange="window.toggleStripedRows(this)"> {{ t('webui_conf_logs_striped') }}</label>
           </div>
           <div style="display:flex; align-items:center; gap:5px;">
             <label>Max:</label>

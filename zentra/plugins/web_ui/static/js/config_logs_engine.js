@@ -404,7 +404,7 @@ async function openLogDeleteModal() {
                             <input type="checkbox" class="log-del-cb" value="${f.name}">
                             <div style="display:flex; flex-direction:column; overflow:hidden;">
                                 <span style="color:var(--text); font-size:13px; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;">📄 ${f.name}</span>
-                                <span style="color:var(--muted); font-size:11px;">Ultima Modifica: ${f.modified}</span>
+                                <span style="color:var(--muted); font-size:11px;">${window.t ? window.t('webui_conf_logs_last_mod') : 'Last Modified'}: ${f.modified}</span>
                             </div>
                         </div>
                         <span style="color:var(--muted); font-size:12px; white-space:nowrap;">${sizeKb} KB</span>
@@ -424,7 +424,11 @@ function closeLogDeleteModal() {
 }
 
 async function deleteSelectedLogs(all = false) {
-    if (!confirm(all ? "Sei sicuro di voler eliminare/svuotare TUTTI i file di log?" : "Eliminare i log selezionati?")) {
+    const confirmMsg = all 
+        ? (window.t ? window.t('webui_conf_logs_confirm_all') : "Are you sure you want to delete ALL logs?")
+        : (window.t ? window.t('webui_conf_logs_confirm_sel') : "Delete selected logs?");
+        
+    if (!confirm(confirmMsg)) {
         return;
     }
     
@@ -432,7 +436,7 @@ async function deleteSelectedLogs(all = false) {
     if (!all) {
         document.querySelectorAll('.log-del-cb:checked').forEach(cb => payload.files.push(cb.value));
         if (payload.files.length === 0) {
-            alert("Nessun file selezionato.");
+            alert(window.t ? window.t('webui_conf_logs_none_sel') : "No files selected.");
             return;
         }
     }
@@ -444,11 +448,13 @@ async function deleteSelectedLogs(all = false) {
         });
         const data = await r.json();
         if (data.ok) {
-            alert(`✅ ${data.deleted} file elaborati/cancellati con successo.`);
+            const successMsg = window.t ? window.t('webui_conf_logs_delete_success') : "files deleted successfully.";
+            alert(`✅ ${data.deleted} ${successMsg}`);
             closeLogDeleteModal();
             refreshLogFiles();
         } else {
-            alert(`❌ Errore durante l'eliminazione: ${data.error}`);
+            const errMsg = window.t ? window.t('webui_conf_logs_delete_err') : "Error during deletion:";
+            alert(`❌ ${errMsg} ${data.error}`);
         }
     } catch(e) {
         alert("Errore di rete: " + e.message);

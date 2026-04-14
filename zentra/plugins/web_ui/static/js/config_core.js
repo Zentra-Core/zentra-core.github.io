@@ -496,18 +496,19 @@ function renderConfigHub(mode = 'tabs') {
     // 2. Render WALL
     let wallHtml = '';
     let currentCat = null;
+    let currentCatData = null; 
     visibleModules.forEach(m => {
         if (m.cat !== currentCat) {
             if (currentCat !== null) wallHtml += `</div></div>`; // Close previous section
             currentCat = m.cat;
-            const catData = hub.categories[currentCat] || { label: currentCat, icon: '📂' };
+            currentCatData = hub.categories[currentCat] || { label: currentCat, icon: '📂' };
             const isCollapsed = uiState.collapsedCategories.includes(currentCat);
             const toggleIcon = isCollapsed ? '⊕' : '⊖';
             wallHtml += `
                 <div class="category-group ${isCollapsed ? 'collapsed' : ''}">
                     <div class="category-header" onclick="toggleCategory('${currentCat}')">
                         <span class="cat-toggle">${toggleIcon}</span>
-                        <span class="cat-label">${catData.icon} ${window.t ? window.t(catData.label) : catData.label}</span>
+                        <span class="cat-label">${currentCatData.icon} ${window.t ? window.t(currentCatData.label) : currentCatData.label}</span>
                         <span class="cat-badge">${catCounts[currentCat]}</span>
                         <div class="cat-line"></div>
                     </div>
@@ -521,7 +522,7 @@ function renderConfigHub(mode = 'tabs') {
             <div class="module-card ${activeClass}" onclick="showTab('${m.id}')">
                 <div class="m-icon">${icon}</div>
                 <div class="m-label">${window.t ? window.t(m.label) : m.label}</div>
-                <div class="m-cat">${currentCat}</div>
+                <div class="m-cat">${window.t ? window.t(currentCatData.label) : currentCat}</div>
             </div>
         `;
     });
