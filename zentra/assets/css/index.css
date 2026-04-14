@@ -782,3 +782,69 @@ input:checked + .slider:before { transform: translateX(20px); background: white;
     background: #161b22; 
     color: #c9d1d9;
 }
+
+/* --- Filter Tabs (Categories) --- */
+.filter-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    padding: 5px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.filter-tabs::-webkit-scrollbar { display: none; }
+
+.filter-btn {
+    padding: 8px 18px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+}
+
+.filter-btn.active {
+    background: rgba(102, 252, 241, 0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 15px rgba(102, 252, 241, 0.15);
+}
+
+.filter-btn .btn-badge {
+    font-size: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 6px;
+    color: var(--muted);
+}
+.filter-btn.active .btn-badge {
+    background: var(--accent);
+    color: #0b0c10;
+}
+
+@media (max-width: 768px) {
+    .filter-tabs {
+        margin-bottom: 15px;
+        padding: 4px;
+    }
+    .filter-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+}
+

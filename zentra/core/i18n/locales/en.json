@@ -473,6 +473,7 @@
         "hub_cat_connettivita": "Connectivity",
         "hub_cat_risorse": "Resources",
         "hub_cat_sistema": "System",
+        "hub_filter_all": "All",
         "hub_mod_backend": "AI Backend",
         "hub_mod_llm": "LLM Keys",
         "hub_mod_keymanager": "Key Manager",

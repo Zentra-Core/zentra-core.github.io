@@ -19,6 +19,8 @@ let uiState = {
 };
 let viewMode = localStorage.getItem('zentra-config-view') || 'tabs';
 let activeTab = 'backend';
+window.activeCategoryFilter = 'ALL';
+
 
 /**
  * Tab switching logic
@@ -309,6 +311,60 @@ function toggleAllCategories(expanded) {
     renderConfigHub();
 }
 
+/**
+ * Filter by category selection
+ */
+function setCategoryFilter(cat) {
+    window.activeCategoryFilter = cat;
+    renderConfigHub();
+}
+
+function renderFilterTabs() {
+    const container = document.getElementById('config-filter-tabs');
+    const hub = window.CONFIG_HUB;
+    if (!container || !hub) return;
+
+    // Calculate counts for ALL visible modules
+    const userRole = (window.currentUser && window.currentUser.role) || 'user';
+    const allVisible = hub.modules.filter(m => {
+        if (m.adminOnly && userRole !== 'admin') return false;
+        if (m.pluginTag) {
+            const p = window.cfg.plugins && window.cfg.plugins[m.pluginTag];
+            if (p && p.enabled === false) return false;
+        }
+        return (document.getElementById('tab-' + m.id) || (hub.tagMap && hub.tagMap[m.pluginTag]) || m.cat === 'MCP');
+    });
+
+    const counts = { 'ALL': allVisible.length };
+    allVisible.forEach(m => {
+        counts[m.cat] = (counts[m.cat] || 0) + 1;
+    });
+
+    let html = `
+        <button class="filter-btn ${window.activeCategoryFilter === 'ALL' ? 'active' : ''}" onclick="setCategoryFilter('ALL')">
+            <span>✨</span> ${window.t ? window.t('hub_filter_all') : 'Tutto'}
+            <span class="btn-badge">${counts['ALL']}</span>
+        </button>
+    `;
+
+    Object.keys(hub.categories).forEach(catId => {
+        const cat = hub.categories[catId];
+        const activeClass = (window.activeCategoryFilter === catId) ? 'active' : '';
+        const count = counts[catId] || 0;
+        if (count === 0) return; // Hide empty categories
+
+        html += `
+            <button class="filter-btn ${activeClass}" onclick="setCategoryFilter('${catId}')">
+                <span>${cat.icon}</span> ${window.t ? window.t(cat.label) : catId}
+                <span class="btn-badge">${count}</span>
+            </button>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+
 // (Mapping logic extracted to config_mapper.js)
 
 async function saveConfig(silent = false) {
@@ -483,11 +539,18 @@ function renderConfigHub(mode = 'tabs') {
         const isMapped = hub.tagMap && hub.tagMap[m.pluginTag];
         const isMcp = (m.cat === 'MCP');
         
+        
         return (hasPanel || isMapped || isMcp);
     });
 
+    // --- APPLY CATEGORY FILTER ---
+    const filteredModules = visibleModules.filter(m => {
+        if (window.activeCategoryFilter === 'ALL') return true;
+        return m.cat === window.activeCategoryFilter;
+    });
+
     // Sort by category order then label
-    visibleModules.sort((a, b) => {
+    filteredModules.sort((a, b) => {
         const catA = hub.categories[a.cat] || { order: 99 };
         const catB = hub.categories[b.cat] || { order: 99 };
         if (catA.order !== catB.order) return catA.order - catB.order;
@@ -496,14 +559,14 @@ function renderConfigHub(mode = 'tabs') {
 
     // 0. Pre-calculate counts
     const catCounts = {};
-    visibleModules.forEach(m => {
+    filteredModules.forEach(m => {
         catCounts[m.cat] = (catCounts[m.cat] || 0) + 1;
     });
 
     // 1. Render TABS
     let tabsHtml = '';
     let currentTabCat = null;
-    visibleModules.forEach(m => {
+    filteredModules.forEach(m => {
         if (m.cat !== currentTabCat) {
             if (currentTabCat !== null) tabsHtml += `</div></div>`; // Close previous section
             currentTabCat = m.cat;
@@ -527,14 +590,14 @@ function renderConfigHub(mode = 'tabs') {
         const icon = window.getIconForModule(m.id, m.label, m.icon);
         tabsHtml += `<button class="tab ${activeClass}" onclick="showTab('${m.id}')">${icon} ${window.t ? window.t(m.label) : m.label}</button>`;
     });
-    if (visibleModules.length > 0) tabsHtml += `</div></div>`; // Close last section
+    if (filteredModules.length > 0) tabsHtml += `</div></div>`; // Close last section
     tabsBar.innerHTML = tabsHtml;
 
     // 2. Render WALL
     let wallHtml = '';
     let currentCat = null;
     let currentCatData = null; 
-    visibleModules.forEach(m => {
+    filteredModules.forEach(m => {
         if (m.cat !== currentCat) {
             if (currentCat !== null) wallHtml += `</div></div>`; // Close previous section
             currentCat = m.cat;
@@ -563,12 +626,19 @@ function renderConfigHub(mode = 'tabs') {
             </div>
         `;
     });
-    if (visibleModules.length > 0) wallHtml += `</div></div>`; // Close last section
+    if (filteredModules.length > 0) wallHtml += `</div></div>`; // Close last section
     wallArea.innerHTML = wallHtml;
+
+    // 3. Render FILTER TABS (Categories bar)
+    renderFilterTabs();
 }
+
 
 window.setViewMode = setViewMode;
 window.renderConfigHub = renderConfigHub;
+window.setCategoryFilter = setCategoryFilter;
+window.renderFilterTabs = renderFilterTabs;
+
 
 window.showTab = showTab;
 window.initAll = initAll;
