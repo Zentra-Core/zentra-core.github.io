@@ -179,6 +179,12 @@ header {
   animation: fadeIn 0.4s ease;
 }
 
+.config-wall.is-all-mode, 
+#config-tabs-bar.is-all-mode {
+    gap: 0 !important;
+}
+
+
 .config-wall .category-group {
     width: 100%;
 }
@@ -368,6 +374,11 @@ header {
     clear: both;
 }
 
+.is-all-mode .category-group {
+    margin-bottom: 0 !important;
+}
+
+
 .category-header {
     display: flex;
     align-items: center;
@@ -378,6 +389,11 @@ header {
     user-select: none;
     transition: opacity 0.2s;
 }
+
+.is-all-mode .category-header {
+    margin-bottom: 2px !important;
+}
+
 
 .category-header:hover { opacity: 0.8; }
 
@@ -440,6 +456,12 @@ header {
     gap: 10px;
     cursor: pointer;
 }
+
+.config-wall.is-all-mode .cat-header {
+    margin-top: 2px !important;
+    margin-bottom: 2px !important;
+}
+
 
 .field { margin-bottom: 16px; }
 

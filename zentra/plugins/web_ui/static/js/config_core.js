@@ -521,7 +521,14 @@ function renderConfigHub(mode = 'tabs') {
 
     if (!tabsBar || !wallArea) return;
 
-    // Filter modules based on dynamic plugin status
+    if (window.activeCategoryFilter === 'ALL') {
+        wallArea.classList.add('is-all-mode');
+        tabsBar.classList.add('is-all-mode');
+    } else {
+        wallArea.classList.remove('is-all-mode');
+        tabsBar.classList.remove('is-all-mode');
+    }
+
 
     const visibleModules = hub.modules.filter(m => {
         // Admin check
