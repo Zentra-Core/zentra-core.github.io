@@ -163,7 +163,7 @@ def get_sessions() -> list:
             "updated_at":    sess["updated_at"],
             "privacy_mode":  sess["privacy_mode"],
             "is_incognito":  sess["is_incognito"],
-            "message_count": len(sess["messages"]) // 2  # user+assistant pairs
+            "message_count": len(sess["messages"])
         })
 
     # Merge: RAM sessions interleaved by updated_at, most recent first
@@ -367,6 +367,7 @@ def delete_session(session_id: str) -> bool:
         cur.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
         conn.commit()
         conn.close()
+        # optimize space
         conn2 = sqlite3.connect(PATH_DB)
         conn2.execute("VACUUM")
         conn2.close()
@@ -374,6 +375,27 @@ def delete_session(session_id: str) -> bool:
         return True
     except Exception as e:
         logger.error(f"[SESSION] delete_session error: {e}")
+        return False
+
+
+def delete_all_sessions() -> bool:
+    """Deletes all sessions across RAM and DB. Returns True if successful."""
+    _ram_sessions.clear()
+    try:
+        conn = sqlite3.connect(PATH_DB)
+        cur  = conn.cursor()
+        cur.execute("DELETE FROM history")
+        cur.execute("DELETE FROM sessions")
+        conn.commit()
+        conn.close()
+        
+        conn2 = sqlite3.connect(PATH_DB)
+        conn2.execute("VACUUM")
+        conn2.close()
+        logger.info("[SESSION] Deleted all sessions (RAM & DB)")
+        return True
+    except Exception as e:
+        logger.error(f"[SESSION] delete_all_sessions error: {e}")
         return False
 
 

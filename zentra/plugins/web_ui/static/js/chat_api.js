@@ -98,6 +98,7 @@ window.sendMessage = async function() {
         window.chatHistory.push({role:'user', content:text});
         window.chatHistory.push({role:'assistant', content:aiText});
         window.isStreaming = false; if (window.sendBtn) window.sendBtn.disabled = false;
+        if (window.loadChatSessions) window.loadChatSessions();
       }
     };
     evtSrc.onerror = () => {
@@ -175,6 +176,7 @@ window.sendInternalMessage = async function(text) {
         window.chatHistory.push({role:'user', content:text});
         window.chatHistory.push({role:'assistant', content:aiText});
         window.isStreaming = false; if (window.sendBtn) window.sendBtn.disabled = false;
+        if (window.loadChatSessions) window.loadChatSessions();
       }
     };
     evtSrc.onerror = () => {

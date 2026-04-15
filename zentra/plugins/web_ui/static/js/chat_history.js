@@ -91,7 +91,7 @@ function renderSessionList() {
     container.innerHTML = sessions.map(s => {
         const isActive = s.id === activeId;
         const modeIcon = s.privacy_mode === 'incognito' ? '🕵️' :
-                         s.privacy_mode === 'auto_wipe' ? '🔒' : '';
+                         s.privacy_mode === 'auto_wipe' ? '🧹' : '';
         const msgCount = s.message_count || 0;
         const dateStr  = s.updated_at ? s.updated_at.slice(0, 16).replace('T', ' ') : '';
         const title    = escapeHistoryHtml(s.title || 'Chat senza titolo');
@@ -145,6 +145,9 @@ window.newChatSession = async function (mode = null) {
 window.activateChatSession = async function (sessionId) {
     if (sessionId === window.chatHistoryState.activeSessionId) return;
 
+    // Refresh data to ensure counts are accurate
+    if (window.loadChatSessions) await window.loadChatSessions();
+
     // Fetch messages of the clicked session
     const res = await _historyGet(`/api/chat/sessions/${sessionId}/messages`);
     if (!res.ok) {
@@ -188,6 +191,20 @@ window.deleteChatSession = async function (e, sessionId) {
         window.chatHistoryState.activeSessionId = null;
     }
     await window.loadChatSessions();
+};
+
+window.deleteAllChatSessions = async function (e) {
+    if (e) e.stopPropagation();
+    if (!confirm('Eliminare TUTTE le conversazioni? L\'operazione non è reversibile e cancellerà in modo definitivo sia le chat normali che quelle private.')) return;
+    const res = await _historyPost(`/api/chat/sessions/all`, {}, 'DELETE');
+    if (res.ok) {
+        if (window._clearChatDOM) window._clearChatDOM();
+        else if (window.chatArea) window.chatArea.innerHTML = '';
+        window.chatHistoryState.activeSessionId = null;
+        await window.loadChatSessions();
+    } else {
+        alert('Errore durante l\'eliminazione: ' + res.error);
+    }
 };
 
 window.startRenameSession = async function (e, sessionId) {
@@ -246,7 +263,7 @@ function updateModeUI() {
             chip.style.display = 'none';
         } else {
             const chipInfo = {
-                auto_wipe: { icon: '🔒', label: 'Auto-Wipe', cls: 'mode-chip-autowipe' },
+                auto_wipe: { icon: '🧹', label: 'Auto-Wipe', cls: 'mode-chip-autowipe' },
                 incognito: { icon: '🕵️', label: 'Incognito', cls: 'mode-chip-incognito' }
             }[mode];
             chip.style.display = '';

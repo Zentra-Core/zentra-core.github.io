@@ -116,6 +116,17 @@ def rename_session(session_id):
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
+@history_bp.route("/api/chat/sessions/all", methods=["DELETE"])
+def delete_all_sessions():
+    """Deletes all sessions completely."""
+    try:
+        ok = _sm().delete_all_sessions()
+        return jsonify({"ok": ok})
+    except Exception as e:
+        logger.error(f"[HISTORY] delete_all_sessions error: {e}")
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 @history_bp.route("/api/chat/sessions/<session_id>", methods=["DELETE"])
 def delete_session(session_id):
     """Deletes a session and all its messages."""

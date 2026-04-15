@@ -1,6 +1,9 @@
 <!-- CHAT HISTORY PANEL - included in chat_sidebar.html -->
 <div class="sidebar-section" id="chat-history-section">
-  <div class="sidebar-label">CONVERSAZIONI</div>
+  <div class="sidebar-label" style="display:flex; justify-content:space-between; align-items:center; padding-right:10px;">
+    <span>CONVERSAZIONI</span>
+    <span title="Elimina tutte le chat" style="cursor:pointer; font-size:12px; opacity:0.5; transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5" onclick="window.deleteAllChatSessions(event)">🗑️</span>
+  </div>
 
   <!-- ── Mode Picker ──────────────────────────────────────────── -->
   <div id="chat-mode-picker" class="chat-mode-picker">
@@ -13,7 +16,7 @@
     <button class="mode-btn" id="mode-btn-auto_wipe"
             onclick="window.selectChatMode('auto_wipe')"
             title="Auto-Wipe: i messaggi vengono cancellati alla chiusura">
-      <span class="mode-icon">🔒</span>
+      <span class="mode-icon">🧹</span>
       <span class="mode-label">Auto-Wipe</span>
     </button>
     <button class="mode-btn" id="mode-btn-incognito"
