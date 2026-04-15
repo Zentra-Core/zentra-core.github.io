@@ -102,16 +102,22 @@ class ImageGenTools:
                 except Exception as e:
                     last_error = e
                     err_msg = str(e)
-                    # Check for rate limit or depletion (402/429)
-                    if "HTTP 402" in err_msg or "HTTP 429" in err_msg:
-                        logger.warning(f"[IMAGE_GEN] Key failed ({err_msg}). Marking as exhausted and retrying...")
+                    # Check for rate limit, depletion, OOM or loading state
+                    is_retriable = any(x in err_msg for x in ["HTTP 402", "HTTP 429", "CUDA out of memory", "Model is loading"])
+                    
+                    if is_retriable:
+                        logger.warning(f"[IMAGE_GEN] Key/Server failed ({err_msg}). Marking as exhausted and retrying...")
                         try:
                             from zentra.core.keys.key_manager import get_key_manager
                             manager = get_key_manager()
                             # If it was the pinned key, we should clear it for this session's attempts
                             if api_key == pinned_key:
                                 pinned_key = "" 
-                            manager.mark_exhausted(provider, api_key, reason="rate_limited")
+                            
+                            # Mark as exhausted so get_key returns the next one
+                            # Reason varies based on error
+                            reason = "rate_limited" if ("402" in err_msg or "429" in err_msg) else "server_overload"
+                            manager.mark_exhausted(provider, api_key, reason=reason)
                         except Exception:
                             pass
                         continue # Try next key

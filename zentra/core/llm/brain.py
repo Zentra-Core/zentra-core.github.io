@@ -304,7 +304,7 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
 
     # --- GLOBAL ROLEPLAY BOOSTER (AI SAFETY SOFTENER) ---
     roleplay_booster_block = ""
-    if config.get('ai', {}).get('roleplay_mode', False):
+    if config.get('ai', {}).get('persona_roleplay_mode', False):
         custom_disclaimer = config.get('ai', {}).get('roleplay_disclaimer', '').strip()
         if not custom_disclaimer:
             custom_disclaimer = (

@@ -350,11 +350,12 @@ def save_key_to_env(provider: str, value: str, description: str = "") -> bool:
             # Insert right after the last occurrence
             lines.insert(last_match_line_idx + 1, new_line)
 
+        logger.info(f"[KeyLoader] Writing {len(lines)} lines to {_ENV_PATH}")
         with open(_ENV_PATH, "w", encoding="utf-8") as f:
             f.writelines(lines)
         return True
     except Exception as e:
-        print(f"[KeyLoader] Error saving key to .env: {e}")
+        logger.error(f"[KeyLoader] Failed to write .env: {e}")
         return False
 
 
