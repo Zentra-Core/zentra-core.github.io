@@ -64,6 +64,12 @@ window.sendMessage = async function() {
     const data = await res.json();
     if(!data.ok) throw new Error(data.error||'Server error');
 
+    // Lock privacy mode on first sent message
+    if (window.chatHistoryState) {
+      window.chatHistoryState.chatModeHasMessages = true;
+      if (window.updateModeUI) window.updateModeUI();
+    }
+
     const evtSrc = new EventSource(`/api/stream/${data.session_id}`);
     evtSrc.onmessage = (e) => {
       const ev = JSON.parse(e.data);
@@ -134,6 +140,12 @@ window.sendInternalMessage = async function(text) {
     });
     const data = await res.json();
     if(!data.ok) throw new Error(data.error||'Server error');
+
+    // Lock privacy mode on first sent message
+    if (window.chatHistoryState) {
+      window.chatHistoryState.chatModeHasMessages = true;
+      if (window.updateModeUI) window.updateModeUI();
+    }
 
     const evtSrc = new EventSource(`/api/stream/${data.session_id}`);
     evtSrc.onmessage = (e) => {

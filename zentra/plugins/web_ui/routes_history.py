@@ -167,7 +167,14 @@ def set_privacy():
         if mode not in ("normal", "auto_wipe", "incognito"):
             return jsonify({"ok": False, "error": "Invalid mode"}), 400
         pm = _pm()
-        pm.set_session(pm.get_session_id() or "default", mode)
+        session_id = pm.get_session_id() or "default"
+        
+        # 1. Instruct session_manager to move it between DB/RAM if necessary
+        if session_id != "default":
+            _sm().change_session_mode(session_id, mode)
+            
+        # 2. Update privacy tracking
+        pm.set_session(session_id, mode)
         return jsonify({"ok": True, "mode": mode})
     except Exception as e:
         logger.error(f"[HISTORY] set_privacy error: {e}")

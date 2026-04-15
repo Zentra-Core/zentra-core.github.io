@@ -1,8 +1,11 @@
 """
 MODULE: Chat Session Manager
-DESCRIPTION: Manages named chat sessions in the episodic memory vault.
-             Provides create/read/update/delete operations for sessions,
-             and handles the non-destructive migration of the legacy flat history.
+DESCRIPTION: Manages named chat sessions.
+             - 'normal' sessions: persisted in SQLite DB across restarts.
+             - 'auto_wipe' sessions: RAM-only (visible while app runs, vanish on restart).
+               Messages are kept in memory and available when switching back to the session.
+             - 'incognito' sessions: RAM-only, zero writes to disk.
+             Both non-normal modes never touch the DB.
 """
 
 import os
@@ -16,6 +19,21 @@ ROOT_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 BASE_DIR  = os.path.join(ROOT_DIR, "memory")
 PATH_DB   = os.path.join(BASE_DIR, "chat_history.db")
 
+# ──────────────────────────────────────────────────────────────────────────────
+# IN-MEMORY STORE  (auto_wipe + incognito sessions — vanish on restart)
+# Structure:
+#   _ram_sessions = { session_id: { id, title, created_at, updated_at,
+#                                   privacy_mode, is_incognito,
+#                                   messages: [ {id, timestamp, role, message} ] } }
+# ──────────────────────────────────────────────────────────────────────────────
+
+_ram_sessions: dict = {}
+
+
+def _is_ram_mode(privacy_mode: str) -> bool:
+    """Returns True for modes that must never touch the DB."""
+    return privacy_mode in ("auto_wipe", "incognito")
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # SCHEMA MIGRATION
@@ -25,7 +43,7 @@ def migrate_schema():
     """
     Non-destructive migration.
     - Creates the `sessions` table if missing.
-    - Adds `session_id` and `session_title` columns to `history` if missing.
+    - Adds `session_id` column to `history` if missing.
     - Assigns all legacy (untagged) messages to a 'Legacy' session.
     """
     conn = sqlite3.connect(PATH_DB)
@@ -49,13 +67,16 @@ def migrate_schema():
         cur.execute("ALTER TABLE history ADD COLUMN session_id TEXT")
         logger.info("[SESSION] Added session_id column to history table.")
 
-    # 3. Migrate legacy messages (session_id IS NULL) to a 'Legacy' session
+    # 3. Clean up any legacy auto_wipe/incognito sessions that were wrongly saved to DB in the past
+    cur.execute("DELETE FROM history WHERE session_id IN (SELECT id FROM sessions WHERE privacy_mode IN ('auto_wipe', 'incognito'))")
+    cur.execute("DELETE FROM sessions WHERE privacy_mode IN ('auto_wipe', 'incognito')")
+
+    # 4. Migrate legacy messages (session_id IS NULL) to a 'Legacy' session
     cur.execute("SELECT COUNT(*) FROM history WHERE session_id IS NULL")
     legacy_count = cur.fetchone()[0]
 
     if legacy_count > 0:
         legacy_id = "legacy-" + datetime.now().strftime("%Y%m%d")
-        # Ensure legacy session exists
         cur.execute("SELECT id FROM sessions WHERE id = ?", (legacy_id,))
         if not cur.fetchone():
             now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -72,32 +93,48 @@ def migrate_schema():
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# SESSION CRUD
+# SESSION CRUD  (DB for normal, RAM for auto_wipe/incognito)
 # ──────────────────────────────────────────────────────────────────────────────
 
 def create_session(title: str = None, privacy_mode: str = "normal") -> str:
-    """Creates a new chat session and returns its ID."""
+    """Creates a new chat session. Normal → DB. auto_wipe/incognito → RAM only."""
     session_id = str(uuid.uuid4())
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     if not title:
         title = f"Chat {datetime.now().strftime('%d/%m/%Y %H:%M')}"
 
-    is_incognito = 1 if privacy_mode == "incognito" else 0
+    if _is_ram_mode(privacy_mode):
+        # ── RAM-only session ──────────────────────────────────────────────────
+        _ram_sessions[session_id] = {
+            "id":           session_id,
+            "title":        title,
+            "created_at":   now,
+            "updated_at":   now,
+            "privacy_mode": privacy_mode,
+            "is_incognito": 1 if privacy_mode == "incognito" else 0,
+            "messages":     []
+        }
+        logger.info(f"[SESSION] Created RAM session: {session_id} (mode={privacy_mode})")
+    else:
+        # ── DB-persisted session ──────────────────────────────────────────────
+        conn = sqlite3.connect(PATH_DB)
+        cur  = conn.cursor()
+        cur.execute(
+            "INSERT INTO sessions (id, title, created_at, updated_at, privacy_mode, is_incognito) VALUES (?, ?, ?, ?, ?, ?)",
+            (session_id, title, now, now, privacy_mode, 0)
+        )
+        conn.commit()
+        conn.close()
+        logger.info(f"[SESSION] Created DB session: {session_id} (mode={privacy_mode})")
 
-    conn = sqlite3.connect(PATH_DB)
-    cur  = conn.cursor()
-    cur.execute(
-        "INSERT INTO sessions (id, title, created_at, updated_at, privacy_mode, is_incognito) VALUES (?, ?, ?, ?, ?, ?)",
-        (session_id, title, now, now, privacy_mode, is_incognito)
-    )
-    conn.commit()
-    conn.close()
-    logger.info(f"[SESSION] Created session: {session_id} '{title}' (mode={privacy_mode})")
     return session_id
 
 
 def get_sessions() -> list:
-    """Returns all sessions ordered by most recent first, with message count."""
+    """Returns all sessions: DB sessions + active RAM sessions, ordered by most recent."""
+    results = []
+
+    # ── DB sessions (normal) ──────────────────────────────────────────────────
     try:
         conn = sqlite3.connect(PATH_DB)
         conn.row_factory = sqlite3.Row
@@ -107,19 +144,48 @@ def get_sessions() -> list:
                    COUNT(h.id) as message_count
             FROM sessions s
             LEFT JOIN history h ON h.session_id = s.id
+            WHERE s.privacy_mode = 'normal'
             GROUP BY s.id
             ORDER BY s.updated_at DESC
         """)
-        rows = [dict(r) for r in cur.fetchall()]
+        results = [dict(r) for r in cur.fetchall()]
         conn.close()
-        return rows
     except Exception as e:
-        logger.error(f"[SESSION] get_sessions error: {e}")
-        return []
+        logger.error(f"[SESSION] get_sessions DB error: {e}")
+
+    # ── RAM sessions (auto_wipe + incognito) ──────────────────────────────────
+    ram_rows = []
+    for sid, sess in _ram_sessions.items():
+        ram_rows.append({
+            "id":            sid,
+            "title":         sess["title"],
+            "created_at":    sess["created_at"],
+            "updated_at":    sess["updated_at"],
+            "privacy_mode":  sess["privacy_mode"],
+            "is_incognito":  sess["is_incognito"],
+            "message_count": len(sess["messages"]) // 2  # user+assistant pairs
+        })
+
+    # Merge: RAM sessions interleaved by updated_at, most recent first
+    all_sessions = ram_rows + results
+    all_sessions.sort(key=lambda s: s.get("updated_at", ""), reverse=True)
+    return all_sessions
 
 
 def get_session(session_id: str) -> dict | None:
-    """Returns metadata for a single session."""
+    """Returns metadata for a single session (checks RAM first, then DB)."""
+    # Check RAM first
+    if session_id in _ram_sessions:
+        sess = _ram_sessions[session_id]
+        return {
+            "id":            sess["id"],
+            "title":         sess["title"],
+            "created_at":    sess["created_at"],
+            "updated_at":    sess["updated_at"],
+            "privacy_mode":  sess["privacy_mode"],
+            "is_incognito":  sess["is_incognito"],
+        }
+    # Fall back to DB
     try:
         conn = sqlite3.connect(PATH_DB)
         conn.row_factory = sqlite3.Row
@@ -134,7 +200,11 @@ def get_session(session_id: str) -> dict | None:
 
 
 def get_session_messages(session_id: str) -> list:
-    """Returns all messages belonging to a session in chronological order."""
+    """Returns all messages for a session (RAM if non-normal, DB if normal)."""
+    # Check RAM first
+    if session_id in _ram_sessions:
+        return list(_ram_sessions[session_id]["messages"])
+    # Fall back to DB
     try:
         conn = sqlite3.connect(PATH_DB)
         cur  = conn.cursor()
@@ -150,8 +220,31 @@ def get_session_messages(session_id: str) -> list:
         return []
 
 
+def add_ram_message(session_id: str, role: str, message: str):
+    """
+    Appends a message to a RAM session's in-memory store.
+    Called by brain_interface instead of the DB write path when the mode is non-normal.
+    """
+    if session_id not in _ram_sessions:
+        logger.warning(f"[SESSION] add_ram_message: session {session_id} not in RAM — ignoring.")
+        return
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    msg_id = str(uuid.uuid4())
+    _ram_sessions[session_id]["messages"].append({
+        "id":        msg_id,
+        "timestamp": now,
+        "role":      role,
+        "message":   message
+    })
+    _ram_sessions[session_id]["updated_at"] = now
+    logger.debug(f"[SESSION] RAM message added ({role}) to {session_id}")
+
+
 def rename_session(session_id: str, new_title: str) -> bool:
-    """Renames a session."""
+    """Renames a session (works for both RAM and DB sessions)."""
+    if session_id in _ram_sessions:
+        _ram_sessions[session_id]["title"] = new_title
+        return True
     try:
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         conn = sqlite3.connect(PATH_DB)
@@ -166,8 +259,90 @@ def rename_session(session_id: str, new_title: str) -> bool:
         return False
 
 
+def change_session_mode(session_id: str, new_mode: str) -> bool:
+    """Changes the privacy mode of a session, moving it between DB and RAM if necessary."""
+    old_sess = get_session(session_id)
+    if not old_sess:
+        return False
+        
+    old_mode = old_sess["privacy_mode"]
+    if old_mode == new_mode:
+        return True
+        
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+    # Moving from DB to RAM
+    if not _is_ram_mode(old_mode) and _is_ram_mode(new_mode):
+        messages = get_session_messages(session_id)
+        
+        _ram_sessions[session_id] = {
+            "id": session_id,
+            "title": old_sess["title"],
+            "created_at": old_sess["created_at"],
+            "updated_at": now,
+            "privacy_mode": new_mode,
+            "is_incognito": 1 if new_mode == "incognito" else 0,
+            "messages": messages
+        }
+        
+        try:
+            conn = sqlite3.connect(PATH_DB)
+            cur = conn.cursor()
+            cur.execute("DELETE FROM history WHERE session_id = ?", (session_id,))
+            cur.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+            conn.commit()
+            conn.close()
+            logger.info(f"[SESSION] Moved DB session {session_id} to RAM -> {new_mode}")
+        except Exception as e:
+            logger.error(f"[SESSION] DB->RAM move error: {e}")
+            
+    # Moving from RAM to DB
+    elif _is_ram_mode(old_mode) and not _is_ram_mode(new_mode):
+        sess = _ram_sessions[session_id]
+        try:
+            conn = sqlite3.connect(PATH_DB)
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO sessions (id, title, created_at, updated_at, privacy_mode, is_incognito) VALUES (?, ?, ?, ?, ?, ?)",
+                (session_id, sess["title"], sess["created_at"], now, new_mode, 0)
+            )
+            for m in sess["messages"]:
+                cur.execute(
+                    "INSERT INTO history (timestamp, role, message, session_id) VALUES (?, ?, ?, ?)",
+                    (m["timestamp"], m["role"], m["message"], session_id)
+                )
+            conn.commit()
+            conn.close()
+            logger.info(f"[SESSION] Moved RAM session {session_id} to DB -> {new_mode}")
+        except Exception as e:
+            logger.error(f"[SESSION] RAM->DB move error: {e}")
+            
+        del _ram_sessions[session_id]
+        
+    else:
+        # Same storage tier (e.g. auto_wipe -> incognito)
+        if session_id in _ram_sessions:
+            _ram_sessions[session_id]["privacy_mode"] = new_mode
+            _ram_sessions[session_id]["is_incognito"] = 1 if new_mode == "incognito" else 0
+        else:
+            try:
+                conn = sqlite3.connect(PATH_DB)
+                cur = conn.cursor()
+                cur.execute("UPDATE sessions SET privacy_mode = ?, is_incognito = ?, updated_at = ? WHERE id = ?", 
+                            (new_mode, 1 if new_mode == "incognito" else 0, now, session_id))
+                conn.commit()
+                conn.close()
+            except Exception as e:
+                logger.error(f"[SESSION] Mode update error: {e}")
+
+    return True
+
+
 def touch_session(session_id: str):
-    """Updates the updated_at timestamp of a session (called when a message is added)."""
+    """Updates the updated_at timestamp (used when a message is added to a DB session)."""
+    if session_id in _ram_sessions:
+        _ram_sessions[session_id]["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return
     try:
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         conn = sqlite3.connect(PATH_DB)
@@ -180,7 +355,11 @@ def touch_session(session_id: str):
 
 
 def delete_session(session_id: str) -> bool:
-    """Deletes a session and all its messages."""
+    """Deletes a session. RAM sessions are removed from memory; DB sessions from SQLite."""
+    if session_id in _ram_sessions:
+        del _ram_sessions[session_id]
+        logger.info(f"[SESSION] Deleted RAM session {session_id}")
+        return True
     try:
         conn = sqlite3.connect(PATH_DB)
         cur  = conn.cursor()
@@ -188,11 +367,10 @@ def delete_session(session_id: str) -> bool:
         cur.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
         conn.commit()
         conn.close()
-        # VACUUM must run outside any transaction
         conn2 = sqlite3.connect(PATH_DB)
         conn2.execute("VACUUM")
         conn2.close()
-        logger.info(f"[SESSION] Deleted session {session_id} and all its messages.")
+        logger.info(f"[SESSION] Deleted DB session {session_id}")
         return True
     except Exception as e:
         logger.error(f"[SESSION] delete_session error: {e}")
@@ -200,14 +378,22 @@ def delete_session(session_id: str) -> bool:
 
 
 def wipe_session_messages(session_id: str) -> bool:
-    """Deletes only the messages of a session (for auto-wipe mode). Keeps the entry."""
+    """
+    Wipes messages from a session.
+    For RAM sessions: clears the messages list (keeps the session entry).
+    For DB sessions: deletes history rows (legacy auto-wipe path, kept for compatibility).
+    """
+    if session_id in _ram_sessions:
+        _ram_sessions[session_id]["messages"] = []
+        logger.info(f"[SESSION] Wiped RAM messages for session {session_id}")
+        return True
     try:
         conn = sqlite3.connect(PATH_DB)
         cur  = conn.cursor()
         cur.execute("DELETE FROM history WHERE session_id = ?", (session_id,))
         conn.commit()
         conn.close()
-        logger.info(f"[SESSION] Wiped messages for session {session_id}.")
+        logger.info(f"[SESSION] Wiped DB messages for session {session_id}")
         return True
     except Exception as e:
         logger.error(f"[SESSION] wipe_session_messages error: {e}")

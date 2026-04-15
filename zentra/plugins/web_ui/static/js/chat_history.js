@@ -1,12 +1,14 @@
 /**
  * chat_history.js
  * Manages the chat session sidebar: load, display, switch, delete, rename.
+ * v2 — Unified 3-state privacy mode picker with session-level lock.
  */
 
 window.chatHistoryState = {
     sessions: [],
     activeSessionId: null,
-    activeMode: 'normal'
+    activeMode: 'normal',
+    chatModeHasMessages: false  // true after first message → mode picker locks
 };
 
 // ─── API helpers ──────────────────────────────────────────────────────────────
@@ -62,8 +64,16 @@ window.loadChatSessions = async function () {
         }
     }
 
+    // Restore lock state: check if the active session already has messages
+    const activeSess = window.chatHistoryState.sessions.find(
+        s => s.id === window.chatHistoryState.activeSessionId
+    );
+    window.chatHistoryState.chatModeHasMessages = activeSess
+        ? (activeSess.message_count || 0) > 0
+        : false;
+
     renderSessionList();
-    updatePrivacyIndicator();
+    updateModeUI();
 };
 
 function renderSessionList() {
@@ -105,49 +115,35 @@ function renderSessionList() {
 // ─── Session Actions ──────────────────────────────────────────────────────────
 
 window.newChatSession = async function (mode = null) {
-    // Determine privacy mode
-    const privMode = mode || window.chatHistoryState.activeMode || 'normal';
-
-    // If current mode is auto_wipe, wipe messages before leaving
-    if (window.chatHistoryState.activeMode === 'auto_wipe' &&
-        window.chatHistoryState.activeSessionId) {
-        await _historyPost(`/api/chat/sessions/${window.chatHistoryState.activeSessionId}/wipe`);
-    }
+    // New chats are always 'normal' unless explicitly passed a different mode
+    const privMode = mode || 'normal';
 
     // Create new session
     const res = await _historyPost('/api/chat/sessions', { privacy_mode: privMode });
     if (!res.ok) {
-        alert(translator.t('error_create_session') || `Errore creazione sessione: ${res.error || 'Unknown'}`);
+        alert(`Errore creazione sessione: ${res.error || 'Unknown'}`);
         return;
     }
 
-    window.chatHistoryState.activeSessionId = res.session_id;
-    window.chatHistoryState.activeMode      = privMode;
+    window.chatHistoryState.activeSessionId     = res.session_id;
+    window.chatHistoryState.activeMode          = privMode;
+    window.chatHistoryState.chatModeHasMessages = false;  // new session → picker unlocked
     localStorage.setItem('zentra_active_session_id', res.session_id);
 
     // Clear chat UI
     if (window._clearChatDOM) {
         window._clearChatDOM();
     } else if (window.clearChat) {
-        // Fallback for isolated contexts where _clearChatDOM isn't defined yet
-        window._clearChatDOM = window.clearChat; 
-        // We do not call clearChat here because it triggers newChatSession
+        window._clearChatDOM = window.clearChat;
         window.chatArea && (window.chatArea.innerHTML = '');
     }
 
-    // Reload session list
+    // Reload session list (also calls updateModeUI internally)
     await window.loadChatSessions();
-    updatePrivacyIndicator();
 };
 
 window.activateChatSession = async function (sessionId) {
     if (sessionId === window.chatHistoryState.activeSessionId) return;
-
-    // Wipe previous if auto-wipe
-    if (window.chatHistoryState.activeMode === 'auto_wipe' &&
-        window.chatHistoryState.activeSessionId) {
-        await _historyPost(`/api/chat/sessions/${window.chatHistoryState.activeSessionId}/wipe`);
-    }
 
     // Fetch messages of the clicked session
     const res = await _historyGet(`/api/chat/sessions/${sessionId}/messages`);
@@ -162,8 +158,9 @@ window.activateChatSession = async function (sessionId) {
     // Activate server-side
     await _historyPost('/api/chat/sessions/active', { session_id: sessionId, privacy_mode: mode });
 
-    window.chatHistoryState.activeSessionId = sessionId;
-    window.chatHistoryState.activeMode      = mode;
+    window.chatHistoryState.activeSessionId     = sessionId;
+    window.chatHistoryState.activeMode          = mode;
+    window.chatHistoryState.chatModeHasMessages = (res.messages || []).length > 0;
     localStorage.setItem('zentra_active_session_id', sessionId);
 
     // Restore messages in chat UI
@@ -172,13 +169,13 @@ window.activateChatSession = async function (sessionId) {
     } else if (window.chatArea) {
         window.chatArea.innerHTML = '';
     }
-    
+
     if (window.renderHistoryMessages) {
         window.renderHistoryMessages(res.messages || []);
     }
 
     renderSessionList();
-    updatePrivacyIndicator();
+    updateModeUI();
 };
 
 window.deleteChatSession = async function (e, sessionId) {
@@ -203,30 +200,64 @@ window.startRenameSession = async function (e, sessionId) {
     if (res.ok) await window.loadChatSessions();
 };
 
-// ─── Privacy Mode Switcher ────────────────────────────────────────────────────
+// ─── Privacy / Mode Switcher ──────────────────────────────────────────────────
 
 window.setPrivacyMode = async function (mode) {
     const res = await _historyPost('/api/chat/privacy', { mode });
     if (res.ok) {
         window.chatHistoryState.activeMode = mode;
-        updatePrivacyIndicator();
+        updateModeUI();
+        if (window.loadChatSessions) await window.loadChatSessions();
     }
 };
 
-function updatePrivacyIndicator() {
-    const indicator = document.getElementById('privacy-indicator');
-    if (!indicator) return;
-    const mode = window.chatHistoryState.activeMode;
-    const map = {
-        normal:     { icon: '👁', label: 'Normal',    cls: '' },
-        auto_wipe:  { icon: '🔒', label: 'Auto-Wipe', cls: 'mode-autowipe' },
-        incognito:  { icon: '🕵️', label: 'Incognito', cls: 'mode-incognito' }
-    };
-    const m = map[mode] || map.normal;
-    indicator.innerHTML    = `${m.icon} <span>${m.label}</span>`;
-    indicator.className    = `privacy-indicator ${m.cls}`;
-    indicator.title        = `Modalità Privacy: ${m.label}. Click per cambiare.`;
+/**
+ * Called by the 3-button mode picker in the sidebar.
+ * Silently ignored if the mode is already locked (session has messages),
+ * which is also enforced visually via pointer-events:none on the buttons.
+ */
+window.selectChatMode = function (mode) {
+    if (window.chatHistoryState.chatModeHasMessages) return;  // double-guard
+    if (window.setPrivacyMode) window.setPrivacyMode(mode);
+};
+
+// ─── Mode UI ──────────────────────────────────────────────────────────────────
+
+function updateModeUI() {
+    const mode        = window.chatHistoryState.activeMode;
+    const hasMessages = window.chatHistoryState.chatModeHasMessages;
+
+    // ── 1. Mode picker buttons ──
+    ['normal', 'auto_wipe', 'incognito'].forEach(m => {
+        const btn = document.getElementById(`mode-btn-${m}`);
+        if (btn) btn.classList.toggle('active', m === mode);
+    });
+
+    // ── 2. Lock / unlock picker ──
+    const picker = document.getElementById('chat-mode-picker');
+    const notice = document.getElementById('mode-lock-notice');
+    if (picker) picker.classList.toggle('locked', hasMessages);
+    if (notice) notice.style.display = hasMessages ? 'block' : 'none';
+
+    // ── 3. Topbar mode chip ──
+    const chip = document.getElementById('topbar-mode-chip');
+    if (chip) {
+        if (mode === 'normal') {
+            chip.style.display = 'none';
+        } else {
+            const chipInfo = {
+                auto_wipe: { icon: '🔒', label: 'Auto-Wipe', cls: 'mode-chip-autowipe' },
+                incognito: { icon: '🕵️', label: 'Incognito', cls: 'mode-chip-incognito' }
+            }[mode];
+            chip.style.display = '';
+            chip.innerHTML     = `${chipInfo.icon} ${chipInfo.label}`;
+            chip.className     = `topbar-chip ${chipInfo.cls}`;
+        }
+    }
 }
+
+// Backward-compatibility alias
+window.updatePrivacyIndicator = updateModeUI;
 
 // ─── Chat Restoration ─────────────────────────────────────────────────────────
 
@@ -251,10 +282,10 @@ function escapeHistoryHtml(str) {
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Try to restore active session from localStorage (helps if server restarted)
     const localSid = localStorage.getItem('zentra_active_session_id');
-    
+
     // 2. Check current server active session
     const res = await _historyGet('/api/chat/sessions/active');
-    
+
     if (res.ok && res.session_id) {
         // Server already has an active session, use it
         localStorage.setItem('zentra_active_session_id', res.session_id);
@@ -270,6 +301,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         // No session anywhere, create fresh
         await _historyPost('/api/chat/sessions', { title: null, privacy_mode: 'normal' });
     }
-    
+
     await window.loadChatSessions();
 });

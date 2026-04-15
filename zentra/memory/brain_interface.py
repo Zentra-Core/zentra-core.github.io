@@ -187,28 +187,38 @@ def update_profile(key, value, user_id: str = "admin"):
 # ── Episodic memory (chat history) ────────────────────────────────────────────
 
 def save_message(role, message, config: dict = None, user_id: str = "admin", session_id: str = None):
-    """Stores an exchange in episodic memory (DB), respecting config flags and privacy mode."""
+    """Stores an exchange in episodic memory, respecting config flags and privacy mode.
+    - incognito → discard entirely (no storage anywhere)
+    - auto_wipe → store in RAM only (vanishes on restart)
+    - normal    → persist in SQLite DB as usual
+    """
     if not is_memory_enabled(config):
         return
-    
+
     try:
         from zentra.core.privacy import privacy_manager
-        if privacy_manager.is_incognito():
-            return
         if not session_id:
             session_id = privacy_manager.get_session_id()
+
+        if privacy_manager.is_incognito():
+            # Total privacy: discard message, write nothing
+            return
+
+        if privacy_manager.is_auto_wipe():
+            # RAM-only: store in session_manager's in-memory store
+            from zentra.memory import session_manager
+            if session_id:
+                session_manager.add_ram_message(session_id, role, message)
+            return
+
     except Exception:
         pass
 
     try:
-        # Utilize the central session_manager for database operations
         from zentra.memory import session_manager
-        
-        # Ensure user folder exists for profile data
+
         initialize_user_vault(user_id)
-        
-        # Manual insert for session-aware central history
-        # We use a with statement to ensure the connection is closed even on error
+
         with sqlite3.connect(session_manager.PATH_DB, timeout=20) as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -216,47 +226,57 @@ def save_message(role, message, config: dict = None, user_id: str = "admin", ses
                 (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), role, message, session_id)
             )
             conn.commit()
-            
+
         if session_id:
             try:
                 session_manager.touch_session(session_id)
             except Exception:
                 pass
-                
+
     except Exception as e:
         logger.error(f"[MEMORY] Save Error: {e}")
 
 
 def get_history(limit: int = None, config: dict = None, user_id: str = "admin", session_id: str = None) -> list:
-    """Retrieves the last N messages from history, filtered by session if provided."""
+    """Retrieves the last N messages from history, filtered by session if provided.
+    For RAM sessions (auto_wipe/incognito), reads from the in-memory store.
+    """
     if limit is None:
         limit = get_max_history(config)
     try:
         from zentra.memory import session_manager
-        if not os.path.exists(session_manager.PATH_DB):
-            return []
-            
+
         if not session_id:
             try:
                 from zentra.core.privacy import privacy_manager
                 session_id = privacy_manager.get_session_id()
-            except: 
+            except:
                 pass
+
+        # ── RAM session (auto_wipe / incognito) ───────────────────────────────
+        if session_id and session_id in session_manager._ram_sessions:
+            messages = session_manager.get_session_messages(session_id)
+            pairs = [(m['role'], m['message']) for m in messages]
+            return pairs[-limit:] if limit else pairs
+
+        # ── Normal DB session ─────────────────────────────────────────────────
+        if not os.path.exists(session_manager.PATH_DB):
+            return []
 
         with sqlite3.connect(session_manager.PATH_DB, timeout=20) as conn:
             cursor = conn.cursor()
             if session_id:
                 cursor.execute(
-                    "SELECT role, message FROM history WHERE session_id = ? ORDER BY id DESC LIMIT ?", 
+                    "SELECT role, message FROM history WHERE session_id = ? ORDER BY id DESC LIMIT ?",
                     (session_id, limit)
                 )
             else:
                 cursor.execute(
-                    "SELECT role, message FROM history ORDER BY id DESC LIMIT ?", 
+                    "SELECT role, message FROM history ORDER BY id DESC LIMIT ?",
                     (limit,)
                 )
             rows = cursor.fetchall()
-            
+
         rows.reverse()
         return rows
     except Exception as e:

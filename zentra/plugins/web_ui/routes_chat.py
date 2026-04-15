@@ -100,13 +100,6 @@ def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr, i
         sess["history"].append({"role": "user",      "content": user_message})
         sess["history"].append({"role": "assistant",  "content": full_text})
 
-        try:
-            from zentra.memory.brain_interface import save_message
-            save_message("user", user_message, session_id=session_id)
-            save_message("assistant", full_text, session_id=session_id)
-        except Exception as e:
-            _chat_log.error(f"[Chat] DB Save Error: {e}")
-
         audio_status = _maybe_generate_tts(full_text, cfg_mgr)
         if audio_status == "web":
             sess["queue"].put({"type": "audio_ready", "text": ""})
