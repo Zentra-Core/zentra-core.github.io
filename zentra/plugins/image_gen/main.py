@@ -65,8 +65,9 @@ class ImageGenTools:
                         from zentra.core.keys.key_manager import get_key_manager
                         manager = get_key_manager()
                         api_key = manager.get_key(provider)
+                        logger.info(f"[IMAGE_GEN] KeyManager returned: {'YES' if api_key else 'NONE'} for {provider}")
                     except ImportError:
-                        pass
+                        logger.error("[IMAGE_GEN] Could not import KeyManager")
 
                 if not api_key and provider in ["gemini", "gemini_native", "openai", "stability", "huggingface"]:
                     # Final fallback to raw os.environ if KeyManager is empty
@@ -76,11 +77,17 @@ class ImageGenTools:
                         "stability": "STABILITY_API_KEY",
                         "huggingface": "HUGGINGFACE_API_KEY",
                     }
-                    api_key = os.environ.get(env_map.get(provider, ""), "").strip()
+                    var_name = env_map.get(provider, "")
+                    api_key = os.environ.get(var_name, "").strip()
+                    logger.info(f"[IMAGE_GEN] OS ENV check for {var_name}: {'YES' if api_key else 'NONE'}")
 
                 if not api_key and provider != "pollinations":
+                    if last_error:
+                        logger.error(f"[IMAGE_GEN] All rotation keys failed for {provider}. Last error: {last_error}")
+                        raise last_error
+                    logger.error(f"[IMAGE_GEN] Final check failed. Provider={provider}, KeyManager had keys for: {list(manager._pools.keys()) if 'manager' in locals() else 'N/A'}")
                     # If we still have no key and it's not a free provider, we can't continue
-                    raise Exception(f"No API key available for {provider}. Add one in Key Manager or .env")
+                    raise Exception(f"No API key available for {provider}. Add at least one valid key in Key Manager or .env")
 
                 try:
                     logger.info(f"[IMAGE_GEN] Attempt {attempt}/{max_attempts} via {provider}/{model}")
