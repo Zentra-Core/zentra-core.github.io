@@ -258,14 +258,15 @@ function renderPlugins(plugins) {
     const pCfg = plugins[tag] || { enabled: true };
     const on = pCfg.enabled !== false;
     const lazyOn = pCfg.lazy_load === true;
-    const desc = descs[tag] || m.label;
+    const translatedName = window.t ? window.t(m.label) : m.label;
+    const desc = descs[tag] || translatedName;
     const icon = m.icon || '🧩';
 
     html += `<div class="plugin-row">
       <div class="plugin-info-main">
         <span class="p-icon">${icon}</span>
         <div class="plugin-meta">
-            <div class="plugin-name">${m.label} <span class="p-tag">${tag}</span>
+            <div class="plugin-name">${translatedName} <span class="p-tag">${tag}</span>
               <label class="lazy-label"><input type="checkbox" data-plugin-lazy="${tag}" ${lazyOn?'checked':''}> Lazy</label>
             </div>
             <div class="plugin-desc">${desc}</div>

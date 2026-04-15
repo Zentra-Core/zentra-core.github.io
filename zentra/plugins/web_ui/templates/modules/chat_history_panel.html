@@ -1,40 +1,40 @@
 <!-- CHAT HISTORY PANEL - included in chat_sidebar.html -->
 <div class="sidebar-section" id="chat-history-section">
   <div class="sidebar-label" style="display:flex; justify-content:space-between; align-items:center; padding-right:10px;">
-    <span>CONVERSAZIONI</span>
-    <span title="Elimina tutte le chat" style="cursor:pointer; font-size:12px; opacity:0.5; transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5" onclick="window.deleteAllChatSessions(event)">🗑️</span>
+    <span>{{ t('webui_chat_history_label') }}</span>
+    <span title="{{ t('webui_chat_delete_all_title') }}" style="cursor:pointer; font-size:12px; opacity:0.5; transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5" onclick="window.deleteAllChatSessions(event)">🗑️</span>
   </div>
 
   <!-- ── Mode Picker ──────────────────────────────────────────── -->
   <div id="chat-mode-picker" class="chat-mode-picker">
     <button class="mode-btn" id="mode-btn-normal"
             onclick="window.selectChatMode('normal')"
-            title="Modalità normale: la cronologia viene conservata">
+            title="{{ t('webui_chat_mode_normal_tip') }}">
       <span class="mode-icon">☁️</span>
       <span class="mode-label">Normal</span>
     </button>
     <button class="mode-btn" id="mode-btn-auto_wipe"
             onclick="window.selectChatMode('auto_wipe')"
-            title="Auto-Wipe: i messaggi vengono cancellati alla chiusura">
+            title="{{ t('webui_chat_mode_autowipe_tip') }}">
       <span class="mode-icon">🧹</span>
       <span class="mode-label">Auto-Wipe</span>
     </button>
     <button class="mode-btn" id="mode-btn-incognito"
             onclick="window.selectChatMode('incognito')"
-            title="Incognito: nessuna scrittura su disco, zero tracce">
+            title="{{ t('webui_chat_mode_incognito_tip') }}">
       <span class="mode-icon">🕵️</span>
       <span class="mode-label">Incognito</span>
     </button>
   </div>
   <div id="mode-lock-notice" class="mode-lock-notice" style="display:none;">
-    🔒 Modalità bloccata
+    🔒 {{ t('webui_chat_mode_locked') }}
   </div>
   <!-- ──────────────────────────────────────────────────────────── -->
 
   <!-- New Chat button -->
   <div style="margin-bottom:8px;">
     <button class="sidebar-btn" onclick="window.newChatSession()" style="width:100%; justify-content:center; font-size:12px; padding:8px 6px;">
-      <span class="icon">💬</span> Nuova Chat
+      <span class="icon">💬</span> {{ t('webui_chat_new') }}
     </button>
   </div>
 

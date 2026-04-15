@@ -76,7 +76,18 @@
     prompt_web: "{{ t('webui_chat_prompt_web') }}",
     prompt_webcam: "{{ t('webui_chat_prompt_webcam') }}",
     none: "{{ t('webui_chat_none') }}",
-    loading: "{{ t('webui_chat_loading') }}"
+    loading: "{{ t('webui_chat_loading') }}",
+    
+    // Privacy & History refactor keys
+    history_label: "{{ t('webui_chat_history_label') }}",
+    delete_all_title: "{{ t('webui_chat_delete_all_title') }}",
+    mode_normal_tip: "{{ t('webui_chat_mode_normal_tip') }}",
+    mode_autowipe_tip: "{{ t('webui_chat_mode_autowipe_tip') }}",
+    mode_incognito_tip: "{{ t('webui_chat_mode_incognito_tip') }}",
+    mode_locked: "{{ t('webui_chat_mode_locked') }}",
+    history_empty: "{{ t('webui_chat_history_empty') }}",
+    delete_confirm_all: "{{ t('webui_chat_delete_confirm_all') }}",
+    interrupted: "{{ t('webui_chat_interrupted') }}"
   };
 </script>
 <script>
@@ -88,7 +99,7 @@
 <script src="/static/js/chat_renderer.js?v=2"></script>
 <script src="/static/js/agent/agent_traces.js?v=4"></script>
 <!-- Refactored Chat Logic Modules -->
-<script src="/static/js/chat_ui.js?v=1"></script>
+<script src="/static/js/chat_ui.js?v=2"></script>
 <script src="/static/js/chat_api.js?v=2"></script>
 <script src="/static/js/chat_events.js?v=1"></script>
 <script src="/static/js/audio_controls.js?v=1"></script>
@@ -102,7 +113,7 @@
 <script src="/static/js/audio_ui.js?v=1"></script>
 <script src="/static/js/mobile/mobile_logic.js?v=1"></script>
 <script src="/static/js/pull_to_refresh.js"></script>
-<script src="/static/js/chat_history.js?v=6"></script>
+<script src="/static/js/chat_history.js?v=7"></script>
 <!-- Remote Triggers (Media keys, Arduino Hooks) -->
 {% if zconfig.plugins.REMOTE_TRIGGERS and zconfig.plugins.REMOTE_TRIGGERS.enabled != False %}
 <script src="/remote_triggers_static/js/remote_triggers.js"></script>

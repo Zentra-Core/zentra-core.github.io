@@ -654,6 +654,15 @@
         "webui_drive_folder_name_ph": "Nome cartella...",
         "webui_drive_create": "Crea",
         "webui_drive_drive_sel_hint": "Cambio disco / periferica",
-        "webui_drive_edit": "Modifica"
+        "webui_drive_edit": "Modifica",
+        "webui_chat_history_label": "CONVERSAZIONI",
+        "webui_chat_delete_all_title": "Elimina tutte le chat",
+        "webui_chat_mode_normal_tip": "Modalità normale: la cronologia viene conservata",
+        "webui_chat_mode_autowipe_tip": "Auto-Wipe: i messaggi vengono cancellati alla chiusura",
+        "webui_chat_mode_incognito_tip": "Incognito: nessuna scrittura su disco, zero tracce",
+        "webui_chat_mode_locked": "Modalità bloccata",
+        "webui_chat_history_empty": "Nessuna conversazione salvata",
+        "webui_chat_delete_confirm_all": "Eliminare TUTTE le conversazioni? L'operazione non è reversibile e cancellerà in modo definitivo sia le chat normali che quelle private.",
+        "webui_chat_interrupted": "Interrotto"
     }
 }

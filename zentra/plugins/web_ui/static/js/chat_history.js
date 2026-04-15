@@ -84,7 +84,7 @@ function renderSessionList() {
     const activeId = window.chatHistoryState.activeSessionId;
 
     if (!sessions.length) {
-        container.innerHTML = '<div class="history-empty">Nessuna conversazione salvata</div>';
+        container.innerHTML = `<div class="history-empty">${window.I18N?.webui_chat_history_empty || 'No conversations saved'}</div>`;
         return;
     }
 
@@ -195,7 +195,8 @@ window.deleteChatSession = async function (e, sessionId) {
 
 window.deleteAllChatSessions = async function (e) {
     if (e) e.stopPropagation();
-    if (!confirm('Eliminare TUTTE le conversazioni? L\'operazione non è reversibile e cancellerà in modo definitivo sia le chat normali che quelle private.')) return;
+    const msg = window.I18N?.webui_chat_delete_confirm_all || 'Delete ALL conversations? This cannot be undone.';
+    if (!confirm(msg)) return;
     const res = await _historyPost(`/api/chat/sessions/all`, {}, 'DELETE');
     if (res.ok) {
         if (window._clearChatDOM) window._clearChatDOM();

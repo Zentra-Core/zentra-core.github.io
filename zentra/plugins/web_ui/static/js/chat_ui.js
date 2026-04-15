@@ -85,7 +85,7 @@ window.stopVoice = async function() {
   window.isStreaming = false;
   if (sendBtn) sendBtn.disabled = false;
   if (window._liveBackendAiBubble) {
-    window._liveBackendAiBubble.innerHTML = '<em style="color:var(--muted)">⛔ Interrotto</em>';
+    window._liveBackendAiBubble.innerHTML = `<em style="color:var(--muted)">⛔ ${window.I18N?.webui_chat_interrupted || 'Stopped'}</em>`;
     window._liveBackendAiBubble = null;
   }
   if (window.showStopVoiceBtn) window.showStopVoiceBtn(false);
