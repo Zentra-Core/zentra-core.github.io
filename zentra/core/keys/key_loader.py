@@ -107,8 +107,13 @@ def _parse_dotenv_extended(path: Path) -> List[Tuple[str, str, str]]:
                         description = after[1:].strip()
             else:
                 # No quotes — split on first #
+                # No quotes — split on first # (look for space-hash first for better precision, then any hash)
                 if " #" in unquoted:
                     val_part, _, desc_part = unquoted.partition(" #")
+                    value = val_part.strip()
+                    description = desc_part.strip()
+                elif "#" in unquoted:
+                    val_part, _, desc_part = unquoted.partition("#")
                     value = val_part.strip()
                     description = desc_part.strip()
                 elif "\t#" in unquoted:

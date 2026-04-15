@@ -19,8 +19,15 @@
     </div>
     <div class="field" id="igen-apikey-row" style="margin-top:10px;display:none;">
       <label id="igen-apikey-label">API Key</label>
-      <input type="password" id="igen-apikey" placeholder="sk-...">
-      <small style="color:var(--muted);font-size:11px;">Key also accepted from .env file.</small>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <input type="password" id="igen-apikey" placeholder="sk-..." style="flex:1;">
+        <input type="text" id="igen-apikey-comment" placeholder="Label / Comment..." style="flex:1;">
+        <div style="display:flex;align-items:center;gap:4px;white-space:nowrap;">
+          <input type="checkbox" id="igen-save-env" class="save-reset" style="width:auto;margin:0;">
+          <label for="igen-save-env" style="font-size:11px;color:var(--muted);margin:0;">Save to ENV</label>
+        </div>
+      </div>
+      <small style="color:var(--muted);font-size:11px;">Keys are also rotated from Key Manager / .env file.</small>
     </div>
     <div class="toggle-row">
       <div class="toggle-info" style="font-weight:600; color:var(--text);">Enable Image Generation</div>

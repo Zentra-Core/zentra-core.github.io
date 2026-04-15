@@ -415,10 +415,14 @@ async function saveConfig(silent = false) {
           setTimeout(() => location.reload(), 1500);
       } else {
           // Provide clear visual feedback for silent background saves
-          setSaveMsg('✓ Modifiche auto-salvate', 'ok');
+          setSaveMsg('✓ Changes auto-saved', 'ok');
+          // Reset any designated elements that should only be active for one save cycle
+          document.querySelectorAll('.save-reset').forEach(el => {
+              if (el.type === 'checkbox') el.checked = false;
+          });
           setTimeout(() => {
               const msgEl = document.getElementById('save-msg');
-              if (msgEl && msgEl.textContent.includes('auto-salvate')) {
+              if (msgEl && msgEl.textContent.includes('auto-saved')) {
                   setSaveMsg('', 'muted'); // Clear message without reloading
               }
           }, 3500);

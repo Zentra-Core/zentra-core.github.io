@@ -45,6 +45,7 @@ function populateMediaUI() {
     setVal('igen-height', igen.height || 1024);
     setCheck('igen-nologo', igen.nologo ?? true);
     setVal('igen-apikey', igen.api_key || '');
+    setVal('igen-apikey-comment', igen.api_key_comment || '');
     
     // New Advanced Fields
     setVal('igen-neg-prompt', igen.negative_prompt || '');
@@ -72,10 +73,12 @@ function buildMediaPayload() {
             height: parseInt(document.getElementById('igen-height').value) || 1024,
             nologo: document.getElementById('igen-nologo').checked,
             api_key: document.getElementById('igen-apikey').value.trim(),
+            api_key_comment: document.getElementById('igen-apikey-comment').value.trim(),
             negative_prompt: document.getElementById('igen-neg-prompt').value.trim(),
             guidance_scale: parseFloat(document.getElementById('igen-guidance').value) || 7.5,
             num_inference_steps: parseInt(document.getElementById('igen-steps').value) || 30,
-            auto_enrich: document.getElementById('igen-auto-enrich').checked
+            auto_enrich: document.getElementById('igen-auto-enrich').checked,
+            _internal_save_to_env: document.getElementById('igen-save-env')?.checked || false
         }
     };
 }

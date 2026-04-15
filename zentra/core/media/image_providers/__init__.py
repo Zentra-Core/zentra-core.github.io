@@ -83,8 +83,8 @@ def generate_image(prompt: str, provider: str, model: str, width: int, height: i
             return filename
         except Exception as e:
             err_msg = str(e)
-            # Standardize common safety-related HTTP errors if possible
-            if "400" in err_msg:
+            # Standardize common safety-related HTTP errors if possible, unless it's a known hardware/loading issue
+            if "400" in err_msg and "CUDA out of memory" not in err_msg and "loading" not in err_msg:
                 err_msg = f"Potential safety/content block ({err_msg})"
             
             log_debug(f"[ImageEngine] {provider} failed: {err_msg}")
