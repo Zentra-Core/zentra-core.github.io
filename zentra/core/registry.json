@@ -1,17 +1,4 @@
 {
-    "DOMOTICA": {
-        "description": "Smart Home control. Currently in integration phase.",
-        "commands": {
-            "get_home_status": "Provides a summary of the status of smart home devices (e.g., temperature, lights on)."
-        },
-        "status": "ONLINE (DORMANT)",
-        "example": "",
-        "routing_instructions": "",
-        "is_class_based": true,
-        "is_lazy": true,
-        "icon": "",
-        "category": "PLUGINS"
-    },
     "DRIVE": {
         "description": "Interfaccia Web per la gestione dei file (Upload, Download, Folder Explorer). È lo spazio di archiviazione personale dell'utente accessibile da WebUI.",
         "commands": {
@@ -131,36 +118,6 @@
         "routing_instructions": "",
         "is_class_based": true,
         "is_lazy": true,
-        "icon": "",
-        "category": "PLUGINS"
-    },
-    "REMOTE_TRIGGERS": {
-        "description": "PTT activation from hardware devices and remote clients",
-        "commands": {
-            "info": "Method"
-        },
-        "status": "online",
-        "example": "",
-        "routing_instructions": "",
-        "is_class_based": true,
-        "icon": "",
-        "category": "PLUGINS"
-    },
-    "ROLEPLAY_ELITE": {
-        "description": "Manages roleplay mode: loads characters and scenes for immersive conversations.",
-        "commands": {
-            "list_characters": "Lists all characters available for roleplaying.",
-            "list_scenes": "Lists all scenes available for roleplaying.",
-            "load_character": "Loads a character by name to interpret their role.",
-            "load_scene": "Loads a specific setting or scene for roleplaying.",
-            "reset_roleplay": "Complete reset of active characters and scenes.",
-            "unload_character": "Deactivates the current character and returns to the normal personality.",
-            "unload_scene": "Removes the current scene or setting."
-        },
-        "status": "plugin_roleplay_status_online",
-        "example": "",
-        "routing_instructions": "",
-        "is_class_based": true,
         "icon": "",
         "category": "PLUGINS"
     },
