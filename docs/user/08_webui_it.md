@@ -7,8 +7,9 @@ La WebUI di Zentra è l'interfaccia grafica moderna accessibile tramite il tuo b
 - **Configurazione Grafica**: Permette di modificare ogni aspetto di Zentra tramite menu intuitivi, senza dover modificare manualmente i file YAML.
 - **Microfono e Camera**: Grazie alla cifratura Zentra PKI, puoi usare il microfono e la webcam del tuo browser per interagire con l'IA anche da remoto sulla tua rete locale.
 - **Gestione Utenti (Multi-User)**: Il tab "Users" permette di gestire profili multipli, cambiare avatar e bio note personali. Ogni utente ha un "Vault" isolato.
-- **Cronologia Sessioni**: Un nuovo pannello laterale permette di gestire conversazioni multiple. Ogni sessione è salvata in modo persistente nell'Episodic Memory Vault, può essere rinominata o eliminata.
-- **Modalità Privacy**: Switch rapido tra tre livelli:
-  - `👁 Normale`: Tutti i messaggi vengono salvati.
-  - `🔒 Auto-Wipe`: I messaggi vengono cancellati automaticamente alla chiusura della sessione.
-  - `🕵️ Incognito`: Nessun dato viene mai scritto su disco; tutto rimane solo in memoria RAM.
+- **Cronologia Sessioni**: Un nuovo pannello laterale permette di gestire conversazioni multiple. Ogni sessione è salvata in modo persistente nell'Episodic Memory Vault, può essere rinominata o eliminata. È presente un pulsante 🗑️ per la cancellazione rapida di tutte le chat.
+- **Sidebar Dinamica**: La barra laterale si adatta istantaneamente caricando solo i plugin configurati e attivi.
+- **Modalità Privacy a 3 Livelli (v0.18.0)**: Selettore avanzato che blocca la modalità dopo l'invio del primo messaggio:
+  - `☁️ Normale`: Messaggi salvati permanentemente nel database locale.
+  - `🔒 Auto-Wipe`: Messaggi conservati in RAM finché il sistema è attivo; cancellati al riavvio.
+  - `🕵️ Incognito`: Traccia zero. I messaggi non vengono mai scritti e il contesto viene rimosso al cambio della chat.
