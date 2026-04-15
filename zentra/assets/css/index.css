@@ -888,28 +888,19 @@ input:checked + .slider:before { transform: translateX(20px); background: white;
 /* --- Filter Tabs (Categories) --- */
 .filter-tabs {
     display: flex;
-    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
     margin-bottom: 25px;
-    padding: 5px 15px; /* Added internal padding */
+    padding: 10px 5px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 14px;
     border: 1px solid var(--border);
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-.filter-tabs::-webkit-scrollbar { display: none; }
-
-/* Force space after the last button in horizontal scroll */
-.filter-tabs::after {
-    content: '';
-    display: block;
-    min-width: 15px;
-    height: 10px;
 }
 
 
 .filter-btn {
-    padding: 8px 18px;
+    padding: 8px 14px;
     background: transparent;
     border: 1px solid transparent;
     border-radius: 10px;
@@ -921,7 +912,7 @@ input:checked + .slider:before { transform: translateX(20px); background: white;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .filter-btn:hover {
@@ -950,12 +941,17 @@ input:checked + .slider:before { transform: translateX(20px); background: white;
 
 @media (max-width: 768px) {
     .filter-tabs {
-        margin-bottom: 15px;
-        padding: 4px;
+        margin: 0 -4px 15px -4px;
+        padding: 4px 0;
+        gap: 3px;
     }
     .filter-btn {
-        padding: 6px 12px;
-        font-size: 12px;
+        padding: 4px 5px;
+        font-size: 10px;
+        gap: 3px;
+    }
+    .filter-btn .btn-badge {
+        padding: 1px 3px;
     }
 }
 
