@@ -262,10 +262,12 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
         from flask import render_template, make_response
         from flask_login import current_user
         from zentra.core.auth.auth_manager import auth_mgr
+        from zentra.core.i18n.translator import get_translator
         try:
             profile = auth_mgr.get_profile(current_user.username) if current_user.is_authenticated else None
+            translations = get_translator().get_translations()
             # Pass Zentra config as 'zconfig' to avoid conflict with Flask's 'config'
-            resp = make_response(render_template("chat.html", profile=profile, zconfig=cfg_mgr.config))
+            resp = make_response(render_template("chat.html", profile=profile, zconfig=cfg_mgr.config, translations=translations))
             resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
             resp.headers["Pragma"] = "no-cache"
             return resp

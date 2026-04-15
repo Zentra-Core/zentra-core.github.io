@@ -117,7 +117,7 @@ window.refreshStatus = async function() {
     if (sbS) sbS.textContent = d.persona || '—';
 
     const isConnected = !!d.model;
-    if (tbM) tbM.textContent = isConnected ? 'Online' : (window.I18N.offline || 'Offline');
+    if (tbM) tbM.textContent = isConnected ? 'Online' : (window.t ? window.t('webui_chat_offline') : 'Offline');
     const tbDot = document.getElementById('tb-status-dot');
     if (tbDot) {
         tbDot.style.background = isConnected ? 'var(--green)' : 'var(--red)';
@@ -152,7 +152,7 @@ window.refreshStatus = async function() {
 
   } catch(e) {
     const tbDot = document.getElementById('tb-status-dot');
-    if (tbM) tbM.textContent = window.I18N.offline || 'Offline';
+    if (tbM) tbM.textContent = window.t ? window.t('webui_chat_offline') : 'Offline';
     if (tbDot) {
         tbDot.style.background = 'var(--red)';
         tbDot.style.boxShadow = '0 0 8px var(--red)';
@@ -162,48 +162,8 @@ window.refreshStatus = async function() {
 };
 
 window.loadPlugins = async function() {
-  try {
-    const cfg = await (await fetch('/zentra/config')).json();
-    const pluginsConfig = cfg.plugins || {};
-    
-    // Define which modules show up in the sidebar and their quick-action prompt keys
-    const sidebarPrompts = {
-      'dashboard': 'webui_chat_prompt_dashboard',
-      'help':      'webui_chat_prompt_help',
-      'media':     'webui_chat_prompt_media',
-      'roleplay_elite': 'webui_chat_prompt_roleplay',
-      'web':       'webui_chat_prompt_web',
-      'webcam':    'webui_chat_prompt_webcam',
-      'igen':      'webui_chat_prompt_igen',
-      'drive':     'webui_chat_prompt_drive',
-      'studio':    'webui_chat_prompt_studio'
-    };
-    
-    let html = '';
-    const modules = window.CONFIG_HUB?.modules || [];
-    
-    // Iterate over centralized modules to ensure consistent metadata
-    for (const m of modules) {
-      if (!m.pluginTag) continue;
-      
-      const isEnabled = pluginsConfig[m.pluginTag]?.enabled !== false;
-      if (!isEnabled) continue; // Only show actually active plugins
-      
-      const promptKey = sidebarPrompts[m.id];
-      if (!promptKey) continue; // Only show those with a specific sidebar action
-      
-      const promptText = (window.I18N[promptKey] || '').replace(/'/g, "\\'");
-      const icon = window.getIconForModule(m.id, m.label, m.icon);
-      const label = window.t ? window.t(m.label) : m.id.toUpperCase();
-      
-      html += `<div class="sidebar-btn" onclick="window.startPrompt('${promptText}')" style="font-size:12px; cursor:pointer;"><span class="icon">${icon}</span> ${label}</div>`;
-    }
-    
-    const sbP = document.getElementById('sb-plugins');
-    if (sbP) sbP.innerHTML = html || `<div style="font-size:12px;color:var(--muted);">${window.I18N.none || 'None'}</div>`;
-  } catch(e){
-    console.error("[Sidebar] Error loading plugins:", e);
-  }
+  // HIDDEN: the user requested to remove the Active Plugins section from the sidebar for now
+  // to save space and unnecessary processing.
 };
 
 window.toggleSidebarDesktop = function() {

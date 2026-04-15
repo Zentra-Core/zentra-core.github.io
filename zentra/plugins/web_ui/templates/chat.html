@@ -62,36 +62,8 @@
 
 <script>
   // I18N Strings for external JS
-  window.I18N = {
-    offline: "{{ t('webui_chat_offline') }}",
-    chat_hint: "{{ t('webui_chat_hint') }}",
-    ptt_hint: "{{ t('ptt_hint') }}",
-    err_connected: "{{ t('webui_chat_err_connected') }}",
-    err_general: "{{ t('webui_chat_err_general') }}",
-    prompt_dashboard: "{{ t('webui_chat_prompt_dashboard') }}",
-    prompt_help: "{{ t('webui_chat_prompt_help') }}",
-    prompt_media: "{{ t('webui_chat_prompt_media') }}",
-    prompt_roleplay: "{{ t('webui_chat_prompt_roleplay') }}",
-    prompt_system: "{{ t('webui_chat_prompt_system') }}",
-    prompt_web: "{{ t('webui_chat_prompt_web') }}",
-    prompt_webcam: "{{ t('webui_chat_prompt_webcam') }}",
-    prompt_igen: "{{ t('webui_chat_prompt_igen') }}",
-    prompt_drive: "{{ t('webui_chat_prompt_drive') }}",
-    prompt_studio: "{{ t('webui_chat_prompt_studio') }}",
-    none: "{{ t('webui_chat_none') }}",
-    loading: "{{ t('webui_chat_loading') }}",
-    
-    // Privacy & History refactor keys
-    history_label: "{{ t('webui_chat_history_label') }}",
-    delete_all_title: "{{ t('webui_chat_delete_all_title') }}",
-    mode_normal_tip: "{{ t('webui_chat_mode_normal_tip') }}",
-    mode_autowipe_tip: "{{ t('webui_chat_mode_autowipe_tip') }}",
-    mode_incognito_tip: "{{ t('webui_chat_mode_incognito_tip') }}",
-    mode_locked: "{{ t('webui_chat_mode_locked') }}",
-    history_empty: "{{ t('webui_chat_history_empty') }}",
-    delete_confirm_all: "{{ t('webui_chat_delete_confirm_all') }}",
-    interrupted: "{{ t('webui_chat_interrupted') }}"
-  };
+  window.I18N = {{ translations | tojson | safe }};
+
 
   /**
    * Global translation function for Frontend JS
