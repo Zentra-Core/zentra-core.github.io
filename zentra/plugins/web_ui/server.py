@@ -251,12 +251,22 @@ class ZentraWebUIServer:
                     f"{scheme}://{lan_ip}:{self.port}/chat  |  "
                     f"{scheme}://{lan_ip}:{self.port}/zentra/config/ui"
                 )
+                # Suppress Flask's "* Serving Flask app / * Debug mode" banner.
+                # Those lines print directly to stdout and would corrupt the
+                # Zentra console prompt. Zentra already shows its own link banner.
+                try:
+                    import flask.cli as _flask_cli
+                    _flask_cli.show_server_banner = lambda *a, **kw: None
+                except Exception:
+                    pass
+
                 # We disable reloader to avoid starting Zentra threads twice
                 # Bind to 0.0.0.0 to handle localhost/127.0.0.1/::1 issues on Windows
                 if ssl_context:
                     app.run(host="0.0.0.0", port=self.port, debug=debug_on, use_reloader=False, ssl_context=ssl_context)
                 else:
                     app.run(host="0.0.0.0", port=self.port, debug=debug_on, use_reloader=False)
+
             except Exception as e:
                 self.logger.error(f"[WebUI] Flask exception: {e}")
 

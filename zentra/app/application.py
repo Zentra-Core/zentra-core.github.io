@@ -116,19 +116,28 @@ class ZentraApplication:
         else:
             ui_updater.stop()
 
-        self.bootstrapper.show_welcome()
-
-        # Avvia thread ascolto
-        ascolto_thread = AscoltoThread(self.state_manager)
-        ascolto_thread.start()
-
-        # [WEB_UI] Inject live managers into plugin if active
+        # [WEB_UI] Inject live managers into plugin if active, then start the Flask server.
+        # Must happen BEFORE show_welcome() so the link info is printed after server is live.
         web_ui_mod = plugin_loader.get_plugin_module("WEB_UI")
         if web_ui_mod and hasattr(web_ui_mod, "tools"):
             if hasattr(web_ui_mod.tools, "set_config_manager"):
                 web_ui_mod.tools.set_config_manager(self.config_manager)
             if hasattr(web_ui_mod.tools, "set_state_manager"):
                 web_ui_mod.tools.set_state_manager(self.state_manager)
+            # Start the Flask server now that managers are injected.
+            # In console mode this is never triggered otherwise (the server starts
+            # lazily only when the agent calls open_browser/get_panel_url).
+            if hasattr(web_ui_mod.tools, "_ensure_server"):
+                try:
+                    web_ui_mod.tools._ensure_server()
+                except Exception as _ws_e:
+                    logger.warning(f"[APP] WebUI server startup error: {_ws_e}")
+
+        self.bootstrapper.show_welcome()
+
+        # Avvia thread ascolto
+        ascolto_thread = AscoltoThread(self.state_manager)
+        ascolto_thread.start()
 
         sys.stdout.write(prefisso)
         sys.stdout.flush()
