@@ -93,11 +93,38 @@ class CognitionConfig(BaseModel):
 
 # ─── FILTERS ──────────────────────────────────────────────────────────────────
 
+class CustomFilterObj(BaseModel):
+    find: str
+    replace: str = ""
+    target: str = "both" # voice, text, both
+
 class FiltersConfig(BaseModel):
-    remove_asterisks: bool = True
-    remove_round_brackets: bool = True
-    remove_square_brackets: bool = False
-    custom_replacements: Dict[str, str] = {}
+    remove_asterisks: str = "both"  # "none", "voice", "text", "both"
+    remove_round_brackets: str = "voice"
+    remove_square_brackets: str = "none"
+    custom_filters: List[CustomFilterObj] = Field(default_factory=list)
+    custom_replacements: Dict[str, str] = {} # Keep for legacy compatibility if needed
+
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source_type, handler):
+        # Apply pre-validation for backward compatibility
+        from pydantic_core import core_schema
+        schema = handler(source_type)
+        return core_schema.no_info_before_validator_function(cls._migrate_legacy_bools, schema)
+
+    @staticmethod
+    def _migrate_legacy_bools(values: Any) -> Any:
+        if not isinstance(values, dict):
+            return values
+        # Convert True -> "both" or "voice" based on old default behavior
+        # In early models, asterisks/round were True for voice. 
+        # But we just made them apply to both in the earlier fix! So True -> both.
+        # Actually, let's map True to "both" and False to "none"
+        for key in ["remove_asterisks", "remove_round_brackets", "remove_square_brackets"]:
+            val = values.get(key)
+            if isinstance(val, bool):
+                values[key] = "both" if val else "none"
+        return values
 
 
 # ─── LLM ──────────────────────────────────────────────────────────────────────

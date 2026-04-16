@@ -120,10 +120,10 @@ class ZentraApplication:
         # Must happen BEFORE show_welcome() so the link info is printed after server is live.
         web_ui_mod = plugin_loader.get_plugin_module("WEB_UI")
         if web_ui_mod and hasattr(web_ui_mod, "tools"):
-            if hasattr(web_ui_mod.tools, "set_config_manager"):
-                web_ui_mod.tools.set_config_manager(self.config_manager)
-            if hasattr(web_ui_mod.tools, "set_state_manager"):
-                web_ui_mod.tools.set_state_manager(self.state_manager)
+            if hasattr(web_ui_mod.tools, "_set_config_manager"):
+                web_ui_mod.tools._set_config_manager(self.config_manager)
+            if hasattr(web_ui_mod.tools, "_set_state_manager"):
+                web_ui_mod.tools._set_state_manager(self.state_manager)
             # Start the Flask server now that managers are injected.
             # In console mode this is never triggered otherwise (the server starts
             # lazily only when the agent calls open_browser/get_panel_url).

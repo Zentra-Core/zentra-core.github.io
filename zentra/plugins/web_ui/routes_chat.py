@@ -70,8 +70,8 @@ def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr, i
         time.sleep(0.4)
         # ─────────────────────────────────────────────────────────────────────
         
-        # The agent logic handles memory storage internally to avoid duplicates
-        full_text, _ = agent.run_agentic_loop(user_message, voice_status=False, images=images)
+        # Ensure voice string is processed by the processore.py properly isolating text/voice filters
+        full_text, clean_voice = agent.run_agentic_loop(user_message, voice_status=True, images=images)
 
         # ── Client Camera Interceptor ────────────────────────────────────────────
         # Check for [CAMERA_SNAPSHOT_REQUEST] BEFORE the 40-char chunking loop.
@@ -100,7 +100,8 @@ def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr, i
         sess["history"].append({"role": "user",      "content": user_message})
         sess["history"].append({"role": "assistant",  "content": full_text})
 
-        audio_status = _maybe_generate_tts(full_text, cfg_mgr)
+        # Send the isolated voice string to the TTS engine, NOT the text string
+        audio_status = _maybe_generate_tts(clean_voice, cfg_mgr)
         if audio_status == "web":
             sess["queue"].put({"type": "audio_ready", "text": ""})
         elif audio_status == "system":

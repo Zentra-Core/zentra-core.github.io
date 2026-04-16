@@ -66,7 +66,7 @@ class WebUIPlugin:
         self._server_started = False
         self._url = f"http://127.0.0.1:{self._port}"
 
-    def set_config_manager(self, cfg_mgr):
+    def _set_config_manager(self, cfg_mgr):
         """Injects the live ConfigManager from the main application."""
         self._cfg_mgr = cfg_mgr
         if cfg_mgr:
@@ -74,7 +74,7 @@ class WebUIPlugin:
             self._auto_open = cfg_mgr.config.get("plugins", {}).get("WEB_UI", {}).get("auto_open_browser", False)
             self._url = f"http://127.0.0.1:{self._port}"
 
-    def set_state_manager(self, sm):
+    def _set_state_manager(self, sm):
         """Injects the live StateManager from the main application."""
         from .server import set_state_manager
         set_state_manager(sm)
@@ -102,7 +102,7 @@ class WebUIPlugin:
         return "http"
 
     @property
-    def status(self) -> str:
+    def _status(self) -> str:
         self._ensure_server()
         scheme = self._get_scheme()
         return f"Online → {scheme}://127.0.0.1:{self._port}/chat"

@@ -51,10 +51,11 @@ def init_config_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
                 
                 # Update the processor and registry at runtime
                 try:
-                    from zentra.core.processing import processore
+                    from zentra.core.processing import processore, filtri
                     from zentra.core.system import plugin_loader
                     processore.configure(cfg_mgr.config)
                     plugin_loader.update_capability_registry(cfg_mgr.config, debug_log=False)
+                    filtri.reset_cache()
                 except Exception as e:
                     logger.debug(f"[WebUI] Processor runtime sync error: {e}")
                     

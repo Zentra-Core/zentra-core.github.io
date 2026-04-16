@@ -135,9 +135,14 @@ function populateUI() {
     setVal('br-delay', br.chunk_delay_ms ?? 0);
 
     const fi = c.filters || {};
-    setCheck('fl-ast', fi.remove_asterisks ?? false);
-    setCheck('fl-tonde', fi.remove_round_brackets ?? false);
-    setCheck('fl-quadre', fi.remove_square_brackets ?? false);
+    // Backward compatibility: boolean to string handled in python, but UI might get bools if cache wasn't cleared
+    setVal('fl-ast', fi.remove_asterisks === true ? 'both' : fi.remove_asterisks === false ? 'none' : fi.remove_asterisks || 'both');
+    setVal('fl-tonde', fi.remove_round_brackets === true ? 'both' : fi.remove_round_brackets === false ? 'none' : fi.remove_round_brackets || 'voice');
+    setVal('fl-quadre', fi.remove_square_brackets === true ? 'both' : fi.remove_square_brackets === false ? 'none' : fi.remove_square_brackets || 'none');
+    
+    if (window.ZentraTextFilters) {
+        window.ZentraTextFilters.populate(fi.custom_filters || []);
+    }
 
     // 2. Audio Module Dispatch
     if (typeof populateAudioUI === 'function') populateAudioUI();
@@ -343,9 +348,13 @@ function buildPayload() {
     out.bridge.chunk_delay_ms      = parseInt(getV('br-delay')) || 0;
 
     out.filters = out.filters || {};
-    out.filters.remove_asterisks       = getC('fl-ast');
-    out.filters.remove_round_brackets  = getC('fl-tonde');
-    out.filters.remove_square_brackets = getC('fl-quadre');
+    out.filters.remove_asterisks       = getV('fl-ast');
+    out.filters.remove_round_brackets  = getV('fl-tonde');
+    out.filters.remove_square_brackets = getV('fl-quadre');
+    
+    if (window.ZentraTextFilters) {
+        out.filters.custom_filters = window.ZentraTextFilters.extract();
+    }
 
     // Dispatch to System Logic for its part of the payload
     if (typeof buildSystemPayload === 'function') {
@@ -533,3 +542,49 @@ window.renderPlugins = renderPlugins;
 window.buildPayload = buildPayload;
 window.isRestartNeeded = isRestartNeeded;
 window.populatePrivacyUI = populatePrivacyUI;
+
+// --- CUSTOM TEXT FILTERS HANDLER ---
+window.ZentraTextFilters = {
+    populate: function(filters) {
+        const container = document.getElementById('custom-filters-container');
+        if (!container) return;
+        container.innerHTML = '';
+        if (Array.isArray(filters)) {
+            filters.forEach(f => this.addPlaceholderRow(f.find, f.replace, f.target));
+        }
+    },
+    extract: function() {
+        const container = document.getElementById('custom-filters-container');
+        if (!container) return [];
+        const results = [];
+        container.querySelectorAll('.custom-filter-row').forEach(row => {
+            const find = row.querySelector('.cf-find').value;
+            if (!find) return;
+            const replace = row.querySelector('.cf-replace').value || '';
+            const target = row.querySelector('.cf-target').value || 'both';
+            results.push({ find, replace, target });
+        });
+        return results;
+    },
+    addPlaceholderRow: function(find = '', replace = '', target = 'both') {
+        const container = document.getElementById('custom-filters-container');
+        if (!container) return;
+        const div = document.createElement('div');
+        div.className = 'custom-filter-row';
+        div.style.display = 'flex';
+        div.style.gap = '8px';
+        div.style.alignItems = 'center';
+        
+        div.innerHTML = `
+            <input type="text" class="config-input cf-find" placeholder="Find..." value="${find.replace(/"/g, '&quot;')}" style="flex: 2; padding:4px 8px; font-size:12px;">
+            <input type="text" class="config-input cf-replace" placeholder="Replace..." value="${replace.replace(/"/g, '&quot;')}" style="flex: 2; padding:4px 8px; font-size:12px;">
+            <select class="config-input cf-target" style="flex: 1.5; padding:4px 8px; font-size:12px;">
+                <option value="both" ${target === 'both' ? 'selected' : ''}>Voice & Text</option>
+                <option value="voice" ${target === 'voice' ? 'selected' : ''}>Voice Only</option>
+                <option value="text" ${target === 'text' ? 'selected' : ''}>Text Only</option>
+            </select>
+            <button type="button" class="btn" onclick="this.parentElement.remove()" style="padding: 4px 8px; font-size: 10px; background: rgba(255,50,50,0.2); color:#ff5555;">X</button>
+        `;
+        container.appendChild(div);
+    }
+};
