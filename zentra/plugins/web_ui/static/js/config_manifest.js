@@ -16,7 +16,7 @@ window.CONFIG_HUB = {
     // Core Modules (not discovered via plugin loader)
     modules: [
         { id: 'backend',   label: 'hub_mod_backend',      icon: '🧠', cat: 'INTELLIGENZA' },
-        { id: 'llm',       label: 'hub_mod_llm',          icon: '🔑', cat: 'INTELLIGENZA' },
+
         { id: 'keymanager',label: 'hub_mod_keymanager',   icon: '🔐', cat: 'INTELLIGENZA' },
         { id: 'routing',   label: 'hub_mod_routing',      icon: '🚦', cat: 'INTELLIGENZA' },
         { id: 'ia',        label: 'hub_mod_persona',      icon: '🎭', cat: 'INTELLIGENZA' },

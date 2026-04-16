@@ -44,9 +44,6 @@ function populateMediaUI() {
     setVal('igen-width', igen.width  || 1024);
     setVal('igen-height', igen.height || 1024);
     setCheck('igen-nologo', igen.nologo ?? true);
-    setVal('igen-apikey', igen.api_key || '');
-    setVal('igen-apikey-comment', igen.api_key_comment || '');
-    
     // New Advanced Fields
     setVal('igen-neg-prompt', igen.negative_prompt || '');
     setVal('igen-guidance', igen.guidance_scale || 7.5);
@@ -72,36 +69,16 @@ function buildMediaPayload() {
             width: parseInt(document.getElementById('igen-width').value) || 1024,
             height: parseInt(document.getElementById('igen-height').value) || 1024,
             nologo: document.getElementById('igen-nologo').checked,
-            api_key: document.getElementById('igen-apikey').value.trim(),
-            api_key_comment: document.getElementById('igen-apikey-comment').value.trim(),
             negative_prompt: document.getElementById('igen-neg-prompt').value.trim(),
             guidance_scale: parseFloat(document.getElementById('igen-guidance').value) || 7.5,
             num_inference_steps: parseInt(document.getElementById('igen-steps').value) || 30,
-            auto_enrich: document.getElementById('igen-auto-enrich').checked,
-            _internal_save_to_env: document.getElementById('igen-save-env')?.checked || false
+            auto_enrich: document.getElementById('igen-auto-enrich').checked
         }
     };
 }
 
 function onProviderChanged() {
-  const provEl = document.getElementById('igen-provider');
-  const provider = provEl ? provEl.value : 'pollinations';
-  const keyRow  = document.getElementById('igen-apikey-row');
-  const keyLbl  = document.getElementById('igen-apikey-label');
-  
-  const labels = {
-    gemini:    'Gemini API Key (GEMINI_API_KEY)',
-    openai:    'OpenAI API Key (OPENAI_API_KEY)',
-    stability: 'Stability API Key (STABILITY_API_KEY)',
-    huggingface: 'Hugging Face Token (HUGGINGFACE_API_KEY)',
-  };
-
-  if (labels[provider]) {
-    if (keyRow) keyRow.style.display = '';
-    if (keyLbl) keyLbl.textContent   = labels[provider];
-  } else {
-    if (keyRow) keyRow.style.display = 'none';
-  }
+  // Provider UI toggles if any future ones are needed
 }
 
 async function refreshImageModels(restoreValue) {

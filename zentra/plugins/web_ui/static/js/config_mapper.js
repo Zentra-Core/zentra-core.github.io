@@ -100,7 +100,7 @@ function populateUI() {
     setCheck('llm-debug', llm.debug_llm ?? true);
     const prov = llm.providers || {};
     ['openai','anthropic','groq','gemini'].forEach(p => {
-      setVal('key-'+p, prov[p]?.api_key || '');
+
       setVal('models-'+p, (prov[p]?.models || []).join('\n'));
     });
 
@@ -315,8 +315,8 @@ function buildPayload() {
     out.llm.providers = out.llm.providers || {};
     ['openai','anthropic','groq','gemini'].forEach(p => {
       out.llm.providers[p] = out.llm.providers[p] || {};
-      const k = document.getElementById('key-'+p).value.trim();
-      if (k) out.llm.providers[p].api_key = k;
+
+
       const rawM = document.getElementById('models-'+p).value.trim();
       if (rawM) out.llm.providers[p].models = rawM.split('\n').map(s=>s.trim()).filter(Boolean);
     });

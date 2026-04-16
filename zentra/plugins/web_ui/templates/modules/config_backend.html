@@ -10,9 +10,19 @@
         <option value="kobold">{{ t('webui_conf_backend_kobold_opt') }}</option>
       </select>
     </div>
+
+  <div class="card" id="card-cloud-settings">
+    <div class="card-title">{{ t('webui_conf_llm_providers') }}</div>
+    <div class="toggle-row">
+      <div class="toggle-info">{{ t('webui_conf_llm_enable') }}<div class="toggle-sub">{{ t('webui_conf_llm_enable_sub') }}</div></div>
+      <label class="switch"><input type="checkbox" id="llm-allow-cloud"><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-info">LiteLLM Verbose Debug<div class="toggle-sub">Stampa log dettagliati di ogni richiesta AI (molto verboso)</div></div>
+      <label class="switch"><input type="checkbox" id="llm-debug"><span class="slider"></span></label>
+    </div>
   </div>
 
-  <div class="card" id="card-cloud">
     <div class="card-title">{{ t('webui_conf_cloud_title') }}</div>
     <div class="field">
       <label>{{ t('webui_conf_model_active') }}</label>
