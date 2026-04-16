@@ -60,6 +60,13 @@ def _get_quick_links(root_dir: str) -> list:
             "recursive": False, 
         },
         {
+            "id":    "gallery",
+            "title": "🖼️ Media Gallery",
+            "dirs":  ["zentra/media"],
+            "exts":  {".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4"},
+            "recursive": False,
+        },
+        {
             "id":    "env",
             "title": "🔒 Environment & Keys",
             "dirs":  ["zentra"],
@@ -69,6 +76,16 @@ def _get_quick_links(root_dir: str) -> list:
     ]
 
     groups = []
+    
+    # Manual group for Folder Shortcuts
+    groups.append({
+        "id": "shortcuts",
+        "title": "🚀 Shortcuts",
+        "items": [
+            {"name": "📁 Media Folder", "path": os.path.normpath(os.path.join(root_dir, "zentra/media")).replace("\\", "/")}
+        ]
+    })
+
     for grp in SCAN_GROUPS:
         items = []
         exclude_suffixes = grp.get("exclude", set())
@@ -314,6 +331,24 @@ def drive_download():
 
     logger.info(f"[Drive] Download: {target} by {current_user.username}")
     return send_file(target, as_attachment=True)
+
+
+# ─── VIEW (PREVIEW) ────────────────────────────────────────────────────────
+@drive_bp.route("/drive/api/view")
+@login_required
+def drive_view():
+    """GET /drive/api/view - Streams the file for browser-based preview (no attachment)."""
+    from .main import get_plugin
+    plugin = get_plugin()
+    root = plugin.get_root()
+    rel = request.args.get("path", "")
+    target = _safe_path(root, rel)
+
+    if target is None: abort(403)
+    if not os.path.isfile(target): abort(404)
+
+    # We use as_attachment=False to let the browser try to render it (images/videos)
+    return send_file(target, as_attachment=False)
 
 
 # ─── DELETE ────────────────────────────────────────────────────────────────

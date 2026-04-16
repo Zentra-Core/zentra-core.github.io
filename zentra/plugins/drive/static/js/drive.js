@@ -172,6 +172,41 @@ function openEditor(path) {
   window.open(`/drive/editor?path=${encodeURIComponent(path)}`, '_blank');
 }
 
+// ─── Media Preview ───────────────────────────────────────────────────────────
+const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg']);
+const VIDEO_EXTS = new Set(['mp4', 'webm', 'ogg', 'mov', 'm4v']);
+
+function isPreviewable(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  return IMAGE_EXTS.has(ext) || VIDEO_EXTS.has(ext);
+}
+
+function openPreview(path, name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const modal = document.getElementById('preview-modal');
+  const content = document.getElementById('preview-content');
+  const title = document.getElementById('preview-title');
+  if (!modal || !content) return;
+
+  title.textContent = name;
+  content.innerHTML = "⏳...";
+  modal.classList.add('show');
+  const viewUrl = `/drive/api/view?path=${encodeURIComponent(path)}`;
+
+  if (IMAGE_EXTS.has(ext)) {
+    content.innerHTML = `<img src="${viewUrl}" alt="${esc(name)}">`;
+  } else if (VIDEO_EXTS.has(ext)) {
+    content.innerHTML = `<video src="${viewUrl}" controls autoplay></video>`;
+  }
+}
+
+function closePreview() {
+  const modal = document.getElementById('preview-modal');
+  const content = document.getElementById('preview-content');
+  if (modal) modal.classList.remove('show');
+  if (content) content.innerHTML = ""; // Stop video playback
+}
+
 function sortBy(key) {
   sortAsc = (sortKey === key) ? !sortAsc : true;
   sortKey = key;
@@ -203,7 +238,9 @@ function renderTable() {
     const dateStr = e.modified ? new Date(e.modified * 1000).toLocaleString() : "—";
     const action  = e.is_dir
       ? `ondblclick="navigateTo('${esc(e.path)}')" onclick="void(0)"`
-      : `onclick="downloadFile('${esc(e.path)}')"`;
+      : (isPreviewable(e.name) 
+          ? `onclick="openPreview('${esc(e.path)}', '${esc(e.name)}')"` 
+          : `onclick="downloadFile('${esc(e.path)}')"`);
 
     return `<tr>
       <td class="name-cell" ${action}>
@@ -217,6 +254,9 @@ function renderTable() {
         ${e.is_dir
           ? `<button onclick="navigateTo('${esc(e.path)}')" title="Apri">📂</button>`
           : `<button onclick="downloadFile('${esc(e.path)}')" title="Scarica">⬇️</button>`}
+        ${!e.is_dir && isPreviewable(e.name)
+          ? `<button onclick="openPreview('${esc(e.path)}', '${esc(e.name)}')" title="Anteprima">👁️</button>`
+          : ''}
         ${!e.is_dir && isEditable(e.name)
           ? `<button onclick="openEditor('${esc(e.path)}')" title="${window.t ? window.t('webui_drive_edit') : 'Edit'}" style="color:#58a6ff;">✏️</button>`
           : ''}
