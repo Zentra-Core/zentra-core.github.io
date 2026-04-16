@@ -34,6 +34,7 @@
         "waiting": "WAITING",
         "online": "ONLINE",
         "loading": "LOADING...",
+        "igen_response_prefix": "Here is the image of **{prompt}**:",
         "no_active_protocols": "No active protocols detected.",
         "cleaning": "Cleaning in progress...",
         "intro_greeting": "Hello, I am Zentra",

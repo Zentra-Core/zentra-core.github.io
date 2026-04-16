@@ -6,6 +6,7 @@ try:
     from zentra.core.logging import logger
     from zentra.core.media_config import get_media_config
     from zentra.core.media.image_providers import generate_image, get_models_for_provider
+    from zentra.core.i18n import translator
 except ImportError as _e:
     class _DummyLogger:
         def error(self, *a): print("[IMAGE_GEN ERR]", *a)
@@ -108,8 +109,14 @@ class ImageGenTools:
                         enrich_keywords=enrich_keywords,
                         style=style
                     )
-                    clean_prompt = prompt.strip()[:80]
-                    return f"Here is the image of **{clean_prompt}**:\n\n[[IMG:{filename}]]"
+                    # Increased limit from 80 to 256 to avoid truncation. 
+                    # Use ellipsis if still too long.
+                    clean_prompt = prompt.strip()
+                    if len(clean_prompt) > 250:
+                        clean_prompt = clean_prompt[:247] + "..."
+                    
+                    prefix = translator.t("igen_response_prefix", prompt=clean_prompt)
+                    return f"{prefix}\n\n[[IMG:{filename}]]"
 
                 except Exception as e:
                     last_error = e

@@ -32,6 +32,7 @@
         "offline": "DISATTIVATO",
         "online": "ATTIVO",
         "loading": "CARICAMENTO...",
+        "igen_response_prefix": "Ecco la foto di **{prompt}**:",
         "help_title": "MANUALE AZIONALE DI ZENTRA",
         "help_scanning": "Scansione dei Plugin Attivi e Disattivati...",
         "help_no_modules": "Nessun modulo rilevato in /plugins o /plugins_disabled.",
