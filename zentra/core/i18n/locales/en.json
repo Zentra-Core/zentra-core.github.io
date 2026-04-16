@@ -559,6 +559,8 @@
         "webui_km_available": "available",
         "webui_km_cooldown": "in cooldown",
         "webui_km_btn_reset_prov": "Reset provider",
+        "webui_km_btn_validate": "Test Key",
+        "webui_km_btn_validate_prov": "Validate All",
         "webui_voice_routing_in": "Input (Listening) Routing",
         "webui_voice_routing_out": "Output (Voice Routing)",
         "webui_voice_pc_mic": "PC Microphone (Local)",

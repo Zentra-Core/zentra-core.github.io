@@ -8,8 +8,9 @@ import threading
 import time
 from typing import Dict, List, Optional
 
-from zentra.core.keys.key_store import ApiKeyEntry, STATUS_VALID, STATUS_UNKNOWN, STATUS_INVALID
+from zentra.core.keys.key_store import ApiKeyEntry, STATUS_VALID, STATUS_UNKNOWN, STATUS_INVALID, STATUS_RATE_LIMITED
 from zentra.core.keys import key_loader as _loader
+from zentra.core.keys import key_validator as _validator
 
 # Default cooldown for rate-limited keys (seconds)
 DEFAULT_COOLDOWN = 60.0
@@ -136,6 +137,40 @@ class KeyManager:
             entry = self.get_entry(provider, value)
             if entry:
                 entry.mark_valid()
+
+    def validate_key(self, provider: str, value: str) -> dict:
+        """
+        Actively validate a key by calling the provider's API.
+        Updates key status based on result.
+        """
+        provider = provider.lower()
+        res = _validator.validate_key(provider, value)
+        
+        with self._pool_lock:
+            entry = self.get_entry(provider, value)
+            if entry:
+                if res["status"] == "valid":
+                    entry.mark_valid()
+                elif res["status"] == "invalid":
+                    entry.mark_invalid()
+                elif res["status"] == "rate_limited":
+                    # Mark rate limited with a long cooldown if it's a validation failure
+                    # (implies quota likely exhausted) — 2 hours.
+                    entry.mark_rate_limited(cooldown_seconds=7200)
+        
+        return res
+
+    def validate_provider(self, provider: str) -> List[dict]:
+        """Validate all keys in a provider pool."""
+        provider = provider.lower()
+        results = []
+        with self._pool_lock:
+            pool = self._pools.get(provider, [])
+            keys = [e.value for e in pool]
+        
+        for k in keys:
+            results.append(self.validate_key(provider, k))
+        return results
 
     def reset_provider(self, provider: str):
         """Reset all keys for a provider to valid status."""

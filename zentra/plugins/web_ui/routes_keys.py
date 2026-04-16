@@ -121,3 +121,37 @@ def init_keys_routes(app, logger):
         except Exception as e:
             logger.error(f"[KeyManager] reset_provider error: {e}")
             return jsonify({"ok": False, "error": str(e)}), 500
+    # ── POST /api/keys/validate ──────────────────────────────────────────────
+    @app.route("/api/keys/validate", methods=["POST"])
+    def keys_validate():
+        """Trigger active validation for a specific key."""
+        body = request.get_json(silent=True) or {}
+        provider = (body.get("provider") or "").strip().lower()
+        value = (body.get("value") or "").strip()
+
+        if not provider or not value:
+            return jsonify({"ok": False, "error": "Provider e valore richiesti."}), 400
+
+        try:
+            res = _km().validate_key(provider, value)
+            return jsonify({"ok": True, "result": res})
+        except Exception as e:
+            logger.error(f"[KeyManager] validate error: {e}")
+            return jsonify({"ok": False, "error": str(e)}), 500
+
+    # ── POST /api/keys/validate_provider ─────────────────────────────────────
+    @app.route("/api/keys/validate_provider", methods=["POST"])
+    def keys_validate_provider():
+        """Trigger active validation for all keys in a provider pool."""
+        body = request.get_json(silent=True) or {}
+        provider = (body.get("provider") or "").strip().lower()
+
+        if not provider:
+            return jsonify({"ok": False, "error": "Provider mancante."}), 400
+
+        try:
+            results = _km().validate_provider(provider)
+            return jsonify({"ok": True, "results": results})
+        except Exception as e:
+            logger.error(f"[KeyManager] validate_provider error: {e}")
+            return jsonify({"ok": False, "error": str(e)}), 500

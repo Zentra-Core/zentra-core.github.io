@@ -85,9 +85,6 @@
 .km-key-source { font-size: 10px; color: var(--muted); opacity: 0.5; }
 .km-cooldown { font-size: 11px; color: #ffc740; }
 .km-actions { display:flex; gap:4px; }
-.btn-sm-reset {
-  /* removed */
-}
 .km-count-bar {
   display: flex; gap:6px; font-size: 11px; margin-bottom: 8px; flex-wrap: wrap;
 }
@@ -130,14 +127,15 @@ function kmRender(data) {
       const canReset = k.status !== 'valid' && k.status !== 'unknown';
       const canRemove = k.source === 'keys_yaml';
       return `
-        <div class="km-key-row" data-provider="${provider}" data-idx="${idx}">
+        <div class="km-key-row" data-provider="${provider}" data-idx="${idx}" id="km-key-${provider}-${idx}">
           ${kmStatusBadge(k.status)}
           <div class="km-key-info">
             <div class="km-key-masked">${k.value}</div>
             ${k.description ? `<div class="km-key-desc">${k.description}</div>` : ''}
-            <div class="km-key-source">${window.t ? window.t('webui_km_source') : 'source'}: ${k.source} ${cooldownHtml}</div>
+            <div class="km-key-source" id="km-msg-${provider}-${idx}">${window.t ? window.t('webui_km_source') : 'source'}: ${k.source} ${cooldownHtml}</div>
           </div>
           <div class="km-actions">
+            <button class="btn-sm btn-secondary" onclick="kmValidateKey('${provider}','${k.value}', ${idx})" title="${window.t ? window.t('webui_km_btn_validate') : 'Test Key'}">🔍 ${window.t ? window.t('webui_km_btn_validate') : 'Test'}</button>
             ${canReset ? `<button class="btn-sm btn-secondary" onclick="kmResetKey('${provider}','${k.value}')">↺ Reset</button>` : ''}
             ${canRemove ? `<button class="btn-sm" style="border-color:var(--red); color:var(--red); background:rgba(248,113,113,0.1);" onclick="kmRemoveKey('${provider}','${k.value}')">✕</button>` : ''}
           </div>
@@ -161,7 +159,8 @@ function kmRender(data) {
         ${inv ? `<span class="km-count-item" style="color:#ff6b6b">✗ ${inv} ${window.t ? window.t('webui_km_status_invalid') : 'invalid'}</span>` : ''}
       </div>
       ${rows}
-      <div style="margin-top:8px;">
+      <div style="margin-top:8px; display:flex; gap:8px;">
+        <button class="btn-sm btn-secondary" onclick="kmValidateProvider('${provider}')">🔍 ${window.t ? window.t('webui_km_btn_validate_prov') : 'Validate All'}</button>
         <button class="btn-sm" onclick="kmResetProvider('${provider}')">↺ ${window.t ? window.t('webui_km_btn_reset_prov') : 'Reset provider'}</button>
       </div>
     `;
@@ -193,6 +192,38 @@ function kmResetKey(provider, value) {
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({provider, value})
   }).then(r => r.json()).then(d => { if (d.ok) kmRefresh(); });
+}
+
+function kmValidateKey(provider, value, idx) {
+  const row = document.getElementById(`km-key-${provider}-${idx}`);
+  const msg = document.getElementById(`km-msg-${provider}-${idx}`);
+  if (row) row.style.opacity = '0.5';
+  if (msg) msg.textContent = '⏱ Validating...';
+
+  fetch(`/api/keys/validate`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({provider, value})
+  }).then(r => r.json()).then(d => {
+    if (d.ok) {
+      if (msg) msg.textContent = d.result.message;
+      kmRefresh();
+    } else {
+      if (msg) msg.textContent = '❌ Error: ' + d.error;
+    }
+    if (row) row.style.opacity = '1';
+  });
+}
+
+function kmValidateProvider(provider) {
+  fetch(`/api/keys/validate_provider`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({provider})
+  }).then(r => r.json()).then(d => { 
+    if (d.ok) kmRefresh(); 
+    else alert('Errore validazione: ' + d.error);
+  });
 }
 
 function kmResetProvider(provider) {

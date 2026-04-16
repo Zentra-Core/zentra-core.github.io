@@ -574,6 +574,8 @@
         "webui_km_available": "disponibili",
         "webui_km_cooldown": "in cooldown",
         "webui_km_btn_reset_prov": "Reset provider",
+        "webui_km_btn_validate": "Testa Chiave",
+        "webui_km_btn_validate_prov": "Valida tutto il pool",
         "webui_voice_routing_in": "Input (Listening) Routing",
         "webui_voice_routing_out": "Uscita Audio (Voice Routing)",
         "webui_voice_pc_mic": "Microfono PC (Locale)",
