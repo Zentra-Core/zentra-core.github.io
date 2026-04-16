@@ -419,6 +419,7 @@ async function confirmMkdir() {
 // ─── Dropzone ────────────────────────────────────────────────────────────────
 function initDropzone() {
   const zone = document.getElementById("dropzone");
+  if (!zone) return;
   zone.addEventListener("dragover",  e => { e.preventDefault(); zone.classList.add("drag-over"); });
   zone.addEventListener("dragleave", ()  => zone.classList.remove("drag-over"));
   zone.addEventListener("drop", e => {
@@ -426,6 +427,7 @@ function initDropzone() {
     uploadFiles(e.dataTransfer.files);
   });
 }
+
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function formatSize(b) {
@@ -481,7 +483,7 @@ async function loadQuickLinks() {
     let html = "";
     data.groups.forEach(grp => {
       html += `<div class="ql-group">
-        <div class="ql-group-title">${esc(grp.title)}</div>
+        <div class="ql-group-title">⭐ ${esc(grp.title)}</div>
         ${grp.items.map(item => `
           <div class="ql-item" onclick="openQuickLink('${esc(item.path)}', ${item.path.includes('.')})">
             <span class="ql-icon">${esc(grp.icon || '📄')}</span>

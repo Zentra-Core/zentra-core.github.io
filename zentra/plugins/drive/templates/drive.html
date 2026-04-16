@@ -27,7 +27,7 @@
     {% endif %}
     <a href="/zentra/config/ui">⚙️ {{ t('webui_chat_config') }}</a>
     <a href="/chat">💬 Chat</a>
-    <a href="/logout" style="color:var(--red);">{{ t('webui_chat_logout') }}</a>
+    <a href="/logout" class="hide-on-mobile" style="color:var(--red);">{{ t('webui_chat_logout') }}</a>
   </div>
 </header>
 
@@ -49,7 +49,6 @@
     <div id="tree-root"></div>
     
     <div id="quick-links-section">
-      <div id="quick-links-header">⭐ Quick Links</div>
       <div id="quick-links-body">
         <div class="sb-empty">{{ t('webui_conf_msg_loading') }}</div>
       </div>
@@ -68,7 +67,7 @@
     </div>
 
     <!-- upload drop target -->
-    <div id="dropzone">{{ t('webui_drive_dropzone') }}</div>
+    <div id="dropzone" class="hide-on-mobile">{{ t('webui_drive_dropzone') }}</div>
 
     <!-- upload progress -->
     <div id="upload-progress">

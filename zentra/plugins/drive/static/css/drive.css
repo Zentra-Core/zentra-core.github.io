@@ -141,7 +141,6 @@ input[type="file"] { display:none; }
 }
 .ql-item:hover .ql-edit { opacity: 0.6; }
 .ql-item .ql-edit:hover { opacity: 1; background: rgba(102,252,241,0.1); }
-.tree-children { }
 
 /* ── File area ───────────────────────────────────────────── */
 #file-area {
@@ -302,13 +301,50 @@ td.actions-cell button:hover { background:rgba(255,75,75,.15); }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:rgba(102,252,241,.2); border-radius:3px; }
 
-/* Responsive: hide sidebar on small screens */
-@media (max-width:600px) {
-  #sidebar { display:none; }
-}
-
 /* Mobile responsive fixes */
 @media (max-width: 768px) {
+  .hide-on-mobile { display: none !important; }
+  #main-layout { flex-direction: column; }
+  #sidebar {
+    width: 100%;
+    min-width: unset;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+  #sidebar-header, #tree-root { display: none; } /* Hide heavy folder tree */
+  #quick-links-section { border-top: none; }
+  #quick-links-body {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-height: unset;
+    padding: 8px;
+    gap: 12px;
+  }
+  .ql-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 0;
+  }
+  .ql-group-title {
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.05);
+    white-space: nowrap;
+  }
+  .ql-item {
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: rgba(102,252,241,0.05);
+  }
+  .ql-item:hover {
+    padding-left: 10px;
+  }
+
   header {
     height: auto;
     flex-wrap: wrap;

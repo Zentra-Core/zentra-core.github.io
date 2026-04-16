@@ -99,10 +99,7 @@
       if (type === 'image') {
         wrap.innerHTML = `<img src="${viewUrl(entry.path)}" alt="${entry.name}" loading="lazy">`;
       } else if (type === 'video') {
-        wrap.innerHTML = `<img src="${viewUrl(entry.path)}" alt="${entry.name}" loading="lazy"><span class="mv-play-badge">▶</span>`;
-        // No poster available via API — just show a dark bg with play icon
-        const img = wrap.querySelector('img');
-        img.onerror = () => { img.style.display='none'; wrap.querySelector('.mv-play-badge').style.opacity='1'; };
+        wrap.innerHTML = `<span class="mv-play-badge" style="opacity:1;">🎬</span>`;
       } else if (type === 'audio') {
         wrap.innerHTML = `<span class="mv-thumb-icon">🎵</span>`;
       }
