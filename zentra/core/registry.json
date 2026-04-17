@@ -13,25 +13,14 @@
         "category": "PLUGINS"
     },
     "EXECUTOR": {
-        "description": "Safe Python execution (AST Sandbox).",
+        "description": "Safe Python execution (AST Sandbox) and System Control.",
         "commands": {
+            "execute_shell_command": "Executes a shell command (cmd.exe) in the background.",
+            "get_time": "Returns the current local time.",
+            "reboot_system": "Reboots the entire Zentra Core system.",
             "run_python_code": "Executes a block of Python code safely after strict Static Analysis."
         },
-        "status": "ONLINE (Code Jail Active)",
-        "example": "",
-        "routing_instructions": "",
-        "is_class_based": true,
-        "icon": "",
-        "category": "PLUGINS"
-    },
-    "FILE_MANAGER": {
-        "description": "System file and directory management with user path and file reading support.",
-        "commands": {
-            "count_items": "Counts the total number of files and folders in a given path, without listing them.",
-            "list_files": "SCANS and lists files/folders in a path to return the names to the AI.",
-            "read_file": "Reads the textual content of a file specified by the path."
-        },
-        "status": "ONLINE",
+        "status": "ONLINE (Core Tools Active)",
         "example": "",
         "routing_instructions": "",
         "is_class_based": true,
@@ -60,20 +49,6 @@
         "example": "",
         "routing_instructions": "",
         "is_class_based": true,
-        "icon": "",
-        "category": "PLUGINS"
-    },
-    "LAZY_TEST": {
-        "description": "Test per architettura Lazy Loading",
-        "commands": {
-            "cmd": "Attiva il plugin al volo ed esegue un test",
-            "ping": "Verifica se il caricamento JIT funziona"
-        },
-        "status": "ONLINE (DORMANT)",
-        "example": "",
-        "routing_instructions": "",
-        "is_class_based": true,
-        "is_lazy": true,
         "icon": "",
         "category": "PLUGINS"
     },
@@ -118,27 +93,6 @@
         "routing_instructions": "",
         "is_class_based": true,
         "is_lazy": true,
-        "icon": "",
-        "category": "PLUGINS"
-    },
-    "SYSTEM": {
-        "description": "Root Access: terminal management, reboot, log diagnostics, system utilities.",
-        "commands": {
-            "execute_shell_command": "Executes a shell command (cmd.exe) in the background and returns the output.",
-            "explore_folder": "OPENS a graphical Windows Explorer window for the specified folder. ",
-            "get_time": "Returns the current local time (HH:MM).",
-            "open_program": "Starts a local program specified by name.",
-            "open_terminal": "Opens a new independent Terminal/CMD window.",
-            "read_debug_logs": "Reads the technical debug logs (LiteLLM, Brain processing).",
-            "read_errors": "Reads specifically the latest errors (crashes, exceptions) recorded by the system.",
-            "read_logs": "Legge gli ultimi eventi registrati nei file di log generali del sistema.",
-            "reboot_system": "Reboots the entire Zentra Core system.",
-            "set_configuration": "Modifies a value within the main configuration file (config.json)."
-        },
-        "status": "plugin_sistema_status_online",
-        "example": "",
-        "routing_instructions": "",
-        "is_class_based": true,
         "icon": "",
         "category": "PLUGINS"
     },

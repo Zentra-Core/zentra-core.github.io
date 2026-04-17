@@ -45,7 +45,6 @@ window.CONFIG_HUB = {
         { id: 'dashboard', label: 'hub_mod_dashboard',    icon: '📊', cat: 'SISTEMA', pluginTag: 'DASHBOARD' },
         { id: 'domotica',  label: 'hub_mod_domotica',     icon: '🏠', cat: 'SISTEMA', pluginTag: 'DOMOTICA' },
         { id: 'webui',     label: 'hub_mod_webui',        icon: '🌐', cat: 'SISTEMA', pluginTag: 'WEB_UI' },
-        { id: 'system',    label: 'hub_mod_system',       icon: '⚙️', cat: 'SISTEMA', pluginTag: 'SYSTEM' },
         { id: 'users',     label: 'hub_mod_users',        icon: '👥', cat: 'SISTEMA', adminOnly: true },
         { id: 'security',  label: 'hub_mod_security',     icon: '🛡️', cat: 'SISTEMA', adminOnly: true },
         { id: 'plugins',   label: 'hub_mod_plugins',      icon: '🧩', cat: 'SISTEMA' },
@@ -75,8 +74,6 @@ window.CONFIG_HUB = {
 
     // Plugins that should NOT be shown in the Module Manager UI
     internalTags: [
-        'FILE_MANAGER',
-        'LAZY_TEST',
         'WEB_UI',
         'HELP'
     ]
@@ -110,7 +107,6 @@ window.CONFIG_HUB.tagMap = {
     'WEB': 'web',
     'WEBCAM': 'webcam',
     'MEMORY': 'memory',
-    'SYSTEM': 'system',
     'SYS_NET': 'sysnet',
     'MEDIA': 'media',
     'MODELS': 'backend',

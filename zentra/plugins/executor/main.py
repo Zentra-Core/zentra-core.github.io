@@ -1,13 +1,9 @@
-"""
-PLUGIN: System Executor (Zentra Code Jail)
-DESCRIPTION: Permette all'IA di eseguire calcoli e snippet di codice Python in locale, 
-previa severa analisi statica (AST) per bloccare importazioni di sistema pericolose.
-"""
-
 import os
 import ast
 import subprocess
 import sys
+import datetime
+import winsound
 try:
     from zentra.core.logging import logger
     from zentra.core.i18n import translator
@@ -32,7 +28,7 @@ FORBIDDEN_IMPORTS = {
     'pty', 'tempfile', 'requests', 'urllib', 'ftplib', 'ctypes', 'winreg'
 }
 
-FORBIDDEN_CALLS = {'eval', 'exec', 'compile', 'open'} # 'open' is blocked to prevent touching host files freely
+FORBIDDEN_CALLS = {'eval', 'exec', 'compile', 'open'}
 
 class SecurityAnalyzer(ast.NodeVisitor):
     def __init__(self):
@@ -62,105 +58,121 @@ class SecurityAnalyzer(ast.NodeVisitor):
 class ExecutorTools:
     """
     Plugin: Zentra Code Jail (AST Sandbox)
-    Allows safe algorithmic execution.
+    Allows safe algorithmic execution and root system control.
     """
 
     def __init__(self):
         self.tag = "EXECUTOR"
-        self.desc = "Safe Python execution (AST Sandbox)."
-        self.status = "ONLINE (Code Jail Active)"
+        self.desc = "Safe Python execution (AST Sandbox) and System Control."
+        self.status = "ONLINE (Core Tools Active)"
         
         self.config_schema = {
             "timeout_seconds": {
                 "type": "int",
                 "default": 10,
                 "description": "Timeout in secondi per prevenire loop infiniti."
+            },
+            "enable_shell_commands": {
+                "type": "bool",
+                "default": True,
+                "description": "Permette l'esecuzione di comandi shell diretti (pericoloso)."
             }
         }
         
-        # Ensure the shared workspace exists for visibility
         self.workspace_dir = os.path.abspath(os.path.join(os.getcwd(), "workspace", "sandbox"))
         os.makedirs(self.workspace_dir, exist_ok=True)
+
+    # --- NATIVE TOOLS (Bypass Sandbox) ---
+
+    def get_time(self) -> str:
+        """Returns the current local time."""
+        ora = datetime.datetime.now().strftime("%H:%M")
+        return f"Current local time: {ora}"
+
+    def reboot_system(self) -> str:
+        """Reboots the entire Zentra Core system."""
+        logger.info("System reboot triggered via EXECUTOR.")
+        if sys.platform == "win32":
+            winsound.Beep(600, 150)
+            winsound.Beep(400, 150)
+        os._exit(42)
+        return "Rebooting..."
+
+    def execute_shell_command(self, command: str) -> str:
+        """Executes a shell command (cmd.exe) in the background."""
+        cfg = ConfigManager()
+        if not cfg.get_plugin_config(self.tag, "enable_shell_commands", True):
+            return "Error: Shell commands are disabled in configuration."
+
+        try:
+            output = subprocess.check_output(command, shell=True, text=True, errors='replace', stderr=subprocess.STDOUT, timeout=15)
+            return output if output.strip() else "Command executed successfully (no output)."
+        except Exception as e:
+            return f"Shell Error: {e}"
+
+    # --- SANDBOXED TOOLS ---
 
     def run_python_code(self, code: str) -> str:
         """
         Executes a block of Python code safely after strict Static Analysis.
-        Use this for math, data manipulation, algorithm building.
-        DO NOT use for file I/O or system commands (imports like os, sys are blocked).
-        
-        :param code: The Python script to execute.
+        Use for math, data manipulation, algorithm building.
         """
-        # 1. Syntax Check & AST Security Analysis
         try:
             tree = ast.parse(code)
-        except SyntaxError as e:
-            return f"SyntaxError nel codice: {e}"
         except Exception as e:
-            return f"Errore di parsing inatteso: {e}"
+            return f"Parsing Error: {e}"
             
         analyzer = SecurityAnalyzer()
         analyzer.visit(tree)
         
         if analyzer.errors:
-            logger.error(f"[{self.tag}] Tentativo di violazione di sicurezza bloccato:\n{analyzer.errors}")
-            return f"SECURITY VIOLATION BLOCKED: The sandbox prevents you from using these modules/functions:\n{', '.join(analyzer.errors)}\nPlease rewrite your logic without them."
+            return f"SECURITY VIOLATION: {', '.join(analyzer.errors)}"
 
-        # 2. Write to user-visible workspace for transparency
         script_path = os.path.join(self.workspace_dir, "ai_last_script.py")
-        output_path = os.path.join(self.workspace_dir, "ai_last_output.txt")
-        
         try:
             with open(script_path, "w", encoding="utf-8") as f:
                 f.write(code)
         except Exception as e:
-            return f"Errore interno di I/O nel sandbox: {e}"
+            return f"I/O Error: {e}"
             
-        logger.info(f"[{self.tag}] Codice sicuro validato. Esecuzione in corso...")
-        
-        # 3. Subprocess Execution
         cfg = ConfigManager()
         timeout = cfg.get_plugin_config(self.tag, "timeout_seconds", 10)
         
         try:
-            # We run the script in a separate python process using the current interpreter
             process = subprocess.Popen(
                 [sys.executable, script_path],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
                 encoding="utf-8",
-                cwd=self.workspace_dir # Restrict execution working dir to sandbox
+                cwd=self.workspace_dir
             )
-            
             output, _ = process.communicate(timeout=timeout)
-            output = output if output is not None else ""
-            
-            # Save output for user visibility
-            with open(output_path, "w", encoding="utf-8") as f:
-                f.write(output)
-            
-            if process.returncode != 0:
-                return f"Execution failed (Code {process.returncode}):\n{output}"
-                
-            return output[-2000:] if len(output) > 2000 else output
-            
+            return output[-2000:] if len(output or "") > 2000 else (output or "")
         except subprocess.TimeoutExpired:
             process.kill()
-            timeout_msg = f"Timeout Error: Lo script ha superato il limite di {timeout} secondi ed è stato killato."
-            return timeout_msg
+            return f"Timeout Error: Execution expired after {timeout}s."
         except Exception as e:
-            return f"Internal Execution Error: {e}"
+            return f"Internal Error: {e}"
 
-# Istanzia pubblicamente lo strumento per l'esportazione verso il Core
+# Singleton
 tools = ExecutorTools()
 
-# --- COMPATIBILITY SHIMS ---
+# --- Plugin standard interface ---
 def info():
-    return {"tag": tools.tag, "desc": tools.desc}
+    return {
+        "tag": tools.tag,
+        "desc": tools.desc,
+        "commands": {
+            "run_python_code": "Esegui script Python in sandbox sicura.",
+            "execute_shell_command": "Esegui comandi CMD nel sistema.",
+            "get_time": "Ottieni l'ora locale corrente.",
+            "reboot_system": "Riavvia il sistema Zentra."
+        }
+    }
 
 def status():
     return tools.status
 
-def execute(comando: str) -> str:
-    """Compatibilità legacy rimossa."""
-    return "La shell dell'host è disabilitata. Usa lo strumento 'run_python_code' per elaborazioni algebriche/dati in locale."
+def get_plugin():
+    return tools
