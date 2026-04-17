@@ -1,0 +1,58 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 0 0 40px 0;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+hr {
+  margin: 20px 0;
+  border: 0;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+strong {
+  font-weight: 600;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Base Category Badge (Fallback) */
+.cat-badge {
+    background: rgba(var(--accent-rgb), 0.15);
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 800;
+    margin-left: 12px;
+    border: 1px solid rgba(var(--accent-rgb), 0.2);
+}
+
+/* Transitions & Fades */
+.panel {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.panel.active {
+    opacity: 1;
+}
+
+/* Standard Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .4; }
+}

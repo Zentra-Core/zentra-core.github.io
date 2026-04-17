@@ -5,7 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Zentra Core - Config</title>
   <link rel="icon" type="image/png" href="/assets/Zentra_Core_Logo_NBG%20-%20SQR.png?v=0.21.0">
-  <link rel="stylesheet" href="/assets/css/index.css?v=0.21.0">
+  
+  <!-- Core Modular Design System -->
+  <link rel="stylesheet" href="/assets/css/core/variables.css?v=0.25.0">
+  <link rel="stylesheet" href="/assets/css/core/base.css?v=0.25.0">
+  <link rel="stylesheet" href="/assets/css/core/layout.css?v=0.25.0">
+  <link rel="stylesheet" href="/assets/css/core/components.css?v=0.25.0">
+  <link rel="stylesheet" href="/assets/css/core/dashboard.css?v=0.25.0">
+  <link rel="stylesheet" href="/assets/css/core/logs.css?v=0.25.0">
+  <link rel="stylesheet" href="/assets/css/core/modules.css?v=0.25.0">
+  
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- Non-blocking font load -->
@@ -100,6 +109,13 @@
     <div class="view-switcher" style="display:flex; background:rgba(255,255,255,0.05); padding:3px; border-radius:10px; border:1px solid var(--border);">
       <button class="switcher-btn active" id="view-tabs" onclick="setViewMode('tabs')" title="Tabs View">📂</button>
       <button class="switcher-btn" id="view-wall" onclick="setViewMode('wall')" title="Wall View">🧱</button>
+    </div>
+
+    <!-- THEME SWITCHER -->
+    <div class="view-switcher" style="display:flex; background:rgba(255,255,255,0.05); padding:3px; border-radius:10px; border:1px solid var(--border);">
+      <button class="switcher-btn active" onclick="setTheme('cyberpunk')" title="Cyberpunk Theme">⚡</button>
+      <button class="switcher-btn" onclick="setTheme('turquoise')" title="Turquoise Theme">💎</button>
+      <button class="switcher-btn" onclick="setTheme('pirate')" title="Pirate Theme">🏴‍☠️</button>
     </div>
 
     <!-- GLOBAL COLLAPSE -->
@@ -255,6 +271,31 @@
       }).catch(() => {});
     }, 5000);
   });
+
+  /**
+   * Global Theme Switcher
+   * @param {string} theme - 'cyberpunk', 'turquoise', 'pirate'
+   */
+  window.setTheme = function(theme) {
+    document.body.classList.remove('theme-cyberpunk', 'theme-turquoise', 'theme-pirate');
+    if (theme !== 'default') {
+      document.body.classList.add(`theme-${theme}`);
+    }
+    // Update active state in UI
+    document.querySelectorAll('.view-switcher .switcher-btn').forEach(btn => {
+      if (btn.onclick && btn.onclick.toString().includes(`setTheme('${theme}')`)) {
+        btn.classList.add('active');
+      } else if (btn.onclick && btn.onclick.toString().includes('setTheme')) {
+        btn.classList.remove('active');
+      }
+    });
+    // Persist to localStorage
+    localStorage.setItem('zentra-ui-theme', theme);
+  };
+
+  // Load saved theme on boot
+  const savedTheme = localStorage.getItem('zentra-ui-theme') || 'cyberpunk';
+  setTheme(savedTheme);
 </script>
 </body>
 </html>
