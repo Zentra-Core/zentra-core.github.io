@@ -27,30 +27,38 @@
 
 .filter-tabs {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* Force single row */
   justify-content: center;
-  gap: 12px;
+  gap: 8px; /* Reduced gap */
   margin-bottom: 30px;
-  padding: 12px;
+  padding: 8px 12px; /* Reduced vertical padding */
   background: rgba(255, 255, 255, 0.05);
   border-radius: 16px;
   border: 1px solid var(--border);
+  overflow-x: auto; /* Allow scrolling if too narrow */
+  scrollbar-width: none; /* Hide scrollbar for clean look */
+  -ms-overflow-style: none;
+}
+
+.filter-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .filter-btn {
-  padding: 10px 18px;
+  padding: 8px 14px; /* Reduced padding */
   background: transparent;
   border: 1px solid transparent;
   border-radius: 12px;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 13px; /* Slightly smaller font */
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px; /* Reduced icon gap */
   white-space: nowrap;
+  flex-shrink: 0; /* Don't squash buttons */
 }
 
 .filter-btn:hover { background: rgba(255, 255, 255, 0.1); color: var(--text); }
