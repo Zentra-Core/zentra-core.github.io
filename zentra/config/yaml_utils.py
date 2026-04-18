@@ -108,13 +108,20 @@ def save_yaml(path: str, model: BaseModel) -> bool:
             ryaml.indent(mapping=2, sequence=4, offset=2)
             
             if os.path.exists(path):
-                with open(path, "r", encoding="utf-8") as f:
-                    data = ryaml.load(f) or {}
-                if not isinstance(data, dict):
-                    data = {}
-                _deep_merge(data, new_data, delete_extra=True) # Preserves CommentedMap keys and syncs
-                with open(path, "w", encoding="utf-8") as f:
-                    ryaml.dump(data, f)
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        data = ryaml.load(f) or {}
+                    if not isinstance(data, dict):
+                        data = {}
+                    _deep_merge(data, new_data, delete_extra=True) # Preserves CommentedMap keys and syncs
+                    with open(path, "w", encoding="utf-8") as f:
+                        ryaml.dump(data, f)
+                except Exception as parse_e:
+                    # If the file is corrupted, reading it to preserve comments will fail.
+                    # In this case, we MUST overwrite it forcefully to recover stability.
+                    print(f"[YAML-UTILS] File corrupted, forcing overwrite of {path}: {parse_e}")
+                    with open(path, "w", encoding="utf-8") as f:
+                        ryaml.dump(new_data, f)
             else:
                 with open(path, "w", encoding="utf-8") as f:
                     ryaml.dump(new_data, f)

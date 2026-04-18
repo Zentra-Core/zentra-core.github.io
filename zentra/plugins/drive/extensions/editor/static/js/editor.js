@@ -30,20 +30,26 @@ require(['vs/editor/editor.main'], function() {
 
   console.log('[Zentra Editor] Auto:', autoTheme, 'Saved:', savedTheme, 'Actual:', zTheme, 'isLight:', isLight, 'isSolar:', isSolar);
   
-  // Zentra Light Profile
+  // Zentra Light Profile (Premium Pearl + Indigo)
   monaco.editor.defineTheme('zentra-light', {
     base: 'vs',
     inherit: true,
-    rules: [],
+    rules: [
+      { token: 'comment', foreground: '78716c', fontStyle: 'italic' },
+      { token: 'keyword', foreground: '4f46e5', fontStyle: 'bold' },
+      { token: 'string', foreground: '059669' },
+      { token: 'number', foreground: '7c3aed' },
+    ],
     colors: {
-      'editor.background': '#ffffff',
-      'editor.lineHighlightBackground': '#f8fafc',
-      'editorLineNumber.foreground': '#94a3b8',
-      'editorLineNumber.activeForeground': '#2563eb',
-      'editor.selectionBackground': '#e2e8f0',
-      'editorWidget.background': '#ffffff',
-      'editorWidget.border': '#e2e8f0',
-      'input.background': '#ffffff',
+      'editor.background': '#fafaf9',         // Warm Pearl White
+      'editor.foreground': '#1c1917',          // Warm near-black
+      'editor.lineHighlightBackground': '#f3f2ef',
+      'editorLineNumber.foreground': '#a8a29e',
+      'editorLineNumber.activeForeground': '#4f46e5',   // Indigo
+      'editor.selectionBackground': '#e0e7ff',           // Indigo tint
+      'editorWidget.background': '#fafaf9',
+      'editorWidget.border': '#d6d3cd',
+      'input.background': '#f3f2ef',
     }
   });
 
