@@ -3,7 +3,10 @@
 /* Using global variables from variables.css */
 
 html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow: hidden; }
-.theme-light, .theme-light body { background: #ffffff !important; color: #1e293b !important; }
+.theme-light, .theme-light body, .theme-solarpunk, .theme-solarpunk body { 
+  background: var(--bg) !important; 
+  color: var(--text) !important; 
+}
 
 /* ── Top bar ──────────────────────────────────────────────────────── */
 #topbar {
@@ -121,7 +124,10 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   flex-shrink: 0;
   font-weight: 500;
 }
-.theme-light #statusbar, .theme-light .btn-save, .theme-light .lang-badge { color: #fff !important; }
+.theme-light #statusbar, .theme-light .btn-save, .theme-light .lang-badge,
+.theme-solarpunk #statusbar, .theme-solarpunk .btn-save, .theme-solarpunk .lang-badge { 
+  color: #fff !important; 
+}
 #statusbar .sep { opacity: 0.4; margin: 0 4px; }
 #status-msg {
   margin-left: auto;
@@ -139,7 +145,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   height: 100vh;
   background: var(--bg);
 }
-.theme-light #layout { background: #ffffff !important; }
+.theme-light #layout, .theme-solarpunk #layout { background: var(--bg) !important; }
 #main-content {
   display: flex;
   flex: 1;
