@@ -67,9 +67,9 @@
   vertical-align: middle;
 }
 
-.p-tag.core { background: rgba(239, 68, 68, 0.15); color: #ef4444; border-color: rgba(239, 68, 68, 0.2); }
-.p-tag.plugin { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border-color: rgba(245, 158, 11, 0.2); }
-.p-tag.extension { background: rgba(16, 185, 129, 0.15); color: #10b981; border-color: rgba(16, 185, 129, 0.2); }
+.p-tag.core { background: rgba(var(--red-rgb), 0.15); color: var(--red); border-color: rgba(var(--red-rgb), 0.2); }
+.p-tag.plugin { background: rgba(var(--yellow-rgb), 0.15); color: var(--yellow); border-color: rgba(var(--yellow-rgb), 0.2); }
+.p-tag.extension { background: rgba(var(--green-rgb), 0.15); color: var(--green); border-color: rgba(var(--green-rgb), 0.2); }
 
 .plugin-desc {
   font-size: 13px;

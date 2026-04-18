@@ -133,8 +133,8 @@
 
     <!-- HELP -->
     <div style="display:flex; gap:8px;">
-      <a href="/zentra/docs?group=user" target="_blank" class="btn btn-secondary" style="text-decoration:none; display:flex; align-items:center; gap:6px; font-size:12px; padding:6px 12px;">
-        <span>📖</span> {{ t('hub_nav_guide') }}
+      <a href="/zentra/docs?group=user" target="_blank" class="btn btn-secondary" style="border-radius:10px; padding:4px 10px; font-size:11px;">
+        📖 {{ t('webui_chat_docs') }}
       </a>
     </div>
 
@@ -242,16 +242,16 @@
       role: "{{ current_user.role if current_user.is_authenticated else 'user' }}"
   };
 </script>
-<script src="/static/js/config_manifest.js?v=0.23.0"></script>
-<script src="/static/js/config_mapper.js?v=0.23.0"></script>
-<script src="/static/js/config_core.js?v=0.24.0"></script>
-<script src="/static/js/config_audio_logic.js?v=0.22.0"></script>
-<script src="/static/js/config_media_logic.js?v=0.22.0"></script>
-<script src="/static/js/config_logs_engine.js?v=0.22.0"></script>
-<script src="/static/js/config_system_logic.js?v=0.22.0"></script>
-<script src="/static/js/config_routing_logic.js?v=0.22.0"></script>
-<script src="/static/js/config_persona_logic.js?v=0.22.0"></script>
-<script src="/static/js/config_search.js?v=0.22.0"></script>
+<script src="/static/js/config_manifest.js?v={{ version }}"></script>
+<script src="/static/js/config_mapper.js?v={{ version }}"></script>
+<script src="/static/js/config_core.js?v={{ version }}"></script>
+<script src="/static/js/config_audio_logic.js?v={{ version }}"></script>
+<script src="/static/js/config_media_logic.js?v={{ version }}"></script>
+<script src="/static/js/config_logs_engine.js?v={{ version }}"></script>
+<script src="/static/js/config_system_logic.js?v={{ version }}"></script>
+<script src="/static/js/config_routing_logic.js?v={{ version }}"></script>
+<script src="/static/js/config_persona_logic.js?v={{ version }}"></script>
+<script src="/static/js/config_search.js?v={{ version }}"></script>
 <script>
   // Global Initialization Bootstrapper
   document.addEventListener('DOMContentLoaded', () => {
@@ -276,7 +276,7 @@
    * @param {boolean} manual - If true, disables automatic theme switching
    */
   window.setTheme = function(theme, manual = false) {
-    document.body.classList.remove('theme-cyberpunk', 'theme-turquoise', 'theme-pirate', 'theme-elegant', 'theme-light', 'theme-rose');
+    document.body.classList.remove('theme-cyberpunk', 'theme-turquoise', 'theme-pirate', 'theme-elegant', 'theme-light', 'theme-rose', 'theme-solarpunk');
     if (theme !== 'default') {
       document.body.classList.add(`theme-${theme}`);
     }

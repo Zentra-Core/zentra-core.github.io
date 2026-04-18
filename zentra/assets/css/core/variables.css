@@ -36,11 +36,17 @@
   --header-logo-sz: 18px;
   --sidebar-logo-sz: 16px;
   
+  
   /* Glass Tokens */
-  --glass:       rgba(255, 255, 255, 0.04);
-  --glass-b:     rgba(255, 255, 255, 0.08);
-  --glass-c:     rgba(255, 255, 255, 0.15);
+  --glass:        rgba(255, 255, 255, 0.04);
+  --glass-b:      rgba(255, 255, 255, 0.08);
+  --glass-c:      rgba(255, 255, 255, 0.15);
   --glass-border: rgba(255, 255, 255, 0.08);
+
+  /* Gradients & Shorthands */
+  --accent-g:   linear-gradient(135deg, var(--accent), var(--accent2));
+  --accent-rgb: 108, 140, 255;
+  --accent2-rgb: 167, 139, 250;
   
   /* Dashboard Specific Tokens */
   --card-title-color: var(--accent);
@@ -89,11 +95,15 @@
   --accent: #fb7185;
   --accent-rgb: 251, 113, 133;
   --accent2: #fda4af;
+  --accent2-rgb: 253, 164, 175;
   --text: #fff1f2;
   --border: #4c1d24;
   --bg-blur: rgba(30, 27, 38, 0.85);
   --glass: rgba(251, 113, 133, 0.04);
   --glass-b: rgba(251, 113, 133, 0.08);
+  --glass-c: rgba(251, 113, 133, 0.12);
+  --glass-border: rgba(251, 113, 133, 0.15);
+  --accent-g: linear-gradient(135deg, #fb7185, #fda4af);
 }
 
 /* Theme: Light Mode (Sky Blue / Premium) - MOVED TO BOTTOM FOR MAX PRIORITY */
@@ -106,10 +116,35 @@
   --accent:      #1877f2; /* Professional Azure/Blue */
   --accent-rgb:  24, 119, 242;
   --accent2:     #2563eb;
+  --accent2-rgb: 37, 99, 235;
   --glass:       rgba(0, 0, 0, 0.02);
-  --glass-b:     rgba(0, 0, 0, 0.04); /* Neutral Gray, NO PINK ALLOWED */
+  --glass-b:     rgba(0, 0, 0, 0.04); 
+  --glass-c:     rgba(0, 0, 0, 0.06);
+  --glass-border: rgba(0, 0, 0, 0.08);
   --border:      #d1d5db;
   --shadow:      0 4px 12px rgba(0, 0, 0, 0.05);
   --bg-blur:     rgba(255, 255, 255, 0.95);
+  --accent-g:    linear-gradient(135deg, #1877f2, #2563eb);
+}
+
+/* Theme: Solarpunk (Nature & Sun) */
+.theme-solarpunk {
+  --bg:          #fbfaf5;
+  --bg2:         #e8f5e9; /* More saturated Green to avoid "pink" perception */
+  --bg3:         #c8e6c9;
+  --text:        #1b5e20;
+  --muted:       #4e7c59;
+  --accent:      #2e7d32;
+  --accent-rgb:  46, 125, 50;
+  --accent2:     #fbc02d;
+  --accent2-rgb: 251, 192, 45;
+  --border:      #a5d6a7;
+  --shadow:      0 4px 20px rgba(46, 125, 50, 0.1);
+  --bg-blur:     rgba(232, 245, 233, 0.9);
+  --glass:       rgba(46, 125, 50, 0.05);
+  --glass-b:     rgba(46, 125, 50, 0.1);
+  --glass-c:     rgba(46, 125, 50, 0.15);
+  --glass-border: rgba(46, 125, 50, 0.2);
+  --accent-g:    linear-gradient(135deg, #2e7d32, #fbc02d);
 }
 

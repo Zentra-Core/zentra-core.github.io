@@ -28,11 +28,11 @@ header {
   height: 28px;
   width: auto;
   object-fit: contain;
-  filter: drop-shadow(0 0 8px rgba(108,140,255,0.2));
+  filter: drop-shadow(0 0 8px rgba(var(--accent-rgb), 0.2));
 }
 
 .logo-text {
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  background: var(--accent-g);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

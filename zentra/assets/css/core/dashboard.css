@@ -192,7 +192,7 @@
   border-color: var(--accent);
   transform: translateY(-5px);
   background: var(--bg3);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+  box-shadow: var(--shadow);
 }
 
 .module-card .m-icon { font-size: 32px; filter: drop-shadow(0 0 8px rgba(var(--accent-rgb), 0.2)); }
