@@ -10,12 +10,14 @@ def init_config_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
         import glob
         cfg = cfg_mgr.reload()
         
-        piper_path_dir = r"C:\piper"
+        # Dynamically resolve Zentra root directory
+        zentra_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        piper_path_dir = os.path.join(zentra_root, 'bin', 'piper')
         try:
             onnx_files = [os.path.basename(f) for f in glob.glob(os.path.join(piper_path_dir, "*.onnx"))]
-            if not onnx_files: onnx_files = ["en_US-lessac-medium.onnx"]
+            if not onnx_files: onnx_files = ["it_IT-aurora-medium.onnx"]
         except:
-            onnx_files = ["en_US-lessac-medium.onnx"]
+            onnx_files = ["it_IT-aurora-medium.onnx"]
             
         from app.model_manager import ModelManager
         mm = ModelManager(cfg_mgr)

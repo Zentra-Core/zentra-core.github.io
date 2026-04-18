@@ -103,15 +103,19 @@ If you get locked out, run `python scripts/reset_admin.py` from the terminal to 
 
 ---
 
-## 🧠 Supported AI Backends
+## 🧠 Supported AI Backends (LLM Engines)
 
-### 🔹 Ollama
-Easy to use, fast and optimized. Recommended for most users.
+Zentra is completely offline by default and requires a local AI engine to process logic and conversation. During setup, you must install one of the independent backends below. Zentra will automatically detect them.
 
-👉 https://ollama.com
+### 🔹 1. Ollama (Recommended)
+Fast, optimized, and easy to run locally as a background service.
+- **Download**: 👉 https://ollama.com/download
+- **Setup**: Once installed, open your terminal/command prompt and run `ollama run llama3.2` to download and test a lightweight fast model. Zentra will instantly detect it.
 
-### 🔹 KoboldCpp
-Supports GGUF models, can run uncensored models, more flexible.
+### 🔹 2. KoboldCpp (Alternative)
+Perfect for GGUF manual models and older hardware without heavy installation.
+- **Download**: 👉 https://github.com/LostRuins/koboldcpp/releases
+- **Setup**: Download the `.exe` (or Linux binary), double-click it, select any GGUF instruction model downloaded from HuggingFace, and launch. Zentra will connect via port `5001`.
 
 ---
 

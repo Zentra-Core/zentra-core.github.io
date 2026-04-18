@@ -90,15 +90,19 @@ python main.py
 
 ---
 
-## 🧠 Backend AI Supportati
+## 🧠 Backend AI Supportati (Motori LLM)
 
-### 🔹 Ollama
-Facile da usare, veloce e ottimizzato. Consigliato per la maggior parte degli utenti.
+Zentra è completamente offline di default e richiede un motore AI locale per elaborare logica e conversazione. Durante il setup iniziale, devi installare uno dei backend indipendenti qui sotto. Zentra li rileverà automaticamente.
 
-👉 https://ollama.com
+### 🔹 1. Ollama (Consigliato)
+Facile da usare, veloce e ottimizzato. Funge da servizio in background.
+- **Download**: 👉 https://ollama.com/download
+- **Setup**: Una volta installato, apri il tuo terminale/prompt dei comandi ed esegui `ollama run llama3.2` per scaricare e testare un modello leggero e veloce. Zentra lo rileverà istantaneamente.
 
-### 🔹 KoboldCpp
-Supporta modelli GGUF, può eseguire modelli non censurati, più flessibile.
+### 🔹 2. KoboldCpp (Alternativa)
+Perfetto per modelli manuali GGUF e hardware più datato senza pesanti installazioni.
+- **Download**: 👉 https://github.com/LostRuins/koboldcpp/releases
+- **Setup**: Scarica il file `.exe` (o il binario Linux), fai doppio clic, seleziona qualsiasi modello GGUF scaricato da HuggingFace e avvialo. Zentra si connetterà automaticamente tramite la porta `5001`.
 
 ---
 

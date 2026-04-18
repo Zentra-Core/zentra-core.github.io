@@ -11,8 +11,10 @@ echo -e "\033[1;32m  ZENTRA NATIVE WEB INTERFACE v${VERSION}\033[0m"
 echo -e "\033[1;32m==============================================================\033[0m"
 echo ""
 
-# Activate virtual environment if it exists
-if [ -f "venv/bin/activate" ]; then
+# Activate portable virtual environment if created via installer
+if [ -f "python_env/bin/activate" ]; then
+    source python_env/bin/activate
+elif [ -f "venv/bin/activate" ]; then
     source venv/bin/activate
 fi
 

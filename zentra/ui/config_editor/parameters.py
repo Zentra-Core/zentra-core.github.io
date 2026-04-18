@@ -117,12 +117,14 @@ def build_parameter_list(config):
     voice_conf = config.get('voice', {})
     
     try:
-        piper_path_dir = r"C:\piper"
+        zentra_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        piper_path_dir = os.path.join(zentra_root, 'bin', 'piper')
         onnx_files = [os.path.basename(f) for f in glob.glob(os.path.join(piper_path_dir, "*.onnx"))]
-        if not onnx_files: onnx_files = ["en_US-lessac-medium.onnx"]
+        if not onnx_files: onnx_files = ["it_IT-aurora-medium.onnx"]
         percorsi_onnx = [os.path.join(piper_path_dir, f) for f in onnx_files]
     except Exception:
-        percorsi_onnx = [r"C:\piper\en_US-lessac-medium.onnx"]
+        # Fallback se la root non è determinabile
+        percorsi_onnx = [os.path.join("bin", "piper", "it_IT-aurora-medium.onnx")]
         
     params.append(Parameter('voice', 'onnx_model', translator.t("label_modello_voce"), 'str', options=percorsi_onnx))
     

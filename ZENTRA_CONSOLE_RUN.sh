@@ -11,8 +11,10 @@ echo -e "\033[1;36m ZENTRA CORE NATIVE TERMINAL v${VERSION}\033[0m"
 echo -e "\033[1;36m==============================================================\033[0m"
 echo ""
 
-# Start the virtual environment if it exists
-if [ -f "venv/bin/activate" ]; then
+# Start the portable environment if it exists
+if [ -f "python_env/bin/activate" ]; then
+    source python_env/bin/activate
+elif [ -f "venv/bin/activate" ]; then
     source venv/bin/activate
 fi
 

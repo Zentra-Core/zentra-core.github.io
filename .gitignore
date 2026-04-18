@@ -297,4 +297,8 @@ zentra/memory/chat_exports/
 
 # Watchdog inhibitor temp file
 .config_saved_by_app
+
+# Portable standalone environments and binaries
+/bin/
+/python_env/
 

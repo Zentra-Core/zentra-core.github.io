@@ -123,7 +123,13 @@ def generate_voice_file(text: str, voice_cfg: dict) -> str:
     Returns the absolute path to the generated WAV, or None on failure.
     """
     try:
-        piper_path = voice_cfg.get("piper_path", r"C:\piper\piper.exe")
+        # Dynamically resolve Zentra root directory (from web_ui/routes_chat.py going up to root)
+        zentra_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        default_piper_dir = os.path.join(zentra_root, 'bin', 'piper')
+        is_windows = os.name == 'nt'
+        piper_exe_name = 'piper.exe' if is_windows else 'piper'
+        
+        piper_path = voice_cfg.get("piper_path", os.path.join(default_piper_dir, piper_exe_name))
         model_path = voice_cfg.get("onnx_model", "")
         
         if not os.path.exists(piper_path):

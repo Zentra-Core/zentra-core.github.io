@@ -1,7 +1,7 @@
 @echo off
+setlocal enabledelayedexpansion
 title ZENTRA CORE - ACTIVE SESSION RUNNER (Native Text Console)
 cd /d "%~dp0"
-
 
 echo.
 set ZENTRA_VERSION=Unknown
@@ -11,8 +11,13 @@ echo   ZENTRA CORE NATIVE TERMINAL v%ZENTRA_VERSION%
 echo  ==============================================================
 echo.
 
-:: Activate virtual environment if it exists
-if exist "venv\Scripts\activate.bat" (
+:: Priority to the isolated portable python runtime
+set PYTHON_CMD=python
+if exist "%CD%\python_env\python.exe" (
+  set PYTHON_CMD="%CD%\python_env\python.exe"
+) else if exist "venv\Scripts\python.exe" (
+  set PYTHON_CMD="%CD%\venv\Scripts\python.exe"
+) else if exist "venv\Scripts\activate.bat" (
   call venv\Scripts\activate.bat
 )
 
@@ -20,7 +25,7 @@ echo [*] Starting interactive terminal...
 echo [*] Press F9 for a Safe Restart of the program.
 echo.
 
-python zentra\monitor.py
+!PYTHON_CMD! zentra\monitor.py
 
 echo.
 echo [!] Process terminated.
