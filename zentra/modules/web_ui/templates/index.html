@@ -273,7 +273,7 @@
    * @param {boolean} manual - If true, disables automatic theme switching
    */
   window.setTheme = function(theme, manual = false) {
-    document.body.classList.remove('theme-cyberpunk', 'theme-turquoise', 'theme-pirate', 'theme-elegant', 'theme-light', 'theme-rose', 'theme-solarpunk');
+    document.body.classList.remove('theme-cyberpunk', 'theme-turquoise', 'theme-pirate', 'theme-elegant', 'theme-light', 'theme-rose', 'theme-solarpunk', 'theme-corporate');
     if (theme !== 'default') {
       document.body.classList.add(`theme-${theme}`);
     }

@@ -22,13 +22,18 @@ require(['vs/editor/editor.main'], function() {
   // Detect if current theme belongs to a LIGHT profile
   const isLight = (zTheme === 'light') || document.documentElement.classList.contains('theme-light') || 
                   document.documentElement.classList.contains('theme-solarpunk') || 
+                  document.documentElement.classList.contains('theme-corporate') || 
                   document.body.classList.contains('theme-light') || 
-                  document.body.classList.contains('theme-solarpunk');
+                  document.body.classList.contains('theme-solarpunk') ||
+                  document.body.classList.contains('theme-corporate');
 
   const isSolar = (zTheme === 'solarpunk') || document.documentElement.classList.contains('theme-solarpunk') || 
                   document.body.classList.contains('theme-solarpunk');
 
-  console.log('[Zentra Editor] Auto:', autoTheme, 'Saved:', savedTheme, 'Actual:', zTheme, 'isLight:', isLight, 'isSolar:', isSolar);
+  const isCorporate = (zTheme === 'corporate') || document.documentElement.classList.contains('theme-corporate') || 
+                      document.body.classList.contains('theme-corporate');
+
+  console.log('[Zentra Editor] Auto:', autoTheme, 'Saved:', savedTheme, 'Actual:', zTheme, 'isLight:', isLight, 'isSolar:', isSolar, 'isCorporate:', isCorporate);
   
   // Zentra Light Profile (Premium Pearl + Indigo)
   monaco.editor.defineTheme('zentra-light', {
@@ -76,7 +81,30 @@ require(['vs/editor/editor.main'], function() {
     }
   });
 
-  const activeTheme = isSolar ? 'zentra-solarpunk' : (isLight ? 'zentra-light' : 'zentra-dark');
+  // Zentra Corporate Profile (Luminous Professional — Sky Blue)
+  monaco.editor.defineTheme('zentra-corporate', {
+    base: 'vs',
+    inherit: true,
+    rules: [
+      { token: 'comment', foreground: '64748b', fontStyle: 'italic' },
+      { token: 'keyword', foreground: '0284c7', fontStyle: 'bold' },
+      { token: 'string', foreground: '16a34a' },
+      { token: 'number', foreground: '7c3aed' },
+    ],
+    colors: {
+      'editor.background': '#f8fafc',         // Cool white
+      'editor.foreground': '#0f172a',          // Slate 900
+      'editor.lineHighlightBackground': '#f1f5f9',
+      'editorLineNumber.foreground': '#94a3b8',
+      'editorLineNumber.activeForeground': '#0ea5e9',   // Sky blue
+      'editor.selectionBackground': '#bae6fd',           // Sky 200
+      'editorWidget.background': '#f8fafc',
+      'editorWidget.border': '#cbd5e1',
+      'input.background': '#f1f5f9',
+    }
+  });
+
+  const activeTheme = isCorporate ? 'zentra-corporate' : (isSolar ? 'zentra-solarpunk' : (isLight ? 'zentra-light' : 'zentra-dark'));
   console.log('[Zentra Editor] Active theme:', activeTheme);
 
   // 2. Create editor

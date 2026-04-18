@@ -3,7 +3,7 @@
 /* Using global variables from variables.css */
 
 html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow: hidden; }
-.theme-light, .theme-light body, .theme-solarpunk, .theme-solarpunk body { 
+.theme-light, .theme-light body, .theme-solarpunk, .theme-solarpunk body, .theme-corporate, .theme-corporate body { 
   background: var(--bg) !important; 
   color: var(--text) !important; 
 }
@@ -32,7 +32,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   text-decoration: none;
 }
 #topbar .logo img { height: 22px; opacity: 1; }
-.theme-light #topbar .logo img { filter: brightness(0.2); }
+.theme-light #topbar .logo img, .theme-corporate #topbar .logo img { filter: brightness(0.2); }
 #topbar .logo:hover { color: var(--text); }
 
 .tab-bar {
@@ -125,7 +125,8 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   font-weight: 500;
 }
 .theme-light #statusbar, .theme-light .btn-save, .theme-light .lang-badge,
-.theme-solarpunk #statusbar, .theme-solarpunk .btn-save, .theme-solarpunk .lang-badge { 
+.theme-solarpunk #statusbar, .theme-solarpunk .btn-save, .theme-solarpunk .lang-badge,
+.theme-corporate #statusbar, .theme-corporate .btn-save, .theme-corporate .lang-badge { 
   color: #fff !important; 
 }
 #statusbar .sep { opacity: 0.4; margin: 0 4px; }
@@ -145,7 +146,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   height: 100vh;
   background: var(--bg);
 }
-.theme-light #layout, .theme-solarpunk #layout { background: var(--bg) !important; }
+.theme-light #layout, .theme-solarpunk #layout, .theme-corporate #layout { background: var(--bg) !important; }
 #main-content {
   display: flex;
   flex: 1;

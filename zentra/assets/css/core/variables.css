@@ -198,6 +198,53 @@
   --accent-g:    linear-gradient(135deg, #4f46e5, #7c3aed);
 }
 
+/* Theme: Corporate (Luminous Professional) */
+.theme-corporate {
+  --bg:          #f8fafc;  /* Cool white — crisp, never harsh */
+  --bg2:         #f1f5f9;  /* Slate-tinted off-white */
+  --bg3:         #e2e8f0;  /* Light slate for cards/inputs */
+
+  /* ── Text ── */
+  --text:        #0f172a;  /* Slate 900 — strong, readable */
+  --muted:       #64748b;  /* Slate 500 — balanced secondary text */
+
+  /* ── Accent ── */
+  --accent:      #0ea5e9;  /* Sky 500 — vivid, trustworthy blue */
+  --accent-rgb:  14, 165, 233;
+  --accent2:     #0284c7;  /* Sky 600 — deeper blue secondary */
+  --accent2-rgb: 2, 132, 199;
+
+  /* ── Semantic Colors ── */
+  --green:       #16a34a;
+  --green-rgb:   22, 163, 74;
+  --red:         #dc2626;
+  --red-rgb:     220, 38, 38;
+  --yellow:      #d97706;
+  --yellow-rgb:  217, 119, 6;
+
+  /* ── Edge & Glass ── */
+  --border:      #cbd5e1;  /* Slate 300 — clean, visible borders */
+  --glass:       rgba(14, 165, 233, 0.03);
+  --glass-b:     rgba(14, 165, 233, 0.07);
+  --glass-c:     rgba(14, 165, 233, 0.12);
+  --glass-border: rgba(14, 165, 233, 0.14);
+
+  /* ── Shadows ── */
+  --shadow:             0 2px 12px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.05);
+  --shadow-up:          0 -4px 20px rgba(14, 165, 233, 0.1), 0 -1px 4px rgba(15, 23, 42, 0.04);
+  --shadow-glow:        0 0 20px rgba(14, 165, 233, 0.2), 0 4px 12px rgba(15, 23, 42, 0.06);
+  --shadow-glow-active: 0 10px 30px rgba(14, 165, 233, 0.18), 0 4px 12px rgba(15, 23, 42, 0.08);
+
+  /* ── Blur ── */
+  --bg-blur:     rgba(248, 250, 252, 0.93);
+
+  /* ── Gradients ── */
+  --accent-g:    linear-gradient(135deg, #0ea5e9, #0284c7);
+
+  /* ── Dashboard ── */
+  --card-title-color: var(--accent);
+}
+
 /* Theme: Solarpunk (Nature & Sun) */
 .theme-solarpunk {
   --bg:          #fbfaf5;
