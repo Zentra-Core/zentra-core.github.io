@@ -72,22 +72,31 @@ class AgentExecutor:
                 for unwanted in ["a photo of ", "a picture of ", "una foto di ", "un'immagine di ", "photo of ", "picture of "]:
                     clean_target = clean_target.replace(unwanted, "")
                 
-                # Smart Enrichment: If user says 'you/me/persona_name', add persona visual context
+                import re
+                
+                # Smart Enrichment: If user says 'you/persona_name', add persona visual context
                 active_p = self.config.get('ai', {}).get('active_personality', 'Zentra_System_Soul.yaml')
                 persona_name_raw = active_p.replace('.yaml', '').replace('_', ' ').lower()
                 persona_short = persona_name_raw.split(' ')[0] # e.g. "urania"
                 
-                enrich_keywords = ["you", "me", "tua", "mia", "tuo", "tuoi", "yourself", "te ", persona_short, persona_name_raw]
+                # We only match second-person pronouns (referring to the AI) and the AI's names.
+                enrich_keywords = ["you", "yourself", "tua", "tuo", "tuoi", "tue", "te", "te stessa", "te stesso", persona_short, persona_name_raw]
+                # Filter out empty strings just in case
+                enrich_keywords = [k for k in enrich_keywords if k.strip()]
+                
+                # Create a regex pattern to match whole words only
+                pattern = r'\b(?:' + '|'.join(map(re.escape, enrich_keywords)) + r')\b'
+                
                 prompt_bypass = clean_target
                 
-                if any(k in raw_prompt.lower() for k in enrich_keywords):
+                if re.search(pattern, raw_prompt.lower()):
                     visual_desc = self._get_persona_visual_description()
                     if visual_desc:
                         self._emit(f"Enriching prompt with persona YAML context: {persona_short}...", level="info")
-                        # Construct a clean, professional prompt for the provider
-                        target_action = clean_target.replace('you', '').replace('your', '').replace('tua', '').replace('me', '').replace(persona_short, '').strip()
+                        # Remove the matched trigger words from the prompt to avoid redundancy
+                        target_action = re.sub(pattern, '', clean_target, flags=re.IGNORECASE)
                         # Clean up punctuation after removal
-                        target_action = target_action.lstrip(',').lstrip('.').strip()
+                        target_action = re.sub(r'^\s*[,.]\s*', '', target_action).strip()
                         prompt_bypass = f"A photo of {visual_desc}, {target_action}" if target_action else f"A photo of {visual_desc}"
                 
                 from zentra.plugins.image_gen.main import tools as image_gen_tools
