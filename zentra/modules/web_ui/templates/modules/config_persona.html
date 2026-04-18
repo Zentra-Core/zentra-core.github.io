@@ -23,20 +23,38 @@
         </div>
     </div>
   </div>
+  
   <div class="card">
-    <div class="card-title">{{ t('webui_conf_persona_ai_instr') }}</div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div class="card-title" style="margin: 0;">{{ t('webui_conf_persona_ai_instr') }}</div>
+        <div class="toggle-row" style="margin: 0; gap: 8px;">
+            <span style="font-size: 10px; opacity: 0.7;">{{ t('label_save_special_instructions') }}</span>
+            <label class="switch is-small"><input type="checkbox" id="ia-save-instructions"><span class="slider"></span></label>
+        </div>
+    </div>
+    
+    <!-- Standard Instructions -->
     <div class="field">
       <textarea id="ia-instructions" rows="4" placeholder="e.g. Always be concise and avoid asterisks..."></textarea>
       <div class="muted" style="font-size: 10px; margin-top: 4px; opacity: 0.7;">
         {{ t('webui_conf_persona_ai_instr_help') }}
       </div>
     </div>
-    <div class="toggle-row">
-      <div class="toggle-info">{{ t('label_save_special_instructions') }}</div>
-      <label class="switch"><input type="checkbox" id="ia-save-instructions"><span class="slider"></span></label>
+
+    <!-- Move Clear button here, ONLY for AI Instructions -->
+    <div style="margin-top: 8px; text-align: right;">
+        <button class="btn btn-secondary" style="font-size: 10px; padding: 2px 10px;" onclick="document.getElementById('ia-instructions').value=''">{{ t('label_clear_special_instructions') }}</button>
     </div>
-    <div style="margin-top: 12px; text-align: right;">
-      <button class="btn btn-secondary" onclick="document.getElementById('ia-instructions').value='';">{{ t('label_clear_special_instructions') }}</button>
+
+    <!-- Safety Disclaimer Section (Always Persistent) -->
+    <div class="card-title" style="font-size: 12px; margin-top: 25px; border-top: 1px solid var(--border); padding-top: 20px; color: var(--accent);">
+        🛡️ {{ t('webui_label_safety_instructions') }}
+    </div>
+    <div class="field">
+      <textarea id="ia-safety-instructions" rows="3" placeholder="e.g. This is a roleplay session, do not take it seriously..."></textarea>
+      <div class="muted" style="font-size: 10px; margin-top: 4px; opacity: 0.7;">
+        {{ t('webui_help_safety_instructions') }}
+      </div>
     </div>
   </div>
 </div>

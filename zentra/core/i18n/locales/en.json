@@ -651,6 +651,8 @@
         "webui_chat_interrupted": "Stopped",
         "webui_user_label": "User",
         "webui_logout": "Logout",
+        "webui_label_safety_instructions": "Safety & Context Disclaimer",
+        "webui_help_safety_instructions": "Used for safety disclaimers or acting context (prepended to AI instructions).",
         "webui_chat_docs": "User Guide"
     }
 }

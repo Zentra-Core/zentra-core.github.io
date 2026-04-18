@@ -301,6 +301,9 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
     special_instructions = config.get('ai', {}).get('special_instructions', '').strip()
     special_instructions_block = f"\n### SPECIAL INSTRUCTIONS ###\n{special_instructions}\n" if special_instructions else ""
 
+    safety_instructions = config.get('ai', {}).get('safety_instructions', '').strip()
+    safety_instructions_block = f"\n### SAFETY & CONTEXT DISCLAIMER ###\n{safety_instructions}\n" if safety_instructions else ""
+
 
     # --- ROUTING ENGINE (DUAL ENGINE) ---
     routing_cfg = config.get('routing_engine', {})
@@ -362,8 +365,8 @@ def generate_response(user_text, external_config=None, tag=None, images=None, ag
         f"{force_clause}"
         f"{plugin_guidelines}"
         f"{RoutingManager.get_dynamic_instructions(config)}"
-        f"{tag_instructions}\n"
         f"{special_instructions_block}"
+        f"{safety_instructions_block}"
         f"{vision_note}"
     )
 

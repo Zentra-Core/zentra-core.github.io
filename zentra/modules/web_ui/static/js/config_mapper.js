@@ -127,9 +127,15 @@ function populateUI() {
     setVal('route-models', rm.legacy_models || '');
 
     populateSelect('ia-personality-main', sysOptions.personalities || [], c.ai?.active_personality, true);
+    const ai = c.ai || {};
+    const instrEl  = document.getElementById('ia-instructions');
+    const safetyEl = document.getElementById('ia-safety-instructions');
+    const saveInstEl = document.getElementById('ia-save-instructions');
+    
+    if (instrEl) instrEl.value = ai.special_instructions || '';
+    if (safetyEl) safetyEl.value = ai.safety_instructions || '';
+    if (saveInstEl) saveInstEl.checked = ai.save_special_instructions || false;
     setVal('ia-avatar-size', c.ai?.avatar_size || 'medium');
-    setVal('ia-instructions', c.ai?.special_instructions || '');
-    setCheck('ia-save-instructions', c.ai?.save_special_instructions || false);
 
 
     
@@ -503,11 +509,10 @@ function buildPayload() {
     }
     
     out.ai.avatar_size = getV('ia-avatar-size');
-    out.ai.special_instructions = getV('ia-instructions');
+    out.ai.special_instructions      = getV('ia-instructions');
+    out.ai.safety_instructions       = getV('ia-safety-instructions');
     out.ai.save_special_instructions = getC('ia-save-instructions');
-
-
-    out.privacy = out.privacy || {};
+    out.ai.avatar_size               = getV('ia-avatar-size');
     out.privacy.default_mode = getV('pr-default-mode') || 'normal';
     out.privacy.auto_wipe_enabled = getC('pr-auto-wipe');
     out.privacy.incognito_shortcut = getC('pr-incognito-shortcut');

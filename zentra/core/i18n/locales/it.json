@@ -121,7 +121,7 @@
         "label_rimuovi_parentesi_tonde": "Rimuovi parentesi tonde",
         "label_rimuovi_parentesi_quadre": "Rimuovi parentesi quadre",
         "label_special_instructions": "Istruzioni Speciali AI",
-        "label_save_special_instructions": "Salva in modo permanente",
+        "label_save_special_instructions": "Salva in maniera persistente",
         "label_clear_special_instructions": "Cancella Istruzioni",
         "instruction_cleared": "Istruzioni Speciali rimosse.",
         "section_ia": "🧠 COMPORTAMENTI AI",
@@ -665,6 +665,8 @@
         "webui_chat_interrupted": "Interrotto",
         "webui_user_label": "Utente",
         "webui_logout": "Esci",
+        "webui_label_safety_instructions": "Disclaimer di Sicurezza & Contesto",
+        "webui_help_safety_instructions": "Usato per disclaimer di sicurezza o contesto di recitazione (inizializza le istruzioni AI).",
         "webui_chat_docs": "Manuale Operativo"
     }
 }
