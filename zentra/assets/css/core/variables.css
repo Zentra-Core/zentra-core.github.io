@@ -57,6 +57,7 @@
   --accent: #66fcf1;
   --accent-rgb: 102, 252, 241;
   --accent2: #45a29e;
+  --bg3: #1f2833;
   --card-title-color: var(--accent);
 }
 
@@ -64,7 +65,7 @@
 .theme-pirate {
   --bg: #1a0f02;
   --bg2: #26180a;
-  --bg3: #332111;
+  --bg3: #3d2b1a; /* Adjusted for better contrast with chips */
   --accent: #d4af37; /* Gold */
   --accent-rgb: 212, 175, 55;
   --accent2: #8b4513;

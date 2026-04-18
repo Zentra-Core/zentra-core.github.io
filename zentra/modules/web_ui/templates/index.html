@@ -106,7 +106,7 @@
     <div id="status-dot"><div class="dot" id="hdr-dot"></div> <span id="hdr-model">{{ t("webui_chat_offline") }}</span></div>
     
     <!-- VIEW SWITCHER -->
-    <div class="view-switcher" style="display:flex; background:var(--glass-b); padding:3px; border-radius:10px; border:1px solid var(--border);">
+    <div class="view-switcher" style="display:flex; background:var(--bg2); padding:3px; border-radius:10px; border:1px solid var(--border);">
       <button class="switcher-btn active" id="view-tabs" onclick="setViewMode('tabs')" title="Tabs View">📂</button>
       <button class="switcher-btn" id="view-wall" onclick="setViewMode('wall')" title="Wall View">🧱</button>
     </div>
@@ -116,18 +116,20 @@
     </div>
 
     <!-- GLOBAL COLLAPSE -->
-    <div class="global-controls" style="display:flex; background:var(--glass-b); padding:3px; border-radius:10px; border:1px solid var(--border);">
+    <div class="global-controls" style="display:flex; background:var(--bg2); padding:3px; border-radius:10px; border:1px solid var(--border);">
       <button class="switcher-btn" onclick="toggleAllCategories(true)" title="Expand All">⊕</button>
       <button class="switcher-btn" onclick="toggleAllCategories(false)" title="Collapse All">⊖</button>
     </div>
     
     <!-- AUTHENTICATION WIDGET -->
     {% if current_user.is_authenticated %}
-    <div style="display:flex; align-items:center; gap:8px; background:var(--glass-b); padding:4px 12px; border-radius:12px; font-size:12px; border:1px solid var(--border);">
+    <div style="display:flex; align-items:center; gap:8px; background:var(--bg2); padding:4px 12px; border-radius:12px; font-size:12px; border:1px solid var(--border);">
       <span style="color:var(--muted);">{{ t('webui_user_label') or 'User' }}:</span>
       <strong style="color:var(--accent);">{{ current_user.username }}</strong>
       <span style="background:var(--accent); color:var(--bg); padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; text-transform:uppercase;">{{ current_user.role }}</span>
-      <a href="/logout" style="color:var(--red); text-decoration:none; margin-left:8px; font-weight:bold;">{{ t('webui_logout') or 'Logout' }}</a>
+      <a href="/logout" style="color:var(--red); text-decoration:none; margin-left:8px; font-weight:bold; opacity:0.8; transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8">
+        {{ t('webui_logout') or 'Logout' }}
+      </a>
     </div>
     {% endif %}
 

@@ -681,6 +681,9 @@
         "webui_chat_mode_locked": "Modalità bloccata",
         "webui_chat_history_empty": "Nessuna conversazione salvata",
         "webui_chat_delete_confirm_all": "Eliminare TUTTE le conversazioni? L'operazione non è reversibile e cancellerà in modo definitivo sia le chat normali che quelle private.",
-        "webui_chat_interrupted": "Interrotto"
+        "webui_chat_interrupted": "Interrotto",
+        "webui_user_label": "Utente",
+        "webui_logout": "Esci",
+        "webui_chat_docs": "Manuale Operativo"
     }
 }

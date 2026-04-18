@@ -667,6 +667,9 @@
         "webui_chat_mode_locked": "Mode Locked",
         "webui_chat_history_empty": "No conversations saved",
         "webui_chat_delete_confirm_all": "Delete ALL conversations? This cannot be undone and will permanently delete both normal and private chats.",
-        "webui_chat_interrupted": "Stopped"
+        "webui_chat_interrupted": "Stopped",
+        "webui_user_label": "User",
+        "webui_logout": "Logout",
+        "webui_chat_docs": "User Guide"
     }
 }
