@@ -15,7 +15,7 @@
 .log-window-card {
   display: flex;
   flex-direction: column;
-  background: #0d1117;
+  background: var(--bg2);
   border: 1px solid var(--border);
   border-radius: 12px;
   max-height: 550px;
@@ -47,7 +47,7 @@
 }
 
 .log-window-header select {
-    background: rgba(0,0,0,0.3);
+    background: var(--glass-b);
     border: 1px solid var(--glass-border);
     color: var(--text);
     font-size: 11px;
@@ -62,9 +62,9 @@
   padding: 16px;
   font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
   font-size: 12px;
-  background: rgba(0,0,0,0.3);
+  background: var(--bg);
   min-height: 0;
-  color: #c9d1d9;
+  color: var(--text);
 }
 
 .log-window-footer {
@@ -75,7 +75,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(0,0,0,0.4);
+    background: var(--bg2);
     flex-shrink: 0;
 }
 
@@ -88,7 +88,7 @@
     word-break: break-all;
 }
 
-.log-time { color: #58a6ff; margin-right: 10px; font-weight: bold; opacity: 0.8; }
+.log-time { color: var(--accent); margin-right: 10px; font-weight: bold; opacity: 0.8; }
 .log-lvl { 
   display: inline-block; 
   width: 65px; 
@@ -101,15 +101,15 @@
   padding: 1px 0;
 }
 
-.lvl-INFO    { color: #ffffff; }
-.lvl-DEBUG   { color: #8b949e; opacity: 0.7; }
-.lvl-WARN, .lvl-WARNING { color: #d29922; }
-.lvl-ERROR   { color: #f85149; }
-.lvl-MONITOR { color: #3fb950; border: 1px solid rgba(63, 185, 80, 0.3); padding: 0 6px; }
-.lvl-FILE    { color: #a371f7; font-style: italic; }
+.lvl-INFO    { color: var(--text); }
+.lvl-DEBUG   { color: var(--muted); opacity: 0.7; }
+.lvl-WARN, .lvl-WARNING { color: var(--yellow); }
+.lvl-ERROR   { color: var(--red); }
+.lvl-MONITOR { color: var(--green); border: 1px solid rgba(var(--green-rgb), 0.3); padding: 0 6px; }
+.lvl-FILE    { color: var(--accent2); font-style: italic; }
 
-.log-text { color: #c9d1d9; }
-.log-line.lvl-ERROR .log-text { color: #f85149; }
+.log-text { color: var(--text); }
+.log-line.lvl-ERROR .log-text { color: var(--red); }
 
 /* Badges & Overrides */
 .restart-badge {
@@ -132,6 +132,6 @@
 
 /* Custom Scrollbar */
 .log-window-body::-webkit-scrollbar { width: 10px; }
-.log-window-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.4); }
+.log-window-body::-webkit-scrollbar-track { background: var(--bg2); }
 .log-window-body::-webkit-scrollbar-thumb { background: var(--glass-c); border-radius: 5px; }
 .log-window-body::-webkit-scrollbar-thumb:hover { background: var(--glass-c); }

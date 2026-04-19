@@ -296,7 +296,7 @@ function appendDataLine(win, data) {
     if (win.filterQ) {
         const qSafe = escapeHtml(win.filterQ).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(`(${qSafe})`, 'gi');
-        textOut = textOut.replace(regex, '<span style="background-color:rgba(255,255,0,0.5); color:#000; border-radius:2px; padding:0 2px;">$1</span>');
+        textOut = textOut.replace(regex, '<span style="background-color:rgba(var(--accent-rgb),0.35); color:var(--text); border-radius:2px; padding:0 2px; border:1px solid var(--accent);">$1</span>');
     }
 
     line.innerHTML = `<span class="log-time">${data.time}</span><span class="log-lvl ${colorClass}">${data.level}</span><span class="log-text">${textOut}</span>`;
@@ -320,7 +320,7 @@ function appendRawLine(win, text) {
     if (win.filterQ) {
         const qSafe = escapeHtml(win.filterQ).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(`(${qSafe})`, 'gi');
-        textOut = textOut.replace(regex, '<span style="background-color:rgba(255,255,0,0.5); color:#000; border-radius:2px; padding:0 2px;">$1</span>');
+        textOut = textOut.replace(regex, '<span style="background-color:rgba(var(--accent-rgb),0.35); color:var(--text); border-radius:2px; padding:0 2px; border:1px solid var(--accent);">$1</span>');
     }
     
     line.innerHTML = `<span class="log-text">${textOut}</span>`;
@@ -406,7 +406,7 @@ async function openLogDeleteModal() {
             data.files.forEach(f => {
                 const sizeKb = (f.size / 1024).toFixed(1);
                 listEl.innerHTML += `
-                    <label style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:10px; border-radius:6px; cursor:pointer; gap:10px;">
+                    <label style="display:flex; justify-content:space-between; align-items:center; background:var(--glass-b); padding:10px; border-radius:6px; cursor:pointer; gap:10px; border:1px solid var(--border);">
                         <div style="display:flex; align-items:center; gap:10px; flex:1; overflow:hidden;">
                             <input type="checkbox" class="log-del-cb" value="${f.name}">
                             <div style="display:flex; flex-direction:column; overflow:hidden;">

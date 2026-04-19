@@ -13,7 +13,7 @@
       
       <div style="display:flex; gap:15px; align-items:center;">
         <label style="font-size:12px; color:var(--muted)">Layout:</label>
-        <select id="log-grid-layout" onchange="updateLogGridLayout()" class="select-sm" style="background:var(--bg-card); border:1px solid var(--border); color:var(--fg); border-radius:4px; padding:2px 5px;">
+        <select id="log-grid-layout" onchange="updateLogGridLayout()" class="select-sm" style="background:var(--bg3); border:1px solid var(--border); color:var(--text); border-radius:4px; padding:2px 5px;">
           <option value="auto">Auto (Flow)</option>
           <option value="1x1">1 Column</option>
           <option value="1x2">2 Columns</option>
@@ -64,7 +64,7 @@
           </div>
           <div style="display:flex; align-items:center; gap:5px;">
             <label>Max:</label>
-            <input type="number" class="w-max-lines" value="500" min="1" max="2500" onchange="window.forceTrimLines(this)" style="width: 50px; background:var(--glass); border:1px solid var(--border); color:var(--fg); font-size:10px; padding:2px; border-radius:3px;">
+            <input type="number" class="w-max-lines" value="500" min="1" max="2500" onchange="window.forceTrimLines(this)" style="width: 50px; background:var(--bg3); border:1px solid var(--border); color:var(--text); font-size:10px; padding:2px; border-radius:3px;">
           </div>
           <span class="w-line-count">0 lines</span>
         </div>
