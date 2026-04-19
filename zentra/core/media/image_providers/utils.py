@@ -26,7 +26,7 @@ def log_debug(msg: str):
     except Exception:
         pass
 
-def save_image_bytes(data: bytes, ext: str = "jpg", prompt: str = "") -> str:
+def save_image_bytes(data: bytes, ext: str = "jpg", prompt: str = "", params: dict = None) -> str:
     """
     Save raw image bytes and return filename.
     Adds creation date and prompt snippet to filename.
@@ -64,6 +64,15 @@ def save_image_bytes(data: bytes, ext: str = "jpg", prompt: str = "") -> str:
             f.write(f"ZENTRA IMAGE METADATA\n")
             f.write(f"=====================\n")
             f.write(f"Date: {now.strftime('%Y-%m-%d %H:%M:%S')}\n")
+            if params:
+                if "provider" in params:
+                    f.write(f"Provider: {params['provider']}\n")
+                if "model" in params:
+                    f.write(f"Model: {params['model']}\n")
+                if "guidance_scale" in params:
+                    f.write(f"Guidance Scale: {params['guidance_scale']}\n")
+                if "inference_steps" in params:
+                    f.write(f"Inference Steps: {params['inference_steps']}\n")
             f.write(f"Prompt: {prompt}\n")
     except Exception as e:
         logger.error(f"[ImageEngine] Failed to save metadata: {e}")

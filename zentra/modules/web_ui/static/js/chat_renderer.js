@@ -3,7 +3,7 @@
 
 window.currentAudio = null;
 
-function addBubble(role, text, id) {
+function addBubble(role, text, id, opts) {
   const isUser = role === 'user';
   const msg = document.createElement('div');
   msg.className = `msg ${isUser?'user':'ai'}`;
@@ -33,11 +33,34 @@ function addBubble(role, text, id) {
       </div>`;
 
   }
+  
+  const wrapper = document.createElement('div');
+  wrapper.className = 'msg-content-wrapper';
+
+  const header = document.createElement('div');
+  header.className = 'msg-header';
+
+  const nameEl = document.createElement('span');
+  nameEl.className = 'msg-name';
+  nameEl.textContent = isUser ? (window.ZentraUserName || 'User') : (window.ZentraPersonaName || 'Zentra');
+
+  const timeEl = document.createElement('span');
+  timeEl.className = 'msg-time';
+  const ts = (opts && opts.timestamp) ? new Date(opts.timestamp) : new Date();
+  timeEl.textContent = ts.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+  header.appendChild(nameEl);
+  header.appendChild(timeEl);
+  wrapper.appendChild(header);
+
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble';
   if(text) bubble.innerHTML = renderMarkdown(text);
+  
+  wrapper.appendChild(bubble);
+
   msg.appendChild(avatar);
-  msg.appendChild(bubble);
+  msg.appendChild(wrapper);
   
   const chatArea = document.getElementById('chat-area');
   if (chatArea) {
@@ -202,6 +225,6 @@ window.appendMessage = function(role, text, opts = {}) {
     if (!text || opts.noSave === undefined) opts.noSave = true;
     // Only add if there is actual content
     if (text && text.trim()) {
-        window.addBubble(role, text);
+        window.addBubble(role, text, null, opts);
     }
 };

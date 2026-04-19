@@ -57,7 +57,10 @@ class GeminiProvider:
 
             import base64
             img_bytes = base64.b64decode(b64_img)
-            return save_image_bytes(img_bytes, "png", prompt=prompt)
+            return save_image_bytes(img_bytes, "png", prompt=prompt, params={
+                "provider": "gemini",
+                "model": model
+            })
 
         except Exception as e:
             raise Exception(f"Gemini API Error: {e}")
@@ -114,7 +117,10 @@ class GeminiNativeProvider:
                     if inline.get("mimeType", "").startswith("image/"):
                         img_bytes = base64.b64decode(inline["data"])
                         ext = inline["mimeType"].split("/")[-1].replace("jpeg", "jpg")
-                        return save_image_bytes(img_bytes, ext, prompt=prompt)
+                        return save_image_bytes(img_bytes, ext, prompt=prompt, params={
+                            "provider": "gemini_native",
+                            "model": model
+                        })
         except Exception as parse_err:
             raise Exception(f"GeminiNative response parse error: {parse_err}")
 

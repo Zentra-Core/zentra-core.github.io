@@ -116,6 +116,8 @@ window.refreshStatus = async function() {
     if (sbM) sbM.textContent = d.model || '—';
     if (sbS) sbS.textContent = d.persona || '—';
 
+    window.ZentraPersonaName = d.persona || 'Zentra';
+
     const isConnected = !!d.model;
     if (tbM) tbM.textContent = isConnected ? 'Online' : (window.t ? window.t('webui_chat_offline') : 'Offline');
     const tbDot = document.getElementById('tb-status-dot');

@@ -102,6 +102,7 @@
   // Expose the global history to window so the renderer can read it
   window.historyList = [];
   window.ZentraUserAvatar = "{{ profile.avatar_path if (profile and profile.avatar_path) else '' }}";
+  window.ZentraUserName = "{{ current_user.username if current_user.is_authenticated else t('webui_user_label') }}";
   window.cfg = {{ zconfig | tojson }};
   window.ZENTRA_VERSION = "{{ version }}";
 </script>
