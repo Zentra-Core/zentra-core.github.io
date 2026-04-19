@@ -98,7 +98,10 @@
   </div>
 
   <div class="card">
-    <div class="card-title">🧰 Discovered Tools Inventory</div>
+    <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
+      🧰 Discovered Tools Inventory
+      <button type="button" class="btn btn-secondary" style="font-size:11px; padding:4px 10px;" onclick="reloadMCPBridge(this)">🔄 Refresh</button>
+    </div>
     <p style="font-size: 11px; color: var(--muted); margin-bottom: 15px;">Real-time list of capabilities available through active MCP servers.</p>
     <div id="mcp-inventory-list" style="max-height: 300px; overflow-y: auto; background: var(--bg3); padding: 15px; border-radius: 8px;">
       <p style="color: var(--muted); font-size: 12px;">Waiting for server response...</p>
@@ -273,7 +276,8 @@
     nameEl.value = ''; cmdEl.value = ''; argsEl.value = '';
     renderMCPServers();
     saveConfig(true);
-    setTimeout(fetchMCPInventory, 2000);
+    // Hot-reload bridge immediately so inventory updates without restart
+    setTimeout(() => reloadMCPBridge(), 500);
   }
 
   function removeMCPServer(name) {
@@ -281,6 +285,27 @@
       delete window.cfg.plugins.MCP_BRIDGE.servers[name];
       renderMCPServers();
       saveConfig(true);
+      setTimeout(() => reloadMCPBridge(), 500);
+    }
+  }
+
+  async function reloadMCPBridge(btn = null) {
+    const origText = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+    try {
+      const r = await fetch('/api/mcp/reload', { method: 'POST' });
+      const d = await r.json();
+      if (!d.ok) {
+        console.warn('[MCP] Reload failed:', d.error);
+      } else {
+        // Give servers a moment to initialise, then refresh inventory
+        setTimeout(fetchMCPInventory, 3000);
+        fetchMCPInventory(); // also update immediately to show 'starting' state
+      }
+    } catch (e) {
+      console.error('[MCP] Reload error:', e);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = origText; }
     }
   }
 

@@ -170,6 +170,52 @@ class MCPBridgePlugin:
         self.initialized = True
         logger.info(f"[MCP_BRIDGE] Bootstrap complete. {len(self.proxies)} servers connected.")
 
+    def sync_from_config(self, config: Dict[str, Any]):
+        """Hot-syncs servers from config without restarting already running ones.
+        - Starts any new servers not yet in self.proxies
+        - Stops servers that have been removed or disabled
+        - Leaves existing connected servers untouched
+        """
+        mcp_cfg = config.get("plugins", {}).get("MCP_BRIDGE", {})
+        if not mcp_cfg.get("enabled", True):
+            logger.info("[MCP_BRIDGE] Bridge is disabled, skipping sync.")
+            return
+
+        desired = mcp_cfg.get("servers", {})
+
+        # Stop servers that have been removed or disabled
+        removed = [n for n in list(self.proxies.keys()) if n not in desired or not desired[n].get("enabled", True)]
+        for name in removed:
+            logger.info(f"[MCP_BRIDGE] Stopping removed/disabled server: {name}")
+            self.proxies[name].stop()
+            del self.proxies[name]
+
+        # Start new servers not yet running
+        for name, s_cfg in desired.items():
+            if not s_cfg.get("enabled", True):
+                continue
+            if name in self.proxies:
+                continue  # Already running, leave it alone
+
+            cmd = s_cfg.get("command")
+            if os.name == 'nt' and cmd == 'npx':
+                cmd = 'npx.cmd'
+
+            proxy = MCPProxy(
+                name=name,
+                command=cmd,
+                args=s_cfg.get("args", []),
+                env=s_cfg.get("env", {})
+            )
+            proxy.start()
+            self.proxies[name] = proxy
+            logger.info(f"[MCP_BRIDGE] Hot-started new server: {name}")
+
+        self.initialized = True
+        logger.info(f"[MCP_BRIDGE] Sync complete. Active servers: {list(self.proxies.keys())}")
+
+
+
     # ── Tool Execution Wrapper ───────────────────────────────────────────────
     def execute_mcp_tool(self, server_name: str, tool_name: str, **kwargs):
         """Dynamic entry point for tools called via Function Calling."""
