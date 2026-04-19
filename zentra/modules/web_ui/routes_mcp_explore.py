@@ -57,7 +57,9 @@ def init_mcp_explore_routes(app, cfg_mgr, logger):
                                 "name": repo["full_name"],
                                 "description": repo["description"] or "MCP Server repository",
                                 "qualifiedName": f"github:{repo['full_name']}",
-                                "downloads": repo["stargazers_count"]
+                                "downloads": repo["stargazers_count"],
+                                "homepage": repo["html_url"],
+                                "author": repo.get("owner", {}).get("login", "")
                             })
                 except Exception as e:
                     logger.error(f"[MCP-EXPLORE] GitHub API error: {e}")
@@ -73,7 +75,9 @@ def init_mcp_explore_routes(app, cfg_mgr, logger):
                                 "name": space["id"],
                                 "description": f"Hugging Face Space ({space.get('sdk', 'mcp')})",
                                 "qualifiedName": f"hf:{space['id']}",
-                                "downloads": space.get("likes", 0)
+                                "downloads": space.get("likes", 0),
+                                "homepage": f"https://huggingface.co/spaces/{space['id']}",
+                                "author": space.get("author", space["id"].split("/")[0])
                             })
                 except Exception as e:
                     logger.error(f"[MCP-EXPLORE] Hugging Face API error: {e}")

@@ -27,6 +27,7 @@ class MCPProxy:
         self.process = None
         self.msg_id = 1
         self.tools = []
+        self.status = "starting"
         self._lock = threading.Lock()
         self._stop_event = None
         self._stderr_thread = None
@@ -61,11 +62,13 @@ class MCPProxy:
             res = self.call("tools/list")
             if res and "result" in res:
                 self.tools = res["result"].get("tools", [])
+                self.status = "connected"
                 logger.info(f"[MCP:{self.name}] Discovered {len(self.tools)} tools.")
                 return
             if i < 4:
                 logger.info(f"[MCP:{self.name}] Tool discovery retry {i+1}/5...")
                 time.sleep(3)
+        self.status = "failed"
         logger.error(f"[MCP:{self.name}] Failed to discover tools after 5 attempts.")
 
     def call(self, method: str, params: Dict[str, Any] = {}):
@@ -76,31 +79,45 @@ class MCPProxy:
                 logger.error(f"[MCP:{self.name}] Cannot call method '{method}': Process exited with code {self.process.returncode}")
                 return None
             try:
+                current_id = self.msg_id
                 req = {
                     "jsonrpc": "2.0",
                     "method": method,
                     "params": params,
-                    "id": self.msg_id
+                    "id": current_id
                 }
                 self.msg_id += 1
-                self.process.stdin.write(json.dumps(req) + "\n")
+                
+                # Must serialize to raw bytes/string carefully
+                payload = json.dumps(req)
+                self.process.stdin.write(payload + "\n")
                 self.process.stdin.flush()
                 
-                # Consume lines until we find a JSON response
-                # This skips "noise" from CLI wrappers like @smithery/cli or npx
-                for _ in range(20): # Limit to 20 lines of noise
+                # Consume lines until we find the matching JSON response
+                # This skips initialization logs and async JSON-RPC notifications
+                for _ in range(100): # Limit to 100 lines of noise max
                     line = self.process.stdout.readline()
                     if not line: return None
                     line = line.strip()
                     if not line: continue
+                    
                     if line.startswith("{"):
                         try:
-                            return json.loads(line)
+                            data = json.loads(line)
+                            # Only return if it's the response to OUR specific request
+                            if "id" in data and data["id"] == current_id:
+                                return data
+                            else:
+                                # It's valid JSON but not our response (e.g. async notification)
+                                logger.debug(f"[MCP:{self.name}] Skipped async/notification JSON: {line[:100]}...")
+                                continue
                         except json.JSONDecodeError:
-                            logger.debug(f"[MCP:{self.name}] Skipped non-JSON line: {line}")
+                            logger.debug(f"[MCP:{self.name}] Skipped broken JSON line: {line[:100]}...")
                             continue
                     else:
-                        logger.debug(f"[MCP:{self.name}] Skipped startup noise: {line}")
+                        logger.debug(f"[MCP:{self.name}] Skipped startup noise: {line[:100]}...")
+                
+                logger.error(f"[MCP:{self.name}] Timeout waiting for matching response id: {current_id}")
                 return None
             except Exception as e:
                 logger.error(f"[MCP:{self.name}] Call error: {e}")

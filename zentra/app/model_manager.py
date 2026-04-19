@@ -3,7 +3,11 @@ Management of LLM model selection and configuration.
 """
 
 import requests
+import os
 from zentra.core.logging import logger
+
+# CRITICAL: Disable LiteLLM remote cost map fetching to prevent startup timeouts
+os.environ["LITELLM_LOCAL_MODEL_COST_MAP"] = "True"
 from zentra.core.i18n import translator
 
 class ModelManager:

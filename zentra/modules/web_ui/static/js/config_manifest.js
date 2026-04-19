@@ -20,6 +20,7 @@ window.CONFIG_HUB = {
         { id: 'keymanager',label: 'hub_mod_keymanager',   icon: '🔐', cat: 'INTELLIGENZA', isCore: true },
         { id: 'routing',   label: 'hub_mod_routing',      icon: '🚦', cat: 'INTELLIGENZA', isCore: true },
         { id: 'ia',        label: 'hub_mod_persona',      icon: '🎭', cat: 'INTELLIGENZA', isCore: true },
+        { id: 'filters',   label: 'hub_mod_filters',      icon: '📝', cat: 'INTELLIGENZA', isCore: true },
         { id: 'memory',    label: 'hub_mod_memory',       icon: '🧠', cat: 'INTELLIGENZA', pluginTag: 'MEMORY', isCore: true },
         { id: 'neural-link', label: 'hub_mod_neural_link', icon: '🧠', cat: 'INTELLIGENZA', pluginTag: 'NEURAL_LINK', isCore: true },
         

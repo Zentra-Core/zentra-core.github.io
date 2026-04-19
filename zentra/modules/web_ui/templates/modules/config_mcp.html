@@ -88,6 +88,7 @@
         <div style="display:flex; gap:8px;">
           <input type="text" id="mcp-explore-query" placeholder="e.g. google, notion, search, spotify..." style="flex:1;">
           <button type="button" class="btn btn-primary" onclick="searchRegistry()" id="mcp-explore-btn">Search</button>
+          <button type="button" class="btn btn-secondary" onclick="clearMCPExplore()" id="mcp-explore-clear-btn" style="display:none;">Clear</button>
         </div>
       </div>
     </div>
@@ -125,6 +126,14 @@
     background: rgba(var(--accent-rgb), 0.2);
     border-color: var(--accent);
   }
+  .pulse-anim {
+    animation: mcp-pulse 1.5s infinite;
+  }
+  @keyframes mcp-pulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
+  }
 </style>
 
 <script>
@@ -160,6 +169,8 @@
       if (!invContainer) return;
       
       const servers = data.servers;
+      let hasStarting = false;
+
       if (Object.keys(servers).length === 0) {
         invContainer.innerHTML = '<p style="color:var(--muted); font-size:12px;">No active tools discovered yet. Make sure servers are enabled and running.</p>';
         return;
@@ -167,10 +178,17 @@
       
       let html = '';
       for (const [sName, sData] of Object.entries(servers)) {
-        const color = sData.status === 'connected' ? 'var(--green)' : (sData.status === 'crashed' ? 'var(--red)' : 'var(--muted)');
+        if (sData.status === 'starting') hasStarting = true;
+        
+        const color = sData.status === 'connected' ? 'var(--green)' : 
+                     (sData.status === 'crashed' || sData.status === 'failed' ? 'var(--red)' : 
+                     (sData.status === 'starting' ? 'var(--accent)' : 'var(--muted)'));
+        
+        const pulseClass = sData.status === 'starting' ? 'pulse-anim' : '';
+        
         html += `<div style="margin-bottom: 20px;">
           <h4 style="margin:0; color:var(--text); font-size:13px; display:flex; align-items:center; gap:8px;">
-            <span style="width:8px; height:8px; border-radius:50%; background:${color}; display:inline-block;"></span>
+            <span class="${pulseClass}" style="width:8px; height:8px; border-radius:50%; background:${color}; display:inline-block;"></span>
             ${sName.toUpperCase()} 
             <span style="font-size:10px; color:var(--muted); font-weight:normal;">[${sData.status}]</span>
           </h4>
@@ -181,12 +199,25 @@
             html += `<span class="tag-mcp-tool" title="${t.description || 'No description'}">${t.name}</span>`;
           });
         } else {
-          html += `<span style="color:var(--muted); font-size:11px; font-style:italic;">No tools discovered yet.</span>`;
+          const msg = sData.status === 'starting' ? 'Starting up...' : 
+                      (sData.status === 'failed' ? 'Failed to fetch tools' : 'No tools discovered.');
+          html += `<span style="color:var(--muted); font-size:11px; font-style:italic;">${msg}</span>`;
         }
         
         html += `</div></div>`;
       }
       invContainer.innerHTML = html;
+
+      // Adjust polling frequency
+      if (hasStarting) {
+        if (mcpPollInterval) clearInterval(mcpPollInterval);
+        mcpPollInterval = setInterval(fetchMCPInventory, 2000); 
+      } else {
+        if (mcpPollInterval) {
+          clearInterval(mcpPollInterval);
+          mcpPollInterval = setInterval(fetchMCPInventory, 10000);
+        }
+      }
     } catch (e) {
       console.error("Failed to fetch MCP inventory", e);
     }
@@ -196,7 +227,14 @@
     const tbody = document.querySelector('#mcp-servers-table tbody');
     if (!tbody) return;
     
-    if (!window.cfg.plugins) window.cfg.plugins = {};
+    if (!window.cfg || !window.cfg.plugins) {
+      // Don't wipe the table if we're waiting for config load
+      if (tbody.children.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--muted); padding:20px;">Initializing configuration...</td></tr>';
+      }
+      return;
+    }
+    
     if (!window.cfg.plugins.MCP_BRIDGE) window.cfg.plugins.MCP_BRIDGE = { enabled: false, servers: {} };
     if (!window.cfg.plugins.MCP_BRIDGE.servers) window.cfg.plugins.MCP_BRIDGE.servers = {};
     
@@ -206,7 +244,7 @@
     if (mainToggle) mainToggle.checked = window.cfg.plugins.MCP_BRIDGE.enabled;
     
     if (Object.keys(servers).length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--muted); font-size:12px; padding: 20px;">No external providers configured. Add one below.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--muted); font-size:12px; padding: 20px;">No external providers configured.</td></tr>';
       return;
     }
 
@@ -314,6 +352,7 @@
     const rEl   = document.getElementById('mcp-explore-registry');
     const btn   = document.getElementById('mcp-explore-btn');
     const container = document.getElementById('mcp-explore-results');
+    const clearBtn  = document.getElementById('mcp-explore-clear-btn');
     
     const query    = qEl.value.trim();
     const registry = rEl.value;
@@ -321,6 +360,7 @@
 
     btn.disabled = true;
     btn.innerText = '...';
+    clearBtn.style.display = 'block';
     container.innerHTML = `<p style="color:var(--muted); font-size:12px; grid-column:1/-1; text-align:center;">🔍 Searching ${registry}...</p>`;
 
     try {
@@ -351,20 +391,41 @@
           args: cmdArgs
         };
         const dataStr = btoa(JSON.stringify(cardData));
+        
+        const url = res.homepage || res.repository || res.url || '';
+        const author = res.author || res.owner || (res.name.includes('/') ? res.name.split('/')[0] : '');
+        const titleHtml = url 
+          ? `<a href="${url}" target="_blank" style="color:var(--accent); font-weight:bold; font-size:12px; font-family:'JetBrains Mono',monospace; text-decoration:none;" title="Open Repository in New Tab">🔗 ${res.name}</a>` 
+          : `<span style="color:var(--accent); font-weight:bold; font-size:12px; font-family:'JetBrains Mono',monospace;">${res.name}</span>`;
+
+        const authorHtml = author ? `<div style="font-size:10px; color:var(--muted); margin-top:2px;">by <b>${author}</b></div>` : '';
+        
+        let descHtml = '';
+        if (res.description && res.description.length > 100) {
+          descHtml = `<p style="font-size:11px; color:var(--muted); line-height:1.4; margin-bottom:0px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">${res.description}</p>
+          <span style="font-size:9px; color:rgba(var(--accent-rgb),0.8); cursor:pointer; display:block; text-align:right; margin-bottom:10px;" onclick="this.previousElementSibling.style.display='block'; this.previousElementSibling.style.webkitLineClamp='unset'; this.style.display='none'; event.stopPropagation();">Read more ▼</span>`;
+        } else {
+          descHtml = `<p style="font-size:11px; color:var(--muted); line-height:1.4; margin-bottom:10px;">${res.description || 'No description available.'}</p>`;
+        }
+
         html += `
           <div style="background:var(--glass); padding:14px; border-radius:10px; border:1px solid var(--glass-border); display:flex; flex-direction:column; justify-content:space-between;">
             <div>
               <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
-                <span style="color:var(--accent); font-weight:bold; font-size:12px; font-family:'JetBrains Mono',monospace;">${res.name}</span>
-                <span style="font-size:10px; color:var(--muted);">${res.useCount || res.downloads || 0} ${registry === 'smithery' ? 'uses' : 'dls'}</span>
+                <div style="display:flex; flex-direction:column;">
+                  ${titleHtml}
+                  ${authorHtml}
+                </div>
+                <span style="font-size:10px; color:var(--muted); white-space:nowrap; margin-left:8px;">${res.useCount || res.downloads || 0} ${registry === 'smithery' ? 'uses' : 'dls'}</span>
               </div>
-              <p style="font-size:11px; color:var(--muted); line-height:1.4; margin-bottom:10px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">${res.description || 'No description available.'}</p>
+              ${descHtml}
             </div>
             <button type="button" class="btn btn-secondary" style="width:100%; font-size:11px;" onclick="addFromExplore('${dataStr}')">➕ Add to Zentra</button>
           </div>
         `;
       });
       container.innerHTML = html;
+      window.ZentraMCPSearchResults = html; // Cache results for re-renders
 
     } catch (e) {
       container.innerHTML = '<p style="color:var(--red); font-size:12px; grid-column:1/-1; text-align:center;">Network error. Make sure Zentra is online.</p>';
@@ -372,6 +433,17 @@
       btn.disabled = false;
       btn.innerText = 'Search';
     }
+  }
+
+  function clearMCPExplore() {
+    const qEl   = document.getElementById('mcp-explore-query');
+    const clearBtn  = document.getElementById('mcp-explore-clear-btn');
+    const container = document.getElementById('mcp-explore-results');
+    
+    qEl.value = '';
+    clearBtn.style.display = 'none';
+    container.innerHTML = '<p style="color: var(--muted); font-size: 12px; grid-column: 1/-1; text-align: center;">Enter a search term to discover new capabilities.</p>';
+    window.ZentraMCPSearchResults = null;
   }
 
   function addFromExplore(encodedData) {
@@ -390,16 +462,30 @@
     } catch(e) { console.error("Failed to parse explore data", e); }
   }
 
+  let mcpPollInterval = null;
+
   document.addEventListener('DOMContentLoaded', () => {
+    // Initial render
     setTimeout(() => {
       renderMCPServers();
       fetchMCPInventory();
+      if (window.ZentraMCPSearchResults) {
+        document.getElementById('mcp-explore-results').innerHTML = window.ZentraMCPSearchResults;
+        document.getElementById('mcp-explore-clear-btn').style.display = 'block';
+      }
     }, 1000);
 
     const qEl = document.getElementById('mcp-explore-query');
-    if (qEl) qEl.addEventListener('keypress', (e) => { if (e.key === 'Enter') searchRegistry(); });
+    if (qEl) {
+      qEl.addEventListener('keypress', (e) => { 
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          searchRegistry(); 
+        }
+      });
+    }
 
     setInterval(renderMCPServers, 5000);
-    setInterval(fetchMCPInventory, 10000);
+    mcpPollInterval = setInterval(fetchMCPInventory, 10000);
   });
 </script>

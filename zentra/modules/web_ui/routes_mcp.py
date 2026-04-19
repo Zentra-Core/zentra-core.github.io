@@ -17,10 +17,10 @@ def init_mcp_routes(app, cfg_mgr, logger):
                 # Check status
                 status = "unknown"
                 if proxy.process:
-                    if proxy.process.poll() is None:
-                        status = "connected"
-                    else:
+                    if proxy.process.poll() is not None:
                         status = "crashed"
+                    else:
+                        status = getattr(proxy, "status", "connected")
                 else:
                     status = "disconnected"
                 
@@ -50,7 +50,7 @@ def init_mcp_routes(app, cfg_mgr, logger):
             # Return updated inventory after sync
             inventory = {}
             for name, proxy in bridge.proxies.items():
-                status = "connected" if proxy.process and proxy.process.poll() is None else "starting"
+                status = getattr(proxy, "status", "starting")
                 inventory[name] = {"status": status, "tools": proxy.tools}
 
             return jsonify({"ok": True, "servers": inventory})
