@@ -1,0 +1,271 @@
+:root {
+  /* ── Core Backgrounds ── */
+  --bg:       #0d0f18;  /* Deep space navy */
+  --bg2:      #141726;
+  --bg3:      #1c2033;
+
+  /* ── Brand Colors (Cyberpunk Default) ── */
+  --accent:      #6c8cff;  /* Neon periwinkle */
+  --accent-rgb:  108, 140, 255;
+  --accent2:     #a78bfa;  /* Soft violet */
+  --accent2-rgb: 167, 139, 250;
+
+  /* ── Semantic Colors ── */
+  --green:     #34d399;
+  --green-rgb: 52, 211, 153;
+  --red:       #f87171;
+  --red-rgb:   248, 113, 113;
+  --yellow:    #fbbf24;
+  --yellow-rgb: 251, 191, 36;
+
+  /* ── Text ── */
+  --text:      #e2e8f0;
+  --muted:     #6b7280;
+
+  /* ── UI Tokens ── */
+  --border:   #252b46;
+  --surface2: #1c2033;
+  --surface3: #252b46;
+  --radius:   10px;
+  --shadow:          0 4px 24px rgba(0,0,0,0.5);
+  --shadow-up:       0 -4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-glow:     0 0 20px rgba(108, 140, 255, 0.2);
+  --shadow-glow-active: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(108, 140, 255, 0.15);
+  --bg-blur:  rgba(13, 15, 24, 0.88);
+
+  /* ── Typography ── */
+  --font-sans:      'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:      'JetBrains Mono', 'Fira Code', monospace;
+  --font-size-xs:   10.5px;
+  --font-size-sm:   12px;
+  --font-size-base: 14px;
+  --header-logo-sz: 18px;
+  --sidebar-logo-sz: 16px;
+
+  /* ── Glass Tokens ── */
+  --glass:        rgba(108, 140, 255, 0.04);
+  --glass-b:      rgba(108, 140, 255, 0.08);
+  --glass-c:      rgba(108, 140, 255, 0.15);
+  --glass-border: rgba(108, 140, 255, 0.1);
+
+  /* ── Gradients ── */
+  --accent-g:    linear-gradient(135deg, var(--accent), var(--accent2));
+  --accent2-rgb: 167, 139, 250;
+
+  /* ── Dashboard ── */
+  --card-title-color: var(--accent);
+}
+
+/* ── Theme: Turquoise (Cyberpunk Teal) ── */
+.theme-turquoise {
+  --bg:  #0b1a1a;
+  --bg2: #112222;
+  --bg3: #182e2e;
+  --accent:      #66fcf1;
+  --accent-rgb:  102, 252, 241;
+  --accent2:     #45a29e;
+  --accent2-rgb: 69, 162, 158;
+  --border:      #1a3a3a;
+  --text:        #cffafe;
+  --muted:       #6ec6c1;
+  --glass:        rgba(102, 252, 241, 0.04);
+  --glass-b:      rgba(102, 252, 241, 0.08);
+  --glass-c:      rgba(102, 252, 241, 0.15);
+  --glass-border: rgba(102, 252, 241, 0.12);
+  --shadow-up:   0 -4px 24px rgba(102, 252, 241, 0.12);
+  --shadow-glow: 0 0 20px rgba(102, 252, 241, 0.25);
+  --shadow-glow-active: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 28px rgba(102, 252, 241, 0.2);
+  --bg-blur:     rgba(11, 26, 26, 0.88);
+  --accent-g:    linear-gradient(135deg, #66fcf1, #45a29e);
+  --card-title-color: var(--accent);
+}
+
+/* ── Theme: Pirate (Rum & Gold — Warm/Aged) ── */
+.theme-pirate {
+  --bg:  #140a00;  /* Dark rum */
+  --bg2: #1e1000;
+  --bg3: #2d1c08;
+  --accent:      #d4af37;  /* Gold doubloon */
+  --accent-rgb:  212, 175, 55;
+  --accent2:     #c0622e;  /* Burnt copper */
+  --accent2-rgb: 192, 98, 46;
+  --text:        #f4e8c1;
+  --muted:       #a08050;
+  --border:      #3d2208;
+  --glass:        rgba(212, 175, 55, 0.05);
+  --glass-b:      rgba(212, 175, 55, 0.1);
+  --glass-c:      rgba(212, 175, 55, 0.15);
+  --glass-border: rgba(212, 175, 55, 0.15);
+  --shadow:      0 4px 24px rgba(0,0,0,0.6);
+  --shadow-up:   0 -4px 24px rgba(212, 175, 55, 0.12);
+  --shadow-glow: 0 0 20px rgba(212, 175, 55, 0.3);
+  --shadow-glow-active: 0 20px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(212, 175, 55, 0.25);
+  --bg-blur:     rgba(20, 10, 0, 0.88);
+  --accent-g:    linear-gradient(135deg, #d4af37, #c0622e);
+  --card-title-color: var(--accent);
+}
+
+/* ── Theme: Elegant (Obsidian + Champagne Gold — Luxury) ── */
+.theme-elegant {
+  --bg:  #080808;
+  --bg2: #111;
+  --bg3: #1a1a1a;
+  --accent:      #c9a84c;  /* Champagne gold */
+  --accent-rgb:  201, 168, 76;
+  --accent2:     #96744a;  /* Antique bronze */
+  --accent2-rgb: 150, 116, 74;
+  --text:        #f0ece4;  /* Warm ivory white */
+  --muted:       #806e56;  /* Warm taupe */
+  --border:      #2a2520;
+  --glass:        rgba(201, 168, 76, 0.04);
+  --glass-b:      rgba(201, 168, 76, 0.08);
+  --glass-c:      rgba(201, 168, 76, 0.12);
+  --glass-border: rgba(201, 168, 76, 0.12);
+  --shadow:      0 4px 24px rgba(0,0,0,0.7);
+  --shadow-up:   0 -4px 24px rgba(201, 168, 76, 0.06);
+  --shadow-glow: 0 0 20px rgba(201, 168, 76, 0.2);
+  --shadow-glow-active: 0 20px 40px rgba(0, 0, 0, 0.7), 0 0 24px rgba(201, 168, 76, 0.18);
+  --bg-blur:     rgba(8, 8, 8, 0.92);
+  --accent-g:    linear-gradient(135deg, #c9a84c, #96744a);
+  --card-title-color: var(--accent);
+}
+
+
+/* Theme: Rose (Soft & Vibrant) */
+.theme-rose {
+  --bg: #0f1117;
+  --bg2: #1e1b26;
+  --bg3: #2a2235;
+  --accent: #fb7185;
+  --accent-rgb: 251, 113, 133;
+  --accent2: #fda4af;
+  --accent2-rgb: 253, 164, 175;
+  --text: #fff1f2;
+  --border: #4c1d24;
+  --shadow-up: 0 -4px 24px rgba(251, 113, 133, 0.15);
+  --shadow-glow: 0 0 20px rgba(251, 113, 133, 0.3);
+  --shadow-glow-active: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(251, 113, 133, 0.25);
+  --bg-blur: rgba(30, 27, 38, 0.85);
+  --glass: rgba(251, 113, 133, 0.04);
+  --glass-b: rgba(251, 113, 133, 0.08);
+  --glass-c: rgba(251, 113, 133, 0.12);
+  --glass-border: rgba(251, 113, 133, 0.15);
+  --accent-g: linear-gradient(135deg, #fb7185, #fda4af);
+}
+
+/* Theme: Light Mode (Premium Pearl + Indigo) */
+.theme-light {
+  /* ── Backgrounds ── */
+  --bg:          #fafaf9;  /* Warm Pearl White — not stark, never cold */
+  --bg2:         #f3f2ef;  /* Warm Off-White (slightly darker) */
+  --bg3:         #eae9e4;  /* Soft Stone — for cards, inputs, chips */
+
+  /* ── Text ── */
+  --text:        #1c1917;  /* Near-black, warm (not cool gray) */
+  --muted:       #78716c;  /* Warm gray for labels & hints */
+
+  /* ── Accent ── */
+  --accent:      #4f46e5;  /* Deep Indigo — confident, modern */
+  --accent-rgb:  79, 70, 229;
+  --accent2:     #7c3aed;  /* Violet secondary */
+  --accent2-rgb: 124, 58, 237;
+
+  /* ── Semantic Colors (adjusted for light bg readability) ── */
+  --green:       #059669;
+  --green-rgb:   5, 150, 105;
+  --red:         #dc2626;
+  --red-rgb:     220, 38, 38;
+  --yellow:      #d97706;
+  --yellow-rgb:  217, 119, 6;
+
+  /* ── Edge & Glass ── */
+  --border:      #d6d3cd;  /* Warm gray border — no pink */
+  --glass:       rgba(79, 70, 229, 0.03);
+  --glass-b:     rgba(79, 70, 229, 0.06);
+  --glass-c:     rgba(79, 70, 229, 0.1);
+  --glass-border: rgba(79, 70, 229, 0.12);
+
+  /* ── Shadows ── */
+  --shadow:             0 2px 12px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-up:          0 -4px 20px rgba(79, 70, 229, 0.08), 0 -1px 4px rgba(0, 0, 0, 0.05);
+  --shadow-glow:        0 0 20px rgba(79, 70, 229, 0.18), 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-glow-active: 0 10px 30px rgba(79, 70, 229, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  /* ── Blur (backdrop for blurred elements) ── */
+  --bg-blur:     rgba(250, 250, 249, 0.92);
+
+  /* ── Gradients ── */
+  --accent-g:    linear-gradient(135deg, #4f46e5, #7c3aed);
+}
+
+/* Theme: Corporate (Luminous Professional) */
+.theme-corporate {
+  --bg:          #f8fafc;  /* Cool white — crisp, never harsh */
+  --bg2:         #f1f5f9;  /* Slate-tinted off-white */
+  --bg3:         #e2e8f0;  /* Light slate for cards/inputs */
+
+  /* ── Text ── */
+  --text:        #0f172a;  /* Slate 900 — strong, readable */
+  --muted:       #64748b;  /* Slate 500 — balanced secondary text */
+
+  /* ── Accent ── */
+  --accent:      #0ea5e9;  /* Sky 500 — vivid, trustworthy blue */
+  --accent-rgb:  14, 165, 233;
+  --accent2:     #0284c7;  /* Sky 600 — deeper blue secondary */
+  --accent2-rgb: 2, 132, 199;
+
+  /* ── Semantic Colors ── */
+  --green:       #16a34a;
+  --green-rgb:   22, 163, 74;
+  --red:         #dc2626;
+  --red-rgb:     220, 38, 38;
+  --yellow:      #d97706;
+  --yellow-rgb:  217, 119, 6;
+
+  /* ── Edge & Glass ── */
+  --border:      #cbd5e1;  /* Slate 300 — clean, visible borders */
+  --glass:       rgba(14, 165, 233, 0.03);
+  --glass-b:     rgba(14, 165, 233, 0.07);
+  --glass-c:     rgba(14, 165, 233, 0.12);
+  --glass-border: rgba(14, 165, 233, 0.14);
+
+  /* ── Shadows ── */
+  --shadow:             0 2px 12px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.05);
+  --shadow-up:          0 -4px 20px rgba(14, 165, 233, 0.1), 0 -1px 4px rgba(15, 23, 42, 0.04);
+  --shadow-glow:        0 0 20px rgba(14, 165, 233, 0.2), 0 4px 12px rgba(15, 23, 42, 0.06);
+  --shadow-glow-active: 0 10px 30px rgba(14, 165, 233, 0.18), 0 4px 12px rgba(15, 23, 42, 0.08);
+
+  /* ── Blur ── */
+  --bg-blur:     rgba(248, 250, 252, 0.93);
+
+  /* ── Gradients ── */
+  --accent-g:    linear-gradient(135deg, #0ea5e9, #0284c7);
+
+  /* ── Dashboard ── */
+  --card-title-color: var(--accent);
+}
+
+/* Theme: Solarpunk (Nature & Sun) */
+.theme-solarpunk {
+  --bg:          #fbfaf5;
+  --bg2:         #e8f5e9; /* More saturated Green to avoid "pink" perception */
+  --bg3:         #c8e6c9;
+  --text:        #1b5e20;
+  --muted:       #4e7c59;
+  --accent:      #2e7d32;
+  --accent-rgb:  46, 125, 50;
+  --accent2:     #fbc02d;
+  --accent2-rgb: 251, 192, 45;
+  --border:      #a5d6a7;
+  --shadow:      0 4px 20px rgba(46, 125, 50, 0.1);
+  --shadow-up:   0 -4px 20px rgba(251, 192, 45, 0.15); /* Yellowish up-shadow */
+  --shadow-glow: 0 0 20px rgba(46, 125, 50, 0.25); /* Greenish glow */
+  --shadow-glow-active: 0 10px 30px rgba(46, 125, 50, 0.15), 0 0 25px rgba(251, 192, 45, 0.2);
+  --bg-blur:     rgba(232, 245, 233, 0.9);
+  --glass:       rgba(46, 125, 50, 0.05);
+  --glass-b:     rgba(46, 125, 50, 0.1);
+  --glass-c:     rgba(46, 125, 50, 0.15);
+  --glass-border: rgba(46, 125, 50, 0.2);
+  --accent-g:    linear-gradient(135deg, #2e7d32, #fbc02d);
+}
+

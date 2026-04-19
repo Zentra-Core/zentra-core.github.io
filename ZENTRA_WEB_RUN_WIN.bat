@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion
 title ZENTRA -- Native Web Server (Watchdog)
 color 0B
 
@@ -54,8 +55,16 @@ if "%SCHEME%"=="https" (
 echo  ==============================================================
 echo.
 
+:: Priority to the isolated portable python runtime
+set PYTHON_CMD=python
+if exist "%CD%\python_env\python.exe" (
+  set PYTHON_CMD="%CD%\python_env\python.exe"
+) else if exist "venv\Scripts\python.exe" (
+  set PYTHON_CMD="%CD%\venv\Scripts\python.exe"
+)
+
 :: Starting the monitor
-python zentra\monitor.py --script zentra.plugins.web_ui.server
+!PYTHON_CMD! zentra\monitor.py --script zentra.modules.web_ui.server
 
 echo.
 echo [!] Watchdog terminated.

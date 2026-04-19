@@ -1,0 +1,131 @@
+<!-- IMAGE GEN PANEL -->
+<div id="tab-igen" class="panel">
+  <div class="card" id="card-image-gen">
+    <div class="card-title">🎨 Image Generation</div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Provider</label>
+        <select id="igen-provider" onchange="onProviderChanged()">
+          <!-- Populated dynamically -->
+        </select>
+      </div>
+      <div class="field">
+        <label>Model <button onclick="refreshImageModels()" style="margin-left:8px;padding:2px 10px;font-size:11px;border:1px solid var(--border);background:var(--bg3);color:var(--text);border-radius:6px;cursor:pointer;">&#8635; Refresh</button></label>
+        <select id="igen-model"><option>flux</option></select>
+        <span id="igen-model-status" style="font-size:11px;color:var(--muted);"></span>
+      </div>
+      <div class="field"><label>Width (px)</label><input type="number" id="igen-width" min="256" max="2048" step="64"></div>
+      <div class="field"><label>Height (px)</label><input type="number" id="igen-height" min="256" max="2048" step="64"></div>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-info" style="font-weight:600; color:var(--text);">Enable Image Generation</div>
+      <label class="switch"><input type="checkbox" id="igen-enabled"><span class="slider"></span></label>
+    </div>
+
+    <div class="field" style="margin-top:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <label style="margin:0;">Negative Prompt</label>
+        <div style="display:flex; align-items:center; gap:8px;">
+           <small style="color:var(--muted);font-size:11px;">Enable</small>
+           <label class="switch"><input type="checkbox" id="igen-use-neg-prompt"><span class="slider"></span></label>
+        </div>
+      </div>
+      <textarea id="igen-neg-prompt" rows="3" placeholder="distorted, extra fingers, malformed limbs..."></textarea>
+      <small style="color:var(--muted);font-size:11px;">Elements to avoid in the generation.</small>
+    </div>
+
+    <div class="grid-2" style="margin-top:10px;">
+      <div class="field">
+        <label>Guidance Scale (CFG)</label>
+        <div style="display:flex; align-items:center;">
+          <input type="range" id="igen-guidance" min="1" max="20" step="0.5" style="flex:1;">
+          <span id="igen-guidance-val" style="margin-left:10px; width:30px; font-weight:bold;">7.5</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Inference Steps</label>
+        <div style="display:flex; align-items:center;">
+          <input type="range" id="igen-steps" min="1" max="100" step="1" style="flex:1;">
+          <span id="igen-steps-val" style="margin-left:10px; width:30px; font-weight:bold;">30</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="toggle-row" style="margin-top:10px;">
+      <div class="toggle-info">
+        <strong>Auto-Enrich Prompt</strong><br>
+        <small style="color:var(--muted);">Automatically adds quality keywords</small>
+      </div>
+      <label class="switch"><input type="checkbox" id="igen-auto-enrich"><span class="slider"></span></label>
+    </div>
+
+    <div class="field" style="margin-top:5px;">
+      <label>Enrichment Keywords</label>
+      <input type="text" id="igen-enrich-keywords" placeholder="masterpiece, 8k, highly detailed...">
+      <small style="color:var(--muted);font-size:11px;">Keywords added when Auto-Enrich is enabled.</small>
+    </div>
+
+    <div class="field" style="margin-top:10px;">
+      <label>Artistic Style</label>
+      <select id="igen-style">
+        <option value="none">None (Raw Prompt)</option>
+        <option value="cinematic">🎬 Cinematic</option>
+        <option value="photography">📷 Photography</option>
+        <option value="anime">✨ Anime</option>
+        <option value="manga">🏴‍☠️ Manga (B&W)</option>
+        <option value="cartoon">🎨 Cartoon</option>
+        <option value="digital_art":>💻 Digital Art</option>
+        <option value="oil_painting">🖼️ Oil Painting</option>
+        <option value="sketch">✏️ Sketch</option>
+        <option value="3d_render">🧊 3D Render</option>
+        <option value="cyberpunk">🌃 Cyberpunk</option>
+        <option value="fantasy">🧙‍♂️ Fantasy</option>
+      </select>
+      <small style="color:var(--muted);font-size:11px;">Applies a predefined artistic mood to the generation.</small>
+    </div>
+
+    <div class="toggle-row" style="margin-top:10px;">
+      <div class="toggle-info">Remove Logo/Watermark (Pollinations only)</div>
+      <label class="switch"><input type="checkbox" id="igen-nologo"><span class="slider"></span></label>
+    </div>
+
+    <!-- FLUX OPTIMIZATION SECTION -->
+    <div style="margin-top:20px; padding:12px; border:1px solid var(--border); border-radius:12px; background:rgba(255,165,0,0.05);">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:18px;">✨</span>
+                <strong>Flux Prompt Studio</strong>
+            </div>
+            <!-- Backend auto optimization toggle -->
+            <div style="display:flex; align-items:center; gap:8px;">
+                <small style="font-size:11px; font-weight:600; color:var(--text);">Auto-Optimize (Backend)</small>
+                <label class="switch"><input type="checkbox" id="igen-optimize-flux"><span class="slider"></span></label>
+            </div>
+        </div>
+        
+        <div class="field" style="margin-top:10px;">
+            <label>Refiner Instructions (AI Rules)</label>
+            <textarea id="igen-flux-instructions" rows="3" placeholder="Rewrite as a detailed photograph description..."></textarea>
+        </div>
+        
+        <hr style="border-color:var(--border); margin:12px 0; opacity:0.5;">
+        
+        <div class="field" style="margin-top:10px;">
+            <label>Manual Test: Draft Prompt (Keywords)</label>
+            <div style="display:flex; gap:8px;">
+                <textarea id="igen-flux-draft" rows="3" placeholder="cyberpunk girl, neon, rainy street..."></textarea>
+                <button onclick="refineDraftPrompt(this)" style="padding:0 15px; border-radius:8px; border:1px solid var(--border); background:var(--bg3); color:var(--text); cursor:pointer;">&#10024; Refine</button>
+            </div>
+        </div>
+        
+        <div class="field" style="margin-top:10px;">
+            <label>Manual Test: Refined Result</label>
+            <textarea id="igen-flux-result" rows="4" placeholder="Refined prompt will appear here..."></textarea>
+            <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+                 <button onclick="sendPromptToChat()" style="padding:8px 15px; font-size:12px; border-radius:8px; border:1px solid var(--border); background:var(--accent); color:#fff; cursor:pointer; font-weight:600;">&#10148; Send to Chat as /img</button>
+            </div>
+        </div>
+    </div>
+  </div>
+</div>

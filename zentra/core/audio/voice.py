@@ -17,6 +17,10 @@ import os as _os
 _os.makedirs(AUDIO_DIR, exist_ok=True)
 _RISPOSTA_WAV = _os.path.join(AUDIO_DIR, "risposta.wav")
 
+def _get_project_root():
+    # C:\Zentra-Core\zentra\core\audio\voice.py -> C:\Zentra-Core
+    return _os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))))
+
 is_speaking = False
 _current_piper_proc = None
 
@@ -73,17 +77,28 @@ def speak(text, state=None):
         if not audio_cfg.get("voice_status", True):
             return
             
-        length_scale     = 1.0 / max(0.1, audio_cfg.get("speed", 1.2))
-        noise_scale      = audio_cfg.get("noise_scale", 0.667)
-        noise_w          = audio_cfg.get("noise_w", 0.8)
-        sentence_silence = audio_cfg.get("sentence_silence", 0.2)
-        piper_path       = audio_cfg.get("piper_path", r"C:\piper\piper.exe")
-        model_path       = audio_cfg.get("onnx_model", r"C:\piper\it_IT-aurora-medium.onnx")
         output_device    = audio_cfg.get("output_device_index", -1)
+        
+        # --- DYNAMIC PATH RESOLUTION ---
+        root = _get_project_root()
+        default_piper = _os.path.join(root, "bin", "piper", "piper.exe")
+        default_model = _os.path.join(root, "bin", "piper", "it_IT-paola-medium.onnx")
+
+        piper_path    = audio_cfg.get("piper_path", default_piper)
+        model_path    = audio_cfg.get("onnx_model", default_model)
+
+        # Force project path if legacy C:\piper is found and doesn't exist
+        if (r"C:\piper" in piper_path or r"C:\piper" in model_path) and not _os.path.exists(piper_path):
+            logger.debug("VOICE", "Legacy Piper path not found. Switching to project-relative paths.")
+            piper_path = default_piper
+            model_path = default_model
     except Exception as e:
         logger.debug("VOICE", f"Configuration error: {e}")
+        root = _get_project_root()
         length_scale, noise_scale, noise_w, sentence_silence = 1.0, 0.667, 0.8, 0.2
-        piper_path, model_path, output_device = r"C:\piper\piper.exe", r"C:\piper\it_IT-aurora-medium.onnx", -1
+        piper_path = _os.path.join(root, "bin", "piper", "piper.exe")
+        model_path = _os.path.join(root, "bin", "piper", "it_IT-paola-medium.onnx")
+        output_device = -1
 
     is_speaking = True
     if state:

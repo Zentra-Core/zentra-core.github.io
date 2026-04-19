@@ -1,0 +1,103 @@
+header {
+  background: linear-gradient(135deg, var(--bg2) 0%, var(--bg) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Centered in index.css */
+  gap: 60px; /* 60px in index.css vs 20px in old layout.css */
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow);
+}
+
+.config-page header {
+  justify-content: center; /* Ensuring consistency with index.css */
+}
+
+.logo {
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo img {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(var(--accent-rgb), 0.2));
+}
+
+.logo-text {
+  background: var(--accent-g);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+/* Telemetry Bar (Top) */
+#live-status {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  margin-bottom: 28px;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  animation: fadeIn 0.4s ease;
+}
+
+.stat { display: flex; align-items: center; gap: 6px; }
+.stat-label { color: var(--muted); }
+.stat-val { font-weight: 600; color: var(--text); }
+.val-ok   { color: var(--green); }
+.val-warn { color: var(--yellow); }
+.val-err  { color: var(--red); }
+
+.container {
+  max-width: 960px; /* index.css had 960px whereas old layout.css had 1100px */
+  margin: 0 auto;
+  padding: 32px 24px;
+  padding-bottom: 100px;
+}
+
+.save-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  z-index: 99;
+  box-shadow: var(--shadow-up);
+}
+
+#save-msg { font-size: 13px; color: var(--muted); }
+
+#status-dot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse 2s infinite;
+}

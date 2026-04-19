@@ -1,0 +1,145 @@
+<!-- VOICE PANEL -->
+<div id="tab-voice" class="panel">
+  <div class="card">
+    <div class="card-title">{{ t('webui_conf_voice_system_title') }}</div>
+    <div class="toggle-row">
+      <div class="toggle-info">{{ t('webui_conf_voice_system_listening') }}</div>
+      <label class="switch"><input type="checkbox" id="sys-mic-status"><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-info">{{ t('webui_conf_voice_system_voice') }}</div>
+      <label class="switch"><input type="checkbox" id="sys-voice-status"><span class="slider"></span></label>
+    </div>
+    
+    <div class="field" style="margin-top:10px;">
+      <label>{{ t('webui_voice_routing_in') }}</label>
+      <select id="stt-source">
+         <option value="system">{{ t('webui_voice_pc_mic') }}</option>
+         <option value="web">{{ t('webui_voice_web_mic') }}</option>
+      </select>
+    </div>
+    <div class="field" style="margin-top:10px;">
+      <label>{{ t('webui_voice_routing_out') }}</label>
+      <select id="tts-destination">
+         <option value="system">{{ t('webui_voice_pc_speaker') }}</option>
+         <option value="web">{{ t('webui_voice_web_speaker') }}</option>
+      </select>
+    </div>
+    <div class="field" style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border);">
+      <label style="display:flex; align-items:center; gap:6px;">
+        {{ t('webui_voice_dynamic_mode') }}
+        <span style="font-size:11px; color:var(--muted); font-weight:400;">{{ t('webui_voice_dynamic_hint') }}</span>
+      </label>
+      <select id="audio-mode" style="margin-top:6px;">
+         <option value="console">{{ t('webui_voice_mode_pc') }}</option>
+         <option value="web">{{ t('webui_voice_mode_web') }}</option>
+         <option value="auto">{{ t('webui_voice_mode_auto') }}</option>
+      </select>
+      <p style="font-size:11px; color:var(--muted); margin-top:5px;">
+        {{ t('webui_voice_mode_auto_desc') }}
+      </p>
+    </div>
+  </div>
+
+  
+  <div class="card">
+    <div class="card-title">Audio Devices</div>
+    <div class="field">
+      <label>Microphone (Input)</label>
+      <div style="display:flex; gap:8px;">
+        <select id="audio-input-device" style="flex:1"></select>
+        <button class="btn btn-secondary" style="padding:4px 12px; font-size:12px;" onclick="applyAudioDevice()">Apply</button>
+      </div>
+    </div>
+    <div class="field" style="margin-top:12px;">
+      <label>Speaker (Output)</label>
+      <div style="display:flex; gap:8px;">
+        <select id="audio-output-device" style="flex:1"></select>
+        <button class="btn btn-secondary" style="padding:4px 12px; font-size:12px;" onclick="applyAudioDevice()">Apply</button>
+      </div>
+    </div>
+    <div style="margin-top: 16px; text-align: right; display: flex; justify-content: space-between; align-items: center;">
+       <span id="audio-scan-status" style="font-size: 12px; color: var(--muted);"></span>
+       <button class="btn btn-secondary" onclick="scanAudioDevices()">Re-scan & Test</button>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-title">{{ t('webui_conf_bridge_title') }}</div>
+    <div class="toggle-row">
+      <div class="toggle-info">{{ t('webui_conf_bridge_stt') }}</div>
+      <label class="switch"><input type="checkbox" id="br-voice-stt"><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-info">{{ t('webui_conf_bridge_tts') }}</div>
+      <label class="switch"><input type="checkbox" id="br-voice-enabled"><span class="slider"></span></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">{{ t('webui_conf_voice_tts_title') }}</div>
+    <div class="field"><label>{{ t('webui_conf_voice_path') }}</label><input type="text" id="v-piper" placeholder="C:\piper\piper.exe"></div>
+    <div class="field">
+      <label>{{ t('webui_conf_voice_onnx') }}</label>
+      <select id="v-onnx-model"></select>
+      <p style="font-size:12px;color:var(--muted);margin-top:4px;">{{ t('webui_conf_voice_info') }}</p>
+    </div>
+    <div class="grid-2">
+      <div class="field"><label>{{ t('webui_conf_voice_speed') }}</label><input type="number" id="v-speed" min="0.5" max="3" step="0.05"></div>
+      <div class="field"><label>{{ t('webui_conf_voice_noise') }}</label><input type="number" id="v-noise" min="0" max="1" step="0.01"></div>
+      <div class="field"><label>{{ t('webui_conf_voice_noisew') }}</label><input type="number" id="v-noisew" min="0" max="1" step="0.01"></div>
+      <div class="field"><label>{{ t('webui_conf_voice_silence') }}</label><input type="number" id="v-silence" min="0" max="2" step="0.05"></div>
+    </div>
+    
+    <div style="margin-top:20px; padding-top:15px; border-top: 1px solid var(--border);">
+      <label style="font-size:12px; color:var(--muted); margin-bottom:8px; display:block;">{{ t('webui_voice_test_title') }}</label>
+      <div style="display:flex; gap:10px;">
+        <input type="text" id="v-test-text" placeholder="{{ t('webui_voice_test_ph') }}" style="flex:1;">
+        <button class="btn btn-secondary" onclick="testVoice('web')" title="{{ t('webui_voice_test_web') }}">🌐</button>
+        <button class="btn btn-secondary" onclick="testVoice('console')" title="{{ t('webui_voice_test_pc') }}">💻</button>
+        <button id="v-test-stop" class="btn btn-danger" style="display:none;" onclick="stopVoice()" title="Stop Voice">⏹</button>
+      </div>
+      <div id="v-test-status" style="font-size:11px; margin-top:5px; color:var(--accent);"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">{{ t('webui_conf_voice_mic_title') }}</div>
+    <div class="grid-2">
+      <div class="field"><label>{{ t('webui_conf_voice_energy') }}</label><input type="number" id="a-threshold" min="50" max="5000" step="50"></div>
+      <div class="field"><label>{{ t('webui_conf_voice_timeout') }}</label><input type="number" id="a-timeout" min="1" max="30" step="1"></div>
+      <div class="field"><label>{{ t('webui_conf_voice_limit') }}</label><input type="number" id="a-limit" min="5" max="60" step="1"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">{{ t('webui_voice_mic_btn_title') }}</div>
+    <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">
+      {{ t('webui_voice_mic_btn_desc') }}
+    </p>
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <strong>{{ t('webui_voice_ptt_mode') }}</strong> <span style="font-size:11px;color:var(--muted);">{{ t('webui_voice_ptt_hint') }}</span>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">{{ t('webui_voice_preview_label') }}</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="webptt-ptt-preview"
+          onchange="window.webptt_setPref('webptt_ptt_preview', this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="toggle-row" style="margin-top:10px;">
+      <div class="toggle-info">
+        <strong>{{ t('webui_voice_toggle_mode') }}</strong> <span style="font-size:11px;color:var(--muted);">{{ t('webui_voice_toggle_hint') }}</span>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">{{ t('webui_voice_preview_label') }}</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="webptt-toggle-preview"
+          onchange="window.webptt_setPref('webptt_toggle_preview', this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <p style="font-size:11px; color:var(--muted); margin-top:10px; padding-top:8px; border-top:1px solid var(--border);">
+      {{ t('webui_voice_preview_tip') | safe }}
+    </p>
+  </div>
+</div>

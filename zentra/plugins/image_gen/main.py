@@ -6,6 +6,7 @@ try:
     from zentra.core.logging import logger
     from zentra.core.media_config import get_media_config
     from zentra.core.media.image_providers import generate_image, get_models_for_provider
+    from zentra.core.i18n import translator
 except ImportError as _e:
     class _DummyLogger:
         def error(self, *a): print("[IMAGE_GEN ERR]", *a)
@@ -22,6 +23,51 @@ class ImageGenTools:
     Generates images from text prompts using external AI services.
     Supports: Pollinations (free), Gemini Imagen, OpenAI DALL-E, Stability.ai
     """
+
+    def _refine_flux_prompt(self, original_prompt: str, instructions: str) -> str:
+        """Uses Zentra's Brain to refine the prompt for Flux."""
+        try:
+            from zentra.core.llm import client
+            from zentra.core.media_config import get_media_config
+            from zentra.app.config import ConfigManager
+            import json
+            
+            # Use main system config for LLM call
+            main_cfg = ConfigManager().config
+            
+            system_prompt = (
+                "You are an expert prompt engineer specializing in the Flux image generation model. "
+                "Flux prefers detailed, natural language descriptions over comma-separated tags. "
+                f"{instructions}"
+            )
+            
+            user_msg = f"Optimize this prompt for Flux: {original_prompt}"
+            
+            # Grab effective backend
+            from app.model_manager import ModelManager
+            effective_backend_type, effective_default_model = ModelManager.get_effective_model_info(main_cfg)
+            backend_config = main_cfg.get('backend', {}).get(effective_backend_type, {}).copy()
+            backend_config['model'] = effective_default_model
+            backend_config['backend_type'] = effective_backend_type
+            
+            llm_cfg = main_cfg.get('llm', {})
+            
+            logger.info(f"[IMAGE_GEN] Refining prompt for Flux via {effective_backend_type}...")
+            
+            refined = client.generate(system_prompt, user_msg, backend_config, llm_cfg)
+            
+            if refined and not isinstance(refined, dict) and not refined.startswith("⚠️"):
+                # Clean up quotes if the model wrapped it
+                cleaned = refined.strip().strip('"').strip("'")
+                logger.info(f"[IMAGE_GEN] Flux prompt refined successfully: {cleaned[:50]}...")
+                return cleaned
+            
+            logger.warning("[IMAGE_GEN] LLM returned empty or error, falling back to original prompt.")
+            return original_prompt
+                
+        except Exception as e:
+            logger.error(f"[IMAGE_GEN] Brain refinement failed: {e}")
+            return original_prompt
 
     def __init__(self):
         self.tag = "IMAGE_GEN"
@@ -46,10 +92,26 @@ class ImageGenTools:
             # 1) Try pinned key from config first if it exists
             pinned_key = cfg.get("api_key", "").strip()
             
-            neg_prompt = cfg.get("negative_prompt", "")
+            use_neg_prompt = cfg.get("enable_negative_prompt", True)
+            neg_prompt = cfg.get("negative_prompt", "") if use_neg_prompt else ""
+            
             guidance   = float(cfg.get("guidance_scale", 7.5))
             steps      = int(cfg.get("num_inference_steps", 30))
-            enrich     = cfg.get("auto_enrich", True)
+            
+            # Flux Optimization Logic
+            optimize_flux = cfg.get("optimize_for_flux", True)
+            flux_instructions = cfg.get("flux_refiner_instructions", "Convert keywords into a descriptive natural language paragraph for Flux. Output ONLY the optimized prompt, no preamble.")
+            
+            if optimize_flux and "flux" in model.lower():
+                logger.info("[IMAGE_GEN] Flux optimization requested. Calling Brain refiner...")
+                prompt = self._refine_flux_prompt(prompt, flux_instructions)
+                enrich = False # Disable legacy tag injection for Flux
+            else:
+                enrich = cfg.get("auto_enrich", True)
+            
+            # New fields: enrich_keywords and style
+            enrich_keywords = cfg.get("enrich_keywords", "")
+            style = cfg.get("style", "none")
 
             max_attempts = 5
             attempt = 0
@@ -101,16 +163,31 @@ class ImageGenTools:
                         negative_prompt=neg_prompt,
                         guidance_scale=guidance,
                         num_inference_steps=steps,
-                        auto_enrich=enrich
+                        auto_enrich=enrich,
+                        enrich_keywords=enrich_keywords,
+                        style=style
                     )
-                    clean_prompt = prompt.strip()[:80]
-                    return f"Here is the image of **{clean_prompt}**:\n\n[[IMG:{filename}]]"
+                    # Increased limit from 80 to 256 to avoid truncation. 
+                    # Use ellipsis if still too long.
+                    clean_prompt = prompt.strip()
+                    if len(clean_prompt) > 250:
+                        clean_prompt = clean_prompt[:247] + "..."
+                    
+                    prefix = translator.t("igen_response_prefix", prompt=clean_prompt)
+                    return f"{prefix}\n\n[[IMG:{filename}]]"
 
                 except Exception as e:
                     last_error = e
                     err_msg = str(e)
                     # Check for rate limit, depletion, OOM or loading state
-                    is_retriable = any(x in err_msg for x in ["HTTP 402", "HTTP 429", "CUDA out of memory", "Model is loading"])
+                    # Check for rate limit, depletion, OOM, loading state or server overload/timeout
+                    is_retriable = any(x.lower() in err_msg.lower() for x in [
+                        "HTTP 402", "HTTP 429", "HTTP 503", "HTTP 500", "HTTP 504",
+                        "CUDA out of memory", "Model is loading", 
+                        "Rate limit reached", "You have reached your limit",
+                        "server is overloaded", "upstream request timeout",
+                        "timed out", "timeout"
+                    ])
                     
                     if is_retriable:
                         logger.warning(f"[IMAGE_GEN] Key/Server failed ({err_msg}). Marking as exhausted and retrying...")
@@ -124,7 +201,9 @@ class ImageGenTools:
                             # Mark as exhausted so get_key returns the next one
                             # Reason varies based on error
                             reason = "rate_limited" if ("402" in err_msg or "429" in err_msg) else "server_overload"
-                            manager.mark_exhausted(provider, api_key, reason=reason)
+                            # If it was a timeout or overload, use a longer cooldown (1 hour) to keep the system responsive
+                            cd_sec = 3600 if reason == "server_overload" else 60.0
+                            manager.mark_exhausted(provider, api_key, reason=reason, cooldown=cd_sec)
                         except Exception:
                             pass
                         continue # Try next key

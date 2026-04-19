@@ -27,6 +27,10 @@ LAST_PAYLOAD_INFO = {
 # Pre-configure LiteLLM (no print to chat)
 litellm.telemetry = False
 
+# CRITICAL: Disable remote cost map fetch to prevent startup timeouts (GitHub.com blocked/slow)
+# LiteLLM: Falling back to local backup. (This avoids the 30s delay)
+os.environ["LITELLM_LOCAL_MODEL_COST_MAP"] = "True"
+
 # CRITICAL: Purge any StreamHandlers LiteLLM added during import
 _litellm_logger = logging.getLogger("LiteLLM")
 for _h in _litellm_logger.handlers[:]:

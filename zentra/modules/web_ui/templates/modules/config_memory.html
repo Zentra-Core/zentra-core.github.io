@@ -1,0 +1,47 @@
+<!-- MEMORY PANEL -->
+<div id="tab-memory" class="panel">
+  <div class="card">
+    <div class="card-title">🧠 Cognition System</div>
+    <div class="toggle-row">
+      <div class="toggle-info">Memory System (Global ON/OFF)</div>
+      <label class="switch"><input type="checkbox" id="cog-memory-enabled"><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-info">Save Conversations (Episodic Memory)</div>
+      <label class="switch"><input type="checkbox" id="cog-episodic"><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-info">Clear History on Restart</div>
+      <label class="switch"><input type="checkbox" id="cog-clear-restart"><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-info">Inject Identity Context</div>
+      <label class="switch"><input type="checkbox" id="cog-identity"><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-info">Inject Self-Awareness</div>
+      <label class="switch"><input type="checkbox" id="cog-awareness"><span class="slider"></span></label>
+    </div>
+    <div class="field" style="margin-top:15px;">
+      <label>Max History Messages in Context</label>
+      <input type="number" id="cog-max-history" min="1" max="200" style="width:80px;">
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 Memory Status</div>
+    <p id="mem-status-text" style="color:var(--muted); font-size:0.9em;">Loading...</p>
+    <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+      <select id="clear-range" class="mode-selector config-input" style="width:140px; margin:0;">
+        <option value="all">Full Wipe (Everything)</option>
+        <option value="1">Older than 24h</option>
+        <option value="7">Older than 7 days</option>
+        <option value="30">Older than 30 days</option>
+      </select>
+      <button class="btn btn-danger" style="flex:1;" onclick="clearMemoryHistory()">🗑 {{ t('webui_chat_btn_clear') or 'Clear Selected' }}</button>
+      <button class="btn btn-secondary" style="width:40px;" onclick="loadMemoryStatus()" title="Refresh">🔄</button>
+    </div>
+    <small style="color:var(--muted); font-size:11px; margin-top:8px; display:block;">
+      Note: Identity and User Profile are NOT affected by this.
+    </small>
+  </div>
+</div>

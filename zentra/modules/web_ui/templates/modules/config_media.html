@@ -1,0 +1,15 @@
+<!-- MEDIA PANEL -->
+<div id="tab-media" class="panel">
+
+  <!-- Media Vault -->
+  <div class="card" id="card-media-vault">
+    <div class="card-title">🔐 Media Vault & Privacy</div>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">
+      Manage the images generated and saved by the AI on your local disk.
+    </p>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-secondary" onclick="openMediaVault()">📂 Open Storage Folder</button>
+      <button class="btn btn-danger" onclick="clearMediaVault()">🗑️ {{ t('webui_media_clear_all') or 'Clear All Generated Media' }}</button>
+    </div>
+  </div>
+</div>

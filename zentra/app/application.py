@@ -7,7 +7,7 @@ import time
 import atexit
 import msvcrt
 from zentra.core.logging import logger
-from zentra.core.system import plugin_loader, diagnostica
+from zentra.core.system import module_loader, diagnostica
 from zentra.core.i18n import translator
 from zentra.ui import interface, graphics, ui_updater
 from zentra.ui.config_editor.core import ConfigEditor
@@ -88,7 +88,7 @@ class ZentraApplication:
         prefisso = graphics.STILE_INPUT
         input_utente = ""
         
-        dashboard_mod = plugin_loader.get_plugin_module("DASHBOARD")
+        dashboard_mod = module_loader.get_plugin_module("DASHBOARD")
 
         # Initial UI
         interface.show_complete_ui(
@@ -116,19 +116,28 @@ class ZentraApplication:
         else:
             ui_updater.stop()
 
+        # [WEB_UI] Inject live managers into plugin if active, then start the Flask server.
+        # Must happen BEFORE show_welcome() so the link info is printed after server is live.
+        web_ui_mod = module_loader.get_plugin_module("WEB_UI")
+        if web_ui_mod and hasattr(web_ui_mod, "tools"):
+            if hasattr(web_ui_mod.tools, "_set_config_manager"):
+                web_ui_mod.tools._set_config_manager(self.config_manager)
+            if hasattr(web_ui_mod.tools, "_set_state_manager"):
+                web_ui_mod.tools._set_state_manager(self.state_manager)
+            # Start the Flask server now that managers are injected.
+            # In console mode this is never triggered otherwise (the server starts
+            # lazily only when the agent calls open_browser/get_panel_url).
+            if hasattr(web_ui_mod.tools, "_ensure_server"):
+                try:
+                    web_ui_mod.tools._ensure_server()
+                except Exception as _ws_e:
+                    logger.warning(f"[APP] WebUI server startup error: {_ws_e}")
+
         self.bootstrapper.show_welcome()
 
         # Avvia thread ascolto
         ascolto_thread = AscoltoThread(self.state_manager)
         ascolto_thread.start()
-
-        # [WEB_UI] Inject live managers into plugin if active
-        web_ui_mod = plugin_loader.get_plugin_module("WEB_UI")
-        if web_ui_mod and hasattr(web_ui_mod, "tools"):
-            if hasattr(web_ui_mod.tools, "set_config_manager"):
-                web_ui_mod.tools.set_config_manager(self.config_manager)
-            if hasattr(web_ui_mod.tools, "set_state_manager"):
-                web_ui_mod.tools.set_state_manager(self.state_manager)
 
         sys.stdout.write(prefisso)
         sys.stdout.flush()
@@ -160,7 +169,7 @@ class ZentraApplication:
                 
                 # Ricarica config e ricollega plugin
                 config = self.config_manager.config
-                dashboard_mod = plugin_loader.get_plugin_module("DASHBOARD")
+                dashboard_mod = module_loader.get_plugin_module("DASHBOARD")
                 
                 if evento in ["F4", "F5"]:
                     interface.update_status_bar_in_place(

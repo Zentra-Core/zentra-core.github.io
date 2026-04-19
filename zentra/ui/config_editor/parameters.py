@@ -117,12 +117,14 @@ def build_parameter_list(config):
     voice_conf = config.get('voice', {})
     
     try:
-        piper_path_dir = r"C:\piper"
+        zentra_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        piper_path_dir = os.path.join(zentra_root, 'bin', 'piper')
         onnx_files = [os.path.basename(f) for f in glob.glob(os.path.join(piper_path_dir, "*.onnx"))]
-        if not onnx_files: onnx_files = ["en_US-lessac-medium.onnx"]
+        if not onnx_files: onnx_files = ["it_IT-aurora-medium.onnx"]
         percorsi_onnx = [os.path.join(piper_path_dir, f) for f in onnx_files]
     except Exception:
-        percorsi_onnx = [r"C:\piper\en_US-lessac-medium.onnx"]
+        # Fallback se la root non è determinabile
+        percorsi_onnx = [os.path.join("bin", "piper", "it_IT-aurora-medium.onnx")]
         
     params.append(Parameter('voice', 'onnx_model', translator.t("label_modello_voce"), 'str', options=percorsi_onnx))
     
@@ -153,9 +155,10 @@ def build_parameter_list(config):
 
     # --- Filters ---
     filters = config.get('filters', {})
-    params.append(Parameter('filters', 'remove_asterisks', translator.t("label_rimuovi_asterischi"), 'bool'))
-    params.append(Parameter('filters', 'remove_round_brackets', translator.t("label_rimuovi_parentesi_tonde"), 'bool'))
-    params.append(Parameter('filters', 'remove_square_brackets', translator.t("label_rimuovi_parentesi_quadre"), 'bool'))
+    filter_opts = ['none', 'voice', 'text', 'both']
+    params.append(Parameter('filters', 'remove_asterisks', translator.t("label_rimuovi_asterischi"), 'str', options=filter_opts))
+    params.append(Parameter('filters', 'remove_round_brackets', translator.t("label_rimuovi_parentesi_tonde"), 'str', options=filter_opts))
+    params.append(Parameter('filters', 'remove_square_brackets', translator.t("label_rimuovi_parentesi_quadre"), 'str', options=filter_opts))
 
     # --- Logging ---
     logging_cfg = config.get('logging', {})

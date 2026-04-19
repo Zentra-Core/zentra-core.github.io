@@ -82,7 +82,7 @@ async function loadDrives() {
     }
     sel.title  = window.t ? window.t('webui_drive_drive_sel_hint') : "Change drive";
     sel.style.cssText = `
-      background: rgba(102,252,241,0.08);
+      background: var(--glass);
       color: var(--accent);
       border: 1px solid var(--border);
       border-radius: 5px;
@@ -172,6 +172,13 @@ function openEditor(path) {
   window.open(`/drive/editor?path=${encodeURIComponent(path)}`, '_blank');
 }
 
+// ─── Media Preview — handled by media_viewer extension ──────────────────────
+// Stub functions kept here only as fallbacks in case the extension JS hasn't
+// loaded yet. The real implementation lives in media_viewer.js.
+function isPreviewable(name) {
+  return typeof window.DriveMediaViewer !== 'undefined' && false; // extension handles it
+}
+
 function sortBy(key) {
   sortAsc = (sortKey === key) ? !sortAsc : true;
   sortKey = key;
@@ -218,7 +225,7 @@ function renderTable() {
           ? `<button onclick="navigateTo('${esc(e.path)}')" title="Apri">📂</button>`
           : `<button onclick="downloadFile('${esc(e.path)}')" title="Scarica">⬇️</button>`}
         ${!e.is_dir && isEditable(e.name)
-          ? `<button onclick="openEditor('${esc(e.path)}')" title="${window.t ? window.t('webui_drive_edit') : 'Edit'}" style="color:#58a6ff;">✏️</button>`
+          ? `<button onclick="openEditor('${esc(e.path)}')" title="${window.t ? window.t('webui_drive_edit') : 'Edit'}" style="color:var(--accent);">✏️</button>`
           : ''}
         <button onclick="deleteItem('${esc(e.path)}','${esc(e.name)}')" title="${window.t ? window.t('webui_conf_logs_delete') : 'Delete'}">🗑️</button>
       </td>
@@ -226,6 +233,11 @@ function renderTable() {
   }).join(""));
 
   updateStatusBar();
+
+  // Notify the media viewer extension to inject thumbnails
+  if (typeof window.DriveMediaViewer?.onTableRendered === 'function') {
+    window.DriveMediaViewer.onTableRendered(allEntries, currentPath);
+  }
 }
 
 function setTbody(html) {
@@ -407,6 +419,7 @@ async function confirmMkdir() {
 // ─── Dropzone ────────────────────────────────────────────────────────────────
 function initDropzone() {
   const zone = document.getElementById("dropzone");
+  if (!zone) return;
   zone.addEventListener("dragover",  e => { e.preventDefault(); zone.classList.add("drag-over"); });
   zone.addEventListener("dragleave", ()  => zone.classList.remove("drag-over"));
   zone.addEventListener("drop", e => {
@@ -414,6 +427,7 @@ function initDropzone() {
     uploadFiles(e.dataTransfer.files);
   });
 }
+
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function formatSize(b) {
@@ -469,7 +483,7 @@ async function loadQuickLinks() {
     let html = "";
     data.groups.forEach(grp => {
       html += `<div class="ql-group">
-        <div class="ql-group-title">${esc(grp.title)}</div>
+        <div class="ql-group-title">⭐ ${esc(grp.title)}</div>
         ${grp.items.map(item => `
           <div class="ql-item" onclick="openQuickLink('${esc(item.path)}', ${item.path.includes('.')})">
             <span class="ql-icon">${esc(grp.icon || '📄')}</span>

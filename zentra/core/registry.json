@@ -1,37 +1,13 @@
 {
-    "DRIVE": {
-        "description": "Interfaccia Web per la gestione dei file (Upload, Download, Folder Explorer). È lo spazio di archiviazione personale dell'utente accessibile da WebUI.",
-        "commands": {
-            "/drive": "Apre il File Manager nel browser"
-        },
-        "status": "ONLINE (DORMANT)",
-        "example": "",
-        "routing_instructions": "",
-        "is_class_based": false,
-        "is_lazy": true,
-        "icon": "",
-        "category": "PLUGINS"
-    },
     "EXECUTOR": {
-        "description": "Safe Python execution (AST Sandbox).",
+        "description": "Safe Python execution (AST Sandbox) and System Control.",
         "commands": {
+            "execute_shell_command": "Executes a shell command (cmd.exe) in the background.",
+            "get_time": "Returns the current local time.",
+            "reboot_system": "Reboots the entire Zentra Core system.",
             "run_python_code": "Executes a block of Python code safely after strict Static Analysis."
         },
-        "status": "ONLINE (Code Jail Active)",
-        "example": "",
-        "routing_instructions": "",
-        "is_class_based": true,
-        "icon": "",
-        "category": "PLUGINS"
-    },
-    "FILE_MANAGER": {
-        "description": "System file and directory management with user path and file reading support.",
-        "commands": {
-            "count_items": "Counts the total number of files and folders in a given path, without listing them.",
-            "list_files": "SCANS and lists files/folders in a path to return the names to the AI.",
-            "read_file": "Reads the textual content of a file specified by the path."
-        },
-        "status": "ONLINE",
+        "status": "ONLINE (Core Tools Active)",
         "example": "",
         "routing_instructions": "",
         "is_class_based": true,
@@ -51,39 +27,17 @@
         "icon": "",
         "category": "PLUGINS"
     },
-    "IMAGE_GEN": {
-        "description": "Generates images from text descriptions using AI image models.",
+    "MCP_BRIDGE": {
+        "description": "Bridge to Model Context Protocol (MCP) servers",
         "commands": {
-            "generate_image": "Generates an image from a text description. Uses the configured provider."
+            "call_tool": "Executes an MCP tool.",
+            "get_mcp_schemas": "Hook used by Zentra's module_docs.py to merge tools.",
+            "list": "Method",
+            "reload": "Method",
+            "search": "Search for MCP servers on Smithery or MCPSkills (mcp-get).",
+            "status": "Method"
         },
-        "status": "ONLINE",
-        "example": "",
-        "routing_instructions": "",
-        "is_class_based": true,
-        "icon": "",
-        "category": "PLUGINS"
-    },
-    "LAZY_TEST": {
-        "description": "Test per architettura Lazy Loading",
-        "commands": {
-            "cmd": "Attiva il plugin al volo ed esegue un test",
-            "ping": "Verifica se il caricamento JIT funziona"
-        },
-        "status": "ONLINE (DORMANT)",
-        "example": "",
-        "routing_instructions": "",
-        "is_class_based": true,
-        "is_lazy": true,
-        "icon": "",
-        "category": "PLUGINS"
-    },
-    "MEDIA": {
-        "description": "Hardware volume and mute control.",
-        "commands": {
-            "set_mute": "Toggles system mute mode on or off.",
-            "set_volume": "Sets the system volume to a specific level."
-        },
-        "status": "ONLINE",
+        "status": "No MCP servers connected.",
         "example": "",
         "routing_instructions": "",
         "is_class_based": true,
@@ -104,7 +58,8 @@
         "is_class_based": true,
         "is_lazy": true,
         "icon": "",
-        "category": "PLUGINS"
+        "category": "PLUGINS",
+        "module_type": "core_module"
     },
     "MODELS": {
         "description": "Changes the AI model based on the active backend (Ollama/Kobold).",
@@ -119,28 +74,8 @@
         "is_class_based": true,
         "is_lazy": true,
         "icon": "",
-        "category": "PLUGINS"
-    },
-    "SYSTEM": {
-        "description": "Root Access: terminal management, reboot, log diagnostics, system utilities.",
-        "commands": {
-            "execute_shell_command": "Executes a shell command (cmd.exe) in the background and returns the output.",
-            "explore_folder": "OPENS a graphical Windows Explorer window for the specified folder. ",
-            "get_time": "Returns the current local time (HH:MM).",
-            "open_program": "Starts a local program specified by name.",
-            "open_terminal": "Opens a new independent Terminal/CMD window.",
-            "read_debug_logs": "Reads the technical debug logs (LiteLLM, Brain processing).",
-            "read_errors": "Reads specifically the latest errors (crashes, exceptions) recorded by the system.",
-            "read_logs": "Legge gli ultimi eventi registrati nei file di log generali del sistema.",
-            "reboot_system": "Reboots the entire Zentra Core system.",
-            "set_configuration": "Modifies a value within the main configuration file (config.json)."
-        },
-        "status": "plugin_sistema_status_online",
-        "example": "",
-        "routing_instructions": "",
-        "is_class_based": true,
-        "icon": "",
-        "category": "PLUGINS"
+        "category": "PLUGINS",
+        "module_type": "core_module"
     },
     "SYS_NET": {
         "description": "Strumenti di rete avanzati: IP, Ping, Stato Proxy, Mappatura LAN e VPN/DNS.",
@@ -155,6 +90,58 @@
             "test_proxy": "Tests the configured Proxy by attempting to reach an external service and reports the visible IP."
         },
         "status": "Online",
+        "example": "",
+        "routing_instructions": "",
+        "is_class_based": true,
+        "icon": "",
+        "category": "PLUGINS"
+    },
+    "WEB_UI": {
+        "description": "Native Web Interface — Chat + Config Panel on localhost:7070",
+        "commands": {
+            "get_panel_url": "Returns the URL of the chat interface.",
+            "open_browser": "Opens the Zentra web interface in the default browser if not already open."
+        },
+        "status": "ONLINE",
+        "example": "",
+        "routing_instructions": "",
+        "is_class_based": true,
+        "icon": "",
+        "category": "PLUGINS"
+    },
+    "DRIVE": {
+        "description": "Interfaccia Web per la gestione dei file (Upload, Download, Folder Explorer). È lo spazio di archiviazione personale dell'utente accessibile da WebUI.",
+        "commands": {
+            "/drive": "Apre il File Manager nel browser"
+        },
+        "status": "ONLINE (DORMANT)",
+        "example": "",
+        "routing_instructions": "",
+        "is_class_based": false,
+        "is_lazy": true,
+        "icon": "",
+        "category": "PLUGINS",
+        "module_type": "plugin"
+    },
+    "IMAGE_GEN": {
+        "description": "Generates images from text descriptions using AI image models.",
+        "commands": {
+            "generate_image": "Generates an image from a text description. Uses the configured provider."
+        },
+        "status": "ONLINE",
+        "example": "",
+        "routing_instructions": "",
+        "is_class_based": true,
+        "icon": "",
+        "category": "PLUGINS"
+    },
+    "MEDIA": {
+        "description": "Hardware volume and mute control.",
+        "commands": {
+            "set_mute": "Toggles system mute mode on or off.",
+            "set_volume": "Sets the system volume to a specific level."
+        },
+        "status": "ONLINE",
         "example": "",
         "routing_instructions": "",
         "is_class_based": true,
@@ -186,19 +173,16 @@
         "icon": "",
         "category": "PLUGINS"
     },
-    "WEB_UI": {
-        "description": "Native Web Interface — Chat + Config Panel on localhost:7070",
+    "MCP_EVERYTHING": {
+        "description": "External Tool Provider (everything) via Model Context Protocol.",
         "commands": {
-            "get_panel_url": "Returns the URL of the chat interface.",
-            "open_browser": "Opens the Zentra web interface in the default browser if not already open.",
-            "set_config_manager": "Injects the live ConfigManager from the main application.",
-            "set_state_manager": "Injects the live StateManager from the main application."
+            "<dynamic_tools>": "Tools are dynamically discovered upon connection."
         },
-        "status": "Online → http://127.0.0.1:7070/chat",
+        "status": "EXTERNAL",
         "example": "",
-        "routing_instructions": "",
-        "is_class_based": true,
-        "icon": "",
-        "category": "PLUGINS"
+        "routing_instructions": "Native LLM Function Calling exposed seamlessly.",
+        "is_class_based": false,
+        "is_mcp": true,
+        "server_name": "everything"
     }
 }

@@ -41,23 +41,18 @@ def _get_quick_links(root_dir: str) -> list:
             "exts":  {".yaml", ".yml"},
         },
         {
-            "id":    "rp_chars",
-            "title": "🎭 Roleplay Characters",
-            "dirs":  ["zentra/plugins/roleplay/characters"],
-            "exts":  {".yaml", ".yml", ".json"},
-        },
-        {
-            "id":    "rp_scenes",
-            "title": "🎬 Roleplay Scenes",
-            "dirs":  ["zentra/plugins/roleplay/scenes"],
-            "exts":  {".yaml", ".yml", ".json"},
-        },
-        {
             "id":    "routing",
             "title": "🔀 Routing & Overrides",
             "dirs":  ["zentra/config"],
             "exts":  {".yaml", ".yml"},
             "recursive": False, 
+        },
+        {
+            "id":    "gallery",
+            "title": "🖼️ Media Gallery",
+            "dirs":  ["zentra/media"],
+            "exts":  {".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4"},
+            "recursive": False,
         },
         {
             "id":    "env",
@@ -69,6 +64,16 @@ def _get_quick_links(root_dir: str) -> list:
     ]
 
     groups = []
+    
+    # Manual group for Folder Shortcuts
+    groups.append({
+        "id": "shortcuts",
+        "title": "🚀 Shortcuts",
+        "items": [
+            {"name": "📁 Media Folder", "path": os.path.normpath(os.path.join(root_dir, "zentra/media")).replace("\\", "/")}
+        ]
+    })
+
     for grp in SCAN_GROUPS:
         items = []
         exclude_suffixes = grp.get("exclude", set())
@@ -135,6 +140,7 @@ def init_drive_routes(app, logger_instance=None):
         plugin_dir = os.path.dirname(os.path.abspath(__file__))
         discover_extensions("DRIVE", plugin_dir)
         load_extension_routes(app, "DRIVE", "editor")
+        load_extension_routes(app, "DRIVE", "media_viewer")
     except Exception as _ext_err:
         import traceback
         tb_str = traceback.format_exc()
@@ -142,7 +148,7 @@ def init_drive_routes(app, logger_instance=None):
             with open("C:\\Zentra-Core\\drive_editor_crash.txt", "w") as f:
                 f.write(f"ERROR: {_ext_err}\n{tb_str}")
         except: pass
-        _log.error(f"[Drive] Failed to load editor extension: {_ext_err}\n{tb_str}")
+        _log.error(f"[Drive] Failed to load extension: {_ext_err}\n{tb_str}")
 
     # ─── Register Drive Blueprint ──────────────────────────────────────────────
     if "zentra_drive" not in app.blueprints:
@@ -314,6 +320,24 @@ def drive_download():
 
     logger.info(f"[Drive] Download: {target} by {current_user.username}")
     return send_file(target, as_attachment=True)
+
+
+# ─── VIEW (PREVIEW) ────────────────────────────────────────────────────────
+@drive_bp.route("/drive/api/view")
+@login_required
+def drive_view():
+    """GET /drive/api/view - Streams the file for browser-based preview (no attachment)."""
+    from .main import get_plugin
+    plugin = get_plugin()
+    root = plugin.get_root()
+    rel = request.args.get("path", "")
+    target = _safe_path(root, rel)
+
+    if target is None: abort(403)
+    if not os.path.isfile(target): abort(404)
+
+    # We use as_attachment=False to let the browser try to render it (images/videos)
+    return send_file(target, as_attachment=False)
 
 
 # ─── DELETE ────────────────────────────────────────────────────────────────

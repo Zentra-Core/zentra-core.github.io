@@ -1,4 +1,4 @@
-﻿"""
+"""
 MODULE: Voice (TTS) - Zentra Core
 DESCRIPTION: Piper TTS engine. Uses sounddevice for audio output on the selected device.
              Falls back to winsound if sounddevice is not available.
@@ -73,13 +73,25 @@ def speak(text, state=None):
         noise_scale      = audio_cfg.get("noise_scale", 0.667)
         noise_w          = audio_cfg.get("noise_w", 0.8)
         sentence_silence = audio_cfg.get("sentence_silence", 0.2)
-        piper_path       = audio_cfg.get("piper_path", r"C:\piper\piper.exe")
-        model_path       = audio_cfg.get("onnx_model", r"C:\piper\it_IT-aurora-medium.onnx")
+        # Dynamically resolve Zentra root directory (3 levels up from this file)
+        zentra_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        default_piper_dir = os.path.join(zentra_root, 'bin', 'piper')
+        
+        # Determine OS-specific extensions
+        is_windows = os.name == 'nt'
+        piper_exe_name = 'piper.exe' if is_windows else 'piper'
+        
+        piper_path       = audio_cfg.get("piper_path", os.path.join(default_piper_dir, piper_exe_name))
+        model_path       = audio_cfg.get("onnx_model", os.path.join(default_piper_dir, "it_IT-aurora-medium.onnx"))
         output_device    = audio_cfg.get("output_device_index", -1)
     except Exception as e:
         logger.debug("VOICE", f"Configuration error: {e}")
+        zentra_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        default_piper_dir = os.path.join(zentra_root, 'bin', 'piper')
+        is_windows = os.name == 'nt'
+        piper_exe_name = 'piper.exe' if is_windows else 'piper'
         length_scale, noise_scale, noise_w, sentence_silence = 1.0, 0.667, 0.8, 0.2
-        piper_path, model_path, output_device = r"C:\piper\piper.exe", r"C:\piper\it_IT-aurora-medium.onnx", -1
+        piper_path, model_path, output_device = os.path.join(default_piper_dir, piper_exe_name), os.path.join(default_piper_dir, "it_IT-aurora-medium.onnx"), -1
 
     is_speaking = True
     if state:

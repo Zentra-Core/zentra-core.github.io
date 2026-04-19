@@ -61,4 +61,9 @@ class StabilityProvider:
         if r.content.startswith(b"<!DOCTYPE") or r.content.startswith(b"<html"):
             raise Exception("Stability returned HTML instead of image")
 
-        return save_image_bytes(r.content, "jpg")
+        return save_image_bytes(r.content, "png", prompt=prompt, params={
+            "provider": "stability",
+            "model": model,
+            "guidance_scale": guidance_scale,
+            "inference_steps": num_inference_steps
+        })

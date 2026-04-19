@@ -3,14 +3,18 @@ Management of LLM model selection and configuration.
 """
 
 import requests
+import os
 from zentra.core.logging import logger
+
+# CRITICAL: Disable LiteLLM remote cost map fetching to prevent startup timeouts
+os.environ["LITELLM_LOCAL_MODEL_COST_MAP"] = "True"
 from zentra.core.i18n import translator
 
 class ModelManager:
     def __init__(self, config_manager):
         self.config_manager = config_manager
 
-    def get_available_models(self):
+    def get_available_models(self, fast_mode=False):
         """Fetches and returns a dictionary of categorized model names (Local + Cloud)."""
         config = self.config_manager.config
         categorized_models = {
@@ -20,63 +24,81 @@ class ModelManager:
         }
         
         # 1. OLLAMA Models (Local)
-        try:
-            response = requests.get("http://localhost:11434/api/tags", timeout=1)
-            if response.status_code == 200:
-                models_ollama = [m['name'] for m in response.json().get('models', [])]
-                self.config_manager.set({str(i+1): name for i, name in enumerate(models_ollama)}, 'backend', 'ollama', 'available_models')
-                self.config_manager.save()
-                for m_name in models_ollama:
-                    categorized_models["Ollama (Local)"].append(m_name)
-        except:
-            # Fallback on cache
+        if fast_mode:
             cache = config.get('backend', {}).get('ollama', {}).get('available_models', {})
             categorized_models["Ollama (Local)"].extend(list(cache.values()))
+        else:
+            try:
+                response = requests.get("http://localhost:11434/api/tags", timeout=1)
+                if response.status_code == 200:
+                    models_ollama = [m['name'] for m in response.json().get('models', [])]
+                    self.config_manager.set({str(i+1): name for i, name in enumerate(models_ollama)}, 'backend', 'ollama', 'available_models')
+                    self.config_manager.save()
+                    for m_name in models_ollama:
+                        categorized_models["Ollama (Local)"].append(m_name)
+            except:
+                # Fallback on cache
+                cache = config.get('backend', {}).get('ollama', {}).get('available_models', {})
+                categorized_models["Ollama (Local)"].extend(list(cache.values()))
 
         # 2. KOBOLD Models (Local)
-        try:
-            url = config.get('backend', {}).get('kobold', {}).get('url', 'http://localhost:5001').rstrip('/') + '/api/v1/model'
-            r = requests.get(url, timeout=1)
-            if r.status_code == 200:
-                model_name = r.json().get('result', 'kobold_model')
-                categorized_models["Kobold (Local)"].append(model_name)
-        except:
+        if fast_mode:
             cache = config.get('backend', {}).get('kobold', {}).get('available_models', {})
             categorized_models["Kobold (Local)"].extend(list(cache.values()))
+        else:
+            try:
+                url = config.get('backend', {}).get('kobold', {}).get('url', 'http://localhost:5001').rstrip('/') + '/api/v1/model'
+                r = requests.get(url, timeout=1)
+                if r.status_code == 200:
+                    model_name = r.json().get('result', 'kobold_model')
+                    categorized_models["Kobold (Local)"].append(model_name)
+            except:
+                cache = config.get('backend', {}).get('kobold', {}).get('available_models', {})
+                categorized_models["Kobold (Local)"].extend(list(cache.values()))
 
         # 3. CLOUD Models
         if config.get('llm', {}).get('allow_cloud', False):
-            import os
-            try:
-                from zentra.core.keys.key_manager import KeyManager
-                key_mgr = KeyManager()
-            except ImportError:
-                key_mgr = None
-                
             providers = config.get('llm', {}).get('providers', {})
-            for provider_name, p_data in providers.items():
-                api_key = p_data.get('api_key')
-                if not api_key and key_mgr:
-                    api_key = key_mgr.get_key(provider_name.lower())
-                elif not api_key:
-                    # Fallback old style
-                    api_key = os.environ.get(f"{provider_name.upper()}_API_KEY", "").strip().strip("'").strip('"')
-                
-                cloud_models = []
-                if api_key:
-                    cloud_models = self._fetch_cloud_models(provider_name, api_key)
-                
-                # Fallback to static models in config if fetching failed or no API key exists
-                if not cloud_models:
+            if fast_mode:
+                for provider_name, p_data in providers.items():
                     cloud_models = p_data.get('models', [])
-                
-                prov_key = f"Cloud ({provider_name.capitalize()})"
-                if prov_key not in categorized_models:
-                    categorized_models[prov_key] = []
+                    prov_key = f"Cloud ({provider_name.capitalize()})"
+                    if prov_key not in categorized_models:
+                        categorized_models[prov_key] = []
+                    for m_name in cloud_models:
+                        full_name = f"{provider_name}/{m_name}" if not m_name.startswith(f"{provider_name}/") else m_name
+                        categorized_models[prov_key].append(full_name)
+            else:
+                import os
+                try:
+                    from zentra.core.keys.key_manager import KeyManager
+                    key_mgr = KeyManager()
+                except ImportError:
+                    key_mgr = None
                     
-                for m_name in cloud_models:
-                    full_name = f"{provider_name}/{m_name}" if not m_name.startswith(f"{provider_name}/") else m_name
-                    categorized_models[prov_key].append(full_name)
+                for provider_name, p_data in providers.items():
+                    api_key = p_data.get('api_key')
+                    if not api_key and key_mgr:
+                        api_key = key_mgr.get_key(provider_name.lower())
+                    elif not api_key:
+                        # Fallback old style
+                        api_key = os.environ.get(f"{provider_name.upper()}_API_KEY", "").strip().strip("'").strip('"')
+                    
+                    cloud_models = []
+                    if api_key:
+                        cloud_models = self._fetch_cloud_models(provider_name, api_key)
+                    
+                    # Fallback to static models in config if fetching failed or no API key exists
+                    if not cloud_models:
+                        cloud_models = p_data.get('models', [])
+                    
+                    prov_key = f"Cloud ({provider_name.capitalize()})"
+                    if prov_key not in categorized_models:
+                        categorized_models[prov_key] = []
+                        
+                    for m_name in cloud_models:
+                        full_name = f"{provider_name}/{m_name}" if not m_name.startswith(f"{provider_name}/") else m_name
+                        categorized_models[prov_key].append(full_name)
 
         
         # Clean empty categories

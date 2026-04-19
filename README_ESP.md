@@ -3,7 +3,7 @@
   <img src="https://raw.githubusercontent.com/Zentra-Core/zentra-core.github.io/main/zentra/assets/Zentra_Core_Logo.jpg" width="400" alt="Logo de Zentra">
 </p>
 
-# Zentra Core - Versión 0.15.2 (Runtime Alpha)
+# Zentra Core - Versión 0.18.1 (Runtime Alpha)
 Idiomas: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP.md)
 
 # 🤖 Zentra Core
@@ -24,24 +24,17 @@ Ahora completamente migrado a una **arquitectura estable de Plugins Nativos**, Z
 
 ---
 
-## ✨ Características Principales (v0.15.2)
-* 🤖 **Agente Cognitivo Autónomo** — Zentra ahora razona paso a paso (Chain of Thought), elige herramientas dinámicamente y resuelve tareas complejas de forma autónoma.
-* 🛡️ **Zentra Code Jail (Sandbox AST)** — Un entorno de ejecución nativo altamente seguro que permite a la IA ejecutar algoritmos Python, matemáticas y lógica de datos de forma segura.
-* 👁️ **Soporte de Visión Nativa** — Capacidades de IA multimodal para Gemini, OpenAI y Ollama (LLaVA). Analiza imágenes, fotos y capturas de pantalla directamente en el chat.
-* 🏗️ **Plugin WebUI Nativo** — Migrado de un bridge a un plugin core (`plugins/web_ui/`) para máximo rendimiento y estabilidad.
-* 🔒 **Seguridad HTTPS Nativa**: Generación de certificados SSL para integración segura WebRTC (Micrófono/Cámara).
-* ⚙️ **Configuración YAML**: Archivos validados con esquemas Pydantic v2 (`system.yaml`).
-* 📊 **Token Payload Inspector**: Panel para auditar el uso de tokens por cada plugin activo.
-* 💻 **Soporte Multi-OS Nativo**: Arquitectura agnóstica vía `OSAdapter` para compatibilidad total con Windows, Linux y MacOS.
-* 🌐 **I18N Global (Multilingüe)** — Soporte completo para Inglés (default) e Italiano en Terminal e interfaz Web con cambio en tiempo real.
-* 🧠 **Streaming Multi-Nube** — Soporte nativo para Groq, OpenAI, Gemini e Anthropic con efecto "máquina de escribir".
-* 🔄 **Live-Sync Config** — Cambia cualquier ajuste en el Panel Web y aplícalo al instante sin reiniciar el sistema.
-* 🎭 **Sincronización de Personalidad** — Las personalidades añadidas a la carpeta `personality/` se detectan automáticamente y se sincronizan con `config.yaml`.
-* 🎙️ **Chat de Voz Integrado** — Interfaz de Chat nativa con integración de Piper TTS y reproducción de audio automática.
-* 🔌 **Botones Macro de Plugins** — La lista de plugins lateral ahora incluye macros clicables para inyectar comandos especializados al instante.
-* 💾 **Memoria Persistente** — Memoria SQLite con contexto compartido entre WebUI y Terminal.
-* 🗂️ **Zentra Drive (Gestor de Archivos)** — Gestor de archivos HTTP nativo integrado en la WebUI para cargar, descargar y organizar archivos del sistema con una interfaz de doble panel.
-* 🚀 **Lanzador Standalone** — Archivo `run_zentra_web.bat` dedicado para iniciar el servidor Web de forma independiente.
+## ✨ Características Principales (v0.18.1)
+* 🎨 **Flux Prompt Studio** — Ingeniería de prompts en tiempo real para Flux.1 con persistenza automatica di metadati sidecar.
+* 🖼️ **Image Metadata Injection** — Los resultados de IA generativa ahora incluyen archivos sidecar JSON (.txt) con prompt, semilla e info del sampler para flujos profesionales.
+* 🎭 **Chat UI Mejorada** — Nuevos encabezados de chat con nombres de Usuario/Persona, marcas de tiempo y mejor posición de botones (Copiar/Editar/Regenerate).
+* 🔄 **Regeneración Corregida** — Se resolvieron problemas de duplicación de historial y errores de sesión durante la regeneración.
+* 🛡️ **Arquitectura de Privacidad de 3 Niveles** — Gestión unificada con modos **Normal**, **Auto-Wipe** (solo RAM) e **Incognito** (sin rastro).
+* 🔌 **Universal Tool Hub (MCP Bridge)** — Soporte nativo para el **Model Context Protocol**. Conéctate a miles de herramientas AI con un solo clic.
+* 🔭 **Deep MCP Discovery** — Explorador avanzado con búsqueda multi-registro (Smithery, MCPSkills, GitHub) e instalación inmediata.
+* 🔒 **Zentra PKI Profesional (HTTPS)** — Certificación Root CA integrada para habilitar Mic/Cámara en toda la LAN de forma segura.
+* 🏗️ **Plugin WebUI Nativo** — Interfaz de alto rendimiento optimizada para escritorio y dispositivos móviles.
+* 🗂️ **Zentra Drive (File Manager)** — Gestión de archivos y editor integrado con interfaz de doble panel.
 
 ---
 
@@ -76,15 +69,19 @@ python main.py
 
 ---
 
-## 🧠 Backends de IA Soportados
+## 🧠 Backends de IA Soportados (Motores LLM)
 
-### 🔹 Ollama
-Fácil de usar, rápido y optimizado. Recomendado para la mayoría de los usuarios.
+Zentra está completamente fuera de línea por defecto y requiere un motor de IA local para procesar lógica y conversación. Durante la configuración, debes instalar uno de los backends independientes a continuación. Zentra los detectará automáticamente.
 
-👉 https://ollama.com
+### 🔹 1. Ollama (Recomendado)
+Fácil de usar, rápido y optimizado para ejecutarse localmente como servicio en segundo plano.
+- **Descarga**: 👉 https://ollama.com/download
+- **Configuración**: Una vez instalado, abre tu terminal/símbolo del sistema y ejecuta `ollama run llama3.2` para descargar y probar un modelo ligero y rápido. Zentra lo detectará al instante.
 
-### 🔹 KoboldCpp
-Soporta modelos GGUF, puede ejecutar modelos sin censura, más flexible.
+### 🔹 2. KoboldCpp (Alternativa)
+Perfecto para modelos manuales GGUF y hardware más antiguo sin grandes instalaciones.
+- **Descarga**: 👉 https://github.com/LostRuins/koboldcpp/releases
+- **Configuración**: Descarga el archivo `.exe` (o el binario de Linux), haz doble clic, selecciona cualquier modelo de instrucciones GGUF descargado de HuggingFace y ejecútalo. Zentra se conectará a través del puerto `5001`.
 
 ---
 

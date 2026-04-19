@@ -7,9 +7,25 @@
   <link rel="icon" type="image/png" href="/assets/Zentra_Core_Logo_NBG.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/core/variables.css">
   <link rel="stylesheet" href="/drive_static/css/drive.css">
 </head>
 <body>
+<script>
+  (function() {
+    var autoTheme = localStorage.getItem('zentra-ui-auto-theme') === 'true';
+    var savedTheme = localStorage.getItem('zentra-ui-theme') || 'cyberpunk';
+    var theme = 'cyberpunk';
+    if (autoTheme) {
+      theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'cyberpunk' : 'light';
+    } else {
+      theme = savedTheme;
+    }
+    if (theme !== 'default') {
+      document.body.classList.add('theme-' + theme);
+    }
+  })();
+</script>
 
 <!-- ── Header ─────────────────────────────────────────────── -->
 <header>
@@ -20,14 +36,14 @@
   <div class="nav-links">
     {% if current_user.is_authenticated %}
     <div class="user-badge">
-      <span style="color:#888;">{{ t('webui_chat_user') }}:</span>
+      <span style="color:var(--muted);">{{ t('webui_chat_user') }}:</span>
       <strong>{{ current_user.username }}</strong>
       <span class="role-badge">{{ current_user.role }}</span>
     </div>
     {% endif %}
     <a href="/zentra/config/ui">⚙️ {{ t('webui_chat_config') }}</a>
     <a href="/chat">💬 Chat</a>
-    <a href="/logout" style="color:var(--red);">{{ t('webui_chat_logout') }}</a>
+    <a href="/logout" class="hide-on-mobile" style="color:var(--red);">{{ t('webui_chat_logout') }}</a>
   </div>
 </header>
 
@@ -49,7 +65,6 @@
     <div id="tree-root"></div>
     
     <div id="quick-links-section">
-      <div id="quick-links-header">⭐ Quick Links</div>
       <div id="quick-links-body">
         <div class="sb-empty">{{ t('webui_conf_msg_loading') }}</div>
       </div>
@@ -68,7 +83,7 @@
     </div>
 
     <!-- upload drop target -->
-    <div id="dropzone">{{ t('webui_drive_dropzone') }}</div>
+    <div id="dropzone" class="hide-on-mobile">{{ t('webui_drive_dropzone') }}</div>
 
     <!-- upload progress -->
     <div id="upload-progress">
@@ -130,5 +145,6 @@
   };
 </script>
 <script src="/drive_static/js/drive.js"></script>
+<script src="/media_viewer_static/js/media_viewer.js"></script>
 </body>
 </html>

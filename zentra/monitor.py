@@ -85,7 +85,7 @@ def get_file_timestamp(path):
     return 0
 
 def start_and_monitor(script_to_run):
-    # For module-style runs (like zentra.plugins.web_ui.server), we don't check file existence directly if it contains dots
+    # For module-style runs (like zentra.modules.web_ui.server), we don't check file existence directly if it contains dots
     is_module = ("." in script_to_run and not script_to_run.endswith(".py"))
     if not is_module:
         if not os.path.exists(script_to_run):
@@ -100,6 +100,24 @@ def start_and_monitor(script_to_run):
     env = os.environ.copy()
     env["PYTHONPATH"] = _ROOT + os.pathsep + env.get("PYTHONPATH", "")
 
+    # Monitor .py files in zentra/ folder
+    zentra_folder = os.path.join(_ROOT, "zentra")
+    
+    def get_max_py_mtime(folder):
+        max_t = 0
+        for root, dirs, files in os.walk(folder):
+            for f in files:
+                if f.endswith(".py"):
+                    t = get_file_timestamp(os.path.join(root, f))
+                    if t > max_t: max_t = t
+        return max_t
+
+    last_code_time = get_max_py_mtime(zentra_folder)
+    
+    # Process startup
+    env = os.environ.copy()
+    env["PYTHONPATH"] = _ROOT + os.pathsep + env.get("PYTHONPATH", "")
+
     if is_module:
         process = subprocess.Popen([sys.executable, "-m", script_to_run], env=env)
     else:
@@ -109,10 +127,10 @@ def start_and_monitor(script_to_run):
         while process.poll() is None:
             time.sleep(1)
             
-            # config.json check
+            
+            # 1. system.yaml check
             current_config_time = get_file_timestamp(CONFIG_FILE)
             if current_config_time > last_config_time + 1:
-                # Check for flag set by app to avoid unnecessary restarts
                 flag_path = os.path.join(_ROOT, ".config_saved_by_app")
                 if os.path.exists(flag_path):
                     try: os.remove(flag_path)
@@ -120,16 +138,17 @@ def start_and_monitor(script_to_run):
                     last_config_time = current_config_time
                     continue
                 
-                monitor_log(f"system.yaml change detected (delta: {current_config_time - last_config_time}s). Terminating...")
+                monitor_log(f"system.yaml change detected. Terminating...")
                 process.terminate()
-                # Wait for process to close (max 5 seconds)
-                try:
-                    process.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    process.kill() # Force close if unresponsive
-                
-                monitor_log(t("reset_complete"))
-                time.sleep(2) # Safety pause for GPU
+                process.wait(timeout=5)
+                return True
+
+            # 2. Code files check (.py)
+            current_code_time = get_max_py_mtime(zentra_folder)
+            if current_code_time > last_code_time + 1:
+                monitor_log(f"Code change detected in zentra/ folder. Restarting...")
+                process.terminate()
+                process.wait(timeout=5)
                 return True
                 
         # Natural exit:
@@ -148,7 +167,7 @@ def start_and_monitor(script_to_run):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Zentra Watchdog Monitor")
-    parser.add_argument("--script", default=DEFAULT_MAIN_SCRIPT, help="Script or module to monitor (e.g. main.py or plugins.web_ui.server)")
+    parser.add_argument("--script", default=DEFAULT_MAIN_SCRIPT, help="Script or module to monitor (e.g. main.py or modules.web_ui.server)")
     args = parser.parse_args()
 
     print(f"\n{'-'*55}")

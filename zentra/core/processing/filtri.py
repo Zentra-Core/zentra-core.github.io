@@ -5,6 +5,53 @@ import unicodedata
 # Cache to avoid disk reads on every sentence
 _config_cache = None
 
+def should_filter(conf_val, mode):
+    """
+    Checks if a filter should be applied based on its target setting.
+    conf_val can be a bool (legacy) or a string ('voice', 'text', 'both', 'none').
+    mode is either 'voice' or 'text'.
+    """
+    if isinstance(conf_val, bool):
+        # Legacy boolean logic: if it's True, we apply to both to be safe
+        return conf_val
+    if not isinstance(conf_val, str):
+        return False
+        
+    val = conf_val.lower()
+    if val in ("both", "all"):
+        return True
+    if val == mode:
+        return True
+    return False
+
+def apply_custom_filters(text, conf, mode):
+    """Applies the custom filters list from the config, respecting the target."""
+    if not text:
+        return text
+    
+    # 1. Legacy string replacements
+    replacements = conf.get("custom_replacements", {})
+    if isinstance(replacements, dict):
+        for target, replacement in replacements.items():
+            text = text.replace(target, replacement)
+            
+    # 2. New custom filter objects
+    custom_filters = conf.get("custom_filters", [])
+    if isinstance(custom_filters, list):
+        for cf in custom_filters:
+            if not isinstance(cf, dict):
+                continue
+            f_target = cf.get("target", "both")
+            if should_filter(f_target, mode):
+                f_find = cf.get("find", "")
+                if f_find:
+                    f_replace = str(cf.get("replace", ""))
+                    # Use case-insensitive regex replacement for user convenience
+                    pattern = re.compile(re.escape(f_find), re.IGNORECASE)
+                    # Using lambda to avoid issues with regex backreferences in standard strings
+                    text = pattern.sub(lambda m: f_replace, text)
+    return text
+
 def load_filter_config():
     global _config_cache
     if _config_cache is None:
@@ -12,7 +59,7 @@ def load_filter_config():
             import os
             # Calcola la root (zentra/core/processing -> ../../../)
             root = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-            path = os.path.join(root, "config", "system.yaml")
+            path = os.path.join(root, "zentra", "config", "data", "system.yaml")
             if os.path.exists(path):
                 import yaml
                 with open(path, "r", encoding="utf-8") as f:
@@ -64,6 +111,25 @@ def clean_for_video(text):
     text = remove_think_tags(text)
     if not text:
         return ""
+    
+    # Check user-configured text filters for visible text
+    conf = load_filter_config()
+    
+    # Apply custom filters targeting 'text' or 'both'
+    text = apply_custom_filters(text, conf, mode="text")
+    
+    # 1. Removes text between asterisks
+    if should_filter(conf.get("remove_asterisks", "both"), "text"):
+        text = re.sub(r"\*.*?\*", "", text)
+
+    # 2. Removes text between round brackets
+    if should_filter(conf.get("remove_round_brackets", "voice"), "text"):
+        text = re.sub(r"\(.*?\)", "", text)
+
+    # 3. Handle square brackets
+    if should_filter(conf.get("remove_square_brackets", "none"), "text"):
+        text = re.sub(r"\[.*?\]", "", text)
+        
     try:
         # Encode in cp1252 with 'replace' (replaces unsupported characters with '?')
         # then decode back to a Python string - the terminal can now always print it
@@ -101,21 +167,19 @@ def clean_for_voice(text):
     # 1b. Remove emojis and special characters
     text = remove_emoji(text)
 
-    # 1. Custom replacements
-    replacements = conf.get("custom_replacements", {})
-    for target, replacement in replacements.items():
-        text = text.replace(target, replacement)
+    # 1. Custom and dynamic filters targeting 'voice'
+    text = apply_custom_filters(text, conf, mode="voice")
 
     # 2. Removes text between asterisks
-    if conf.get("remove_asterisks", True):
+    if should_filter(conf.get("remove_asterisks", "both"), "voice"):
         text = re.sub(r"\*.*?\*", "", text)
 
     # 3. Removes text between round brackets
-    if conf.get("remove_round_brackets", True):
+    if should_filter(conf.get("remove_round_brackets", "voice"), "voice"):
         text = re.sub(r"\(.*?\)", "", text)
 
     # 4. Handle square brackets
-    if conf.get("remove_square_brackets", False):
+    if should_filter(conf.get("remove_square_brackets", "none"), "voice"):
         text = re.sub(r"\[.*?\]", "", text)
     else:
         text = text.replace("[", "").replace("]", "")

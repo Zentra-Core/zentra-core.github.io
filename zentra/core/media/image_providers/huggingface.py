@@ -49,7 +49,7 @@ class HuggingFaceProvider:
             }
         }
 
-        r = requests.post(url, headers=headers, json=payload, timeout=60, proxies=get_proxies(provider="huggingface"))
+        r = requests.post(url, headers=headers, json=payload, timeout=90, proxies=get_proxies(provider="huggingface"))
         log_debug(f"[HuggingFace] HTTP {r.status_code}, len={len(r.content)}")
 
         if r.status_code != 200:
@@ -66,4 +66,9 @@ class HuggingFaceProvider:
         if r.content.startswith(b"<!DOCTYPE") or r.content.startswith(b"<html"):
             raise Exception("HuggingFace returned HTML instead of image")
 
-        return save_image_bytes(r.content, "jpg")
+        return save_image_bytes(r.content, "jpg", prompt=prompt, params={
+            "provider": "huggingface",
+            "model": model,
+            "guidance_scale": guidance_scale,
+            "inference_steps": num_inference_steps
+        })
