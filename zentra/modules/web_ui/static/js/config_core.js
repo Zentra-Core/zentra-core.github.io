@@ -18,7 +18,7 @@ let uiState = {
     collapsedCategories: []
 };
 let viewMode = localStorage.getItem('zentra-config-view') || 'tabs';
-let activeTab = 'backend';
+let activeTab = sessionStorage.getItem('zentra-config-tab') || 'backend';
 window.activeCategoryFilter = 'ALL';
 
 
@@ -63,6 +63,8 @@ function showTab(name, skipScroll = false) {
   }
 
   activeTab = name; // Consolidate the logical active tab
+  sessionStorage.setItem('zentra-config-tab', name);
+  
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.module-card').forEach(c => c.classList.remove('active'));

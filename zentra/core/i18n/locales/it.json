@@ -505,6 +505,7 @@
         "hub_mod_dashboard": "Dashboard",
         "hub_mod_domotica": "Smart Home",
         "hub_mod_webui": "Motore WebUI",
+        "webui_conf_mcp_title": "🔌 MCP Bridge (Model Context Protocol)",
         "hub_mod_help": "Guida & Supporto",
         "hub_mod_system": "Sistema & Log",
         "hub_mod_users": "Utenti",

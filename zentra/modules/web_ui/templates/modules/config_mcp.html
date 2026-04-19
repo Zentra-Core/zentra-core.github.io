@@ -1,24 +1,26 @@
 <div id="tab-mcp" class="panel">
   <div class="card">
-    <div class="card-title">{{ t('webui_conf_mcp_title') or 'MCP Bridge (Universal Protocol)' }}</div>
-    <div class="field">
-      <p style="font-size: 11px; opacity:0.8;">Connect Zentra to external AI tools and resources using the Model Context Protocol. Discover servers on <a href="https://smithery.ai" target="_blank" style="color:var(--accent); text-decoration:none; font-weight:bold;">Smithery.ai</a>.</p>
-    </div>
-    
-    <div class="toggle-row" style="margin-bottom: 20px;">
-      <div class="toggle-info">Enable MCP Bridge</div>
+    <div class="card-title">{{ t('webui_conf_mcp_title') }}</div>
+    <p style="font-size: 11px; color: var(--muted); margin-bottom: 16px;">
+      Connect Zentra to external AI tools and resources using the Model Context Protocol. 
+      Discover servers on <a href="https://smithery.ai" target="_blank" style="color:var(--accent); text-decoration:none; font-weight:bold;">Smithery.ai</a>.
+    </p>
+    <div class="toggle-row">
+      <div class="toggle-info">Enable MCP Bridge
+        <div class="toggle-sub">Allows Zentra to launch and connect to external MCP servers.</div>
+      </div>
       <label class="switch"><input type="checkbox" id="mcp-enabled" data-plugin="MCP_BRIDGE"><span class="slider"></span></label>
     </div>
   </div>
 
   <div class="card">
     <div class="card-title">Active Servers</div>
-    <table class="config-table" id="mcp-servers-table" style="margin-bottom: 20px;">
+    <table class="config-table" id="mcp-servers-table" style="margin-bottom: 20px; width: 100%;">
       <thead>
         <tr>
-          <th>Provider Namespace</th>
-          <th>Executable & Arguments</th>
-          <th>Status</th>
+          <th>Name</th>
+          <th>Command & Arguments</th>
+          <th>Active</th>
           <th>Remove</th>
         </tr>
       </thead>
@@ -27,61 +29,79 @@
       </tbody>
     </table>
 
-    <div style="background: var(--bg3); padding: 15px; border-radius: 8px; border: 1px dashed var(--accent);">
-      <h4 style="margin-top: 0; color: var(--text); font-size: 14px; margin-bottom: 10px;">➕ Add New Server</h4>
-      
-      <!-- Preset Selector -->
-      <div style="margin-bottom: 10px;">
-        <select id="mcp-presets" class="input-dark" style="width: 100%; max-width: 300px; padding: 6px;" onchange="applyMCPPreset(this.value)">
-          <option value="">-- Choose from Popular Presets --</option>
-          <option value="everything">Educational: Everything (Mock tools)</option>
-          <option value="sequentialthinking">Reasoning: Sequential Thinking (Better logic)</option>
-          <option value="bravesearch">Web Search: Brave Search (Requires API Key)</option>
-          <option value="wikipedia">Knowledge: Wikipedia (Community)</option>
-          <option value="sequentialthinking">Reasoning: Sequential Thinking (Free)</option>
-          <option value="google-maps">Maps: Google Maps (Requires API Key)</option>
-          <option value="github">Developer: GitHub (Requires PAT)</option>
-          <option value="filesystem">Utility: Local File System</option>
-          <option value="postgres">Database: PostgreSQL</option>
-          <option value="weather">Science: OpenWeather (Requires API Key)</option>
+    <!-- Add New Server -->
+    <div style="background: var(--bg3); padding: 16px; border-radius: 10px; border: 1px dashed var(--accent);">
+      <div class="card-title" style="font-size:13px; margin-bottom: 12px;">➕ Add New Server</div>
+
+      <div class="field">
+        <label>Load a Preset</label>
+        <select id="mcp-presets" onchange="applyMCPPreset(this.value)">
+          <option value="">— Choose from Popular Presets —</option>
+          <option value="everything">🧰 Educational: Everything (Mock tools)</option>
+          <option value="sequentialthinking">🧠 Reasoning: Sequential Thinking</option>
+          <option value="bravesearch">🔍 Web Search: Brave Search (API Key required)</option>
+          <option value="wikipedia">📖 Knowledge: Wikipedia</option>
+          <option value="google-maps">🗺️ Maps: Google Maps (API Key required)</option>
+          <option value="github">💻 Developer: GitHub (PAT required)</option>
+          <option value="filesystem">📁 Utility: Local File System</option>
+          <option value="postgres">🗄️ Database: PostgreSQL</option>
+          <option value="weather">⛅ Science: OpenWeather (API Key required)</option>
         </select>
       </div>
 
-      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <input type="text" id="mcp-new-name" class="input-dark" placeholder="Name (e.g. google_maps)" style="flex: 1; min-width: 150px;">
-        <input type="text" id="mcp-new-cmd" class="input-dark" placeholder="Command (e.g. npx)" style="flex: 0.5; min-width: 100px;">
-        <input type="text" id="mcp-new-args" class="input-dark" placeholder="Args (e.g. -y @usemcp/google-maps)" style="flex: 2; min-width: 250px;">
-        <button type="button" class="btn btn-primary" onclick="addMCPServer()">Add</button>
+      <div class="grid-2" style="margin-top: 8px;">
+        <div class="field">
+          <label>Name (namespace)</label>
+          <input type="text" id="mcp-new-name" placeholder="e.g. google_maps">
+        </div>
+        <div class="field">
+          <label>Command</label>
+          <input type="text" id="mcp-new-cmd" placeholder="e.g. npx">
+        </div>
+      </div>
+      <div class="field">
+        <label>Arguments</label>
+        <input type="text" id="mcp-new-args" placeholder="e.g. -y @modelcontextprotocol/server-google-maps">
+      </div>
+      <div style="text-align: right; margin-top: 8px;">
+        <button type="button" class="btn btn-primary" onclick="addMCPServer()">➕ Add Server</button>
       </div>
     </div>
   </div>
 
   <div class="card">
-    <div class="card-title">MCP Explorer (Cross-Registry)</div>
+    <div class="card-title">🔭 MCP Explorer</div>
     <p style="font-size: 11px; color: var(--muted); margin-bottom: 15px;">Search and discover external tools across multiple registries (Smithery, MCPSkills) without leaving Zentra.</p>
-    
-    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-      <select id="mcp-explore-registry" class="input-dark" style="flex: 0.3; padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--bg3); color: var(--text);">
-        <option value="smithery" selected>Smithery.ai</option>
-        <option value="mcp-get">MCPSkills (mcp-get)</option>
-        <option value="github">GitHub (Topic: mcp-server)</option>
-        <option value="huggingface">Hugging Face (Spaces)</option>
-      </select>
-      <input type="text" id="mcp-explore-query" class="input-dark" placeholder="e.g. google, notion, search, spotify..." style="flex: 1; padding: 10px; border-radius: 8px;">
-      <button type="button" class="btn btn-primary" onclick="searchRegistry()" id="mcp-explore-btn">Search</button>
+
+    <div class="grid-2" style="margin-bottom: 15px;">
+      <div class="field">
+        <label>Registry</label>
+        <select id="mcp-explore-registry">
+          <option value="smithery" selected>Smithery.ai</option>
+          <option value="mcp-get">MCPSkills (mcp-get)</option>
+          <option value="github">GitHub (Topic: mcp-server)</option>
+          <option value="huggingface">Hugging Face (Spaces)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Search Query</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="mcp-explore-query" placeholder="e.g. google, notion, search, spotify..." style="flex:1;">
+          <button type="button" class="btn btn-primary" onclick="searchRegistry()" id="mcp-explore-btn">Search</button>
+        </div>
+      </div>
     </div>
 
     <div id="mcp-explore-results" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 15px; min-height: 50px;">
-      <!-- Results will appear here -->
       <p style="color: var(--muted); font-size: 12px; grid-column: 1/-1; text-align: center;">Enter a search term to discover new capabilities.</p>
     </div>
   </div>
 
   <div class="card">
-    <div class="card-title">Discovered Tools Inventory</div>
+    <div class="card-title">🧰 Discovered Tools Inventory</div>
     <p style="font-size: 11px; color: var(--muted); margin-bottom: 15px;">Real-time list of capabilities available through active MCP servers.</p>
     <div id="mcp-inventory-list" style="max-height: 300px; overflow-y: auto; background: var(--bg3); padding: 15px; border-radius: 8px;">
-        <p style="color: var(--muted); font-size: 12px;">Waiting for server response...</p>
+      <p style="color: var(--muted); font-size: 12px;">Waiting for server response...</p>
     </div>
   </div>
 </div>
@@ -105,17 +125,17 @@
 </style>
 
 <script>
-  // Presets mapping for Smithery.ai standard servers
+  // Presets mapping for standard MCP servers
   const mcpPresetsMap = {
-    'everything': { name: 'everything', cmd: 'npx', args: '-y @modelcontextprotocol/server-everything' },
+    'everything':         { name: 'everything',         cmd: 'npx', args: '-y @modelcontextprotocol/server-everything' },
     'sequentialthinking': { name: 'sequential_thinking', cmd: 'npx', args: '-y @modelcontextprotocol/server-sequential-thinking' },
-    'bravesearch': { name: 'brave_search', cmd: 'npx', args: '-y @modelcontextprotocol/server-brave-search' },
-    'google-maps': { name: 'google_maps', cmd: 'npx', args: '-y @modelcontextprotocol/server-google-maps' },
-    'github': { name: 'github', cmd: 'npx', args: '-y @modelcontextprotocol/server-github' },
-    'filesystem': { name: 'filesystem', cmd: 'npx', args: '-y @modelcontextprotocol/server-filesystem /path/to/expose' },
-    'wikipedia': { name: 'wikipedia', cmd: 'npx', args: '-y wikipedia-mcp' },
-    'sequentialthinking': { name: 'sequential_thinking', cmd: 'npx', args: '-y @modelcontextprotocol/server-sequential-thinking' },
-    'weather': { name: 'weather', cmd: 'npx', args: '-y @modelcontextprotocol/server-weather' }
+    'bravesearch':        { name: 'brave_search',        cmd: 'npx', args: '-y @modelcontextprotocol/server-brave-search' },
+    'google-maps':        { name: 'google_maps',         cmd: 'npx', args: '-y @modelcontextprotocol/server-google-maps' },
+    'github':             { name: 'github',              cmd: 'npx', args: '-y @modelcontextprotocol/server-github' },
+    'filesystem':         { name: 'filesystem',          cmd: 'npx', args: '-y @modelcontextprotocol/server-filesystem /path/to/expose' },
+    'wikipedia':          { name: 'wikipedia',           cmd: 'npx', args: '-y wikipedia-mcp' },
+    'postgres':           { name: 'postgres',            cmd: 'npx', args: '-y @modelcontextprotocol/server-postgres postgresql://localhost/mydb' },
+    'weather':            { name: 'weather',             cmd: 'npx', args: '-y @modelcontextprotocol/server-weather' }
   };
 
   function applyMCPPreset(presetKey) {
@@ -124,9 +144,7 @@
     document.getElementById('mcp-new-name').value = preset.name;
     document.getElementById('mcp-new-cmd').value = preset.cmd;
     document.getElementById('mcp-new-args').value = preset.args;
-    
-    // Reset dropdown
-    document.getElementById('mcp-presets').value = "";
+    document.getElementById('mcp-presets').value = '';
   }
 
   async function fetchMCPInventory() {
@@ -175,42 +193,36 @@
     const tbody = document.querySelector('#mcp-servers-table tbody');
     if (!tbody) return;
     
-    // Ensure the structure exists
     if (!window.cfg.plugins) window.cfg.plugins = {};
     if (!window.cfg.plugins.MCP_BRIDGE) window.cfg.plugins.MCP_BRIDGE = { enabled: false, servers: {} };
     if (!window.cfg.plugins.MCP_BRIDGE.servers) window.cfg.plugins.MCP_BRIDGE.servers = {};
     
     const servers = window.cfg.plugins.MCP_BRIDGE.servers;
     
-    // Sync the main toggle state
     const mainToggle = document.getElementById('mcp-enabled');
-    if (mainToggle) {
-        mainToggle.checked = window.cfg.plugins.MCP_BRIDGE.enabled;
-    }
+    if (mainToggle) mainToggle.checked = window.cfg.plugins.MCP_BRIDGE.enabled;
     
     if (Object.keys(servers).length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--muted); font-size:12px; padding: 20px;">No external providers configured.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--muted); font-size:12px; padding: 20px;">No external providers configured. Add one below.</td></tr>';
       return;
     }
 
     let html = '';
     for (const [name, configData] of Object.entries(servers)) {
       const cmds = Array.isArray(configData.args) ? configData.args.join(' ') : (configData.args || '');
-      
+      const isEnabled = configData.enabled !== false;
       html += `
         <tr>
-          <td style="color: var(--accent); font-weight: bold;">${name}</td>
+          <td style="color: var(--accent); font-weight: bold; font-family: 'JetBrains Mono', monospace;">${name}</td>
           <td style="font-family: 'JetBrains Mono', monospace; font-size:11px; color: var(--muted);">
             <span style="color: var(--text);">${configData.command}</span> ${cmds}
           </td>
           <td>
-             <div class="toggle-wrapper" style="transform: scale(0.8); transform-origin: left center; margin: 0;">
-               <input type="checkbox" id="mcp-srv-${name}" ${configData.enabled !== false ? 'checked' : ''} 
-                      onchange="toggleMCPServer('${name}', this.checked)">
-             </div>
+            <label class="switch is-small"><input type="checkbox" ${isEnabled ? 'checked' : ''}
+                   onchange="toggleMCPServer('${name}', this.checked)"><span class="slider"></span></label>
           </td>
           <td>
-            <button type="button" class="btn btn-danger btn-sm" onclick="removeMCPServer('${name}')">✕</button>
+            <button type="button" class="btn btn-danger" style="padding:3px 10px; font-size:11px;" onclick="removeMCPServer('${name}')">✕ Remove</button>
           </td>
         </tr>
       `;
@@ -221,17 +233,16 @@
   function toggleMCPServer(name, isEnabled) {
     if (window.cfg.plugins.MCP_BRIDGE.servers[name]) {
       window.cfg.plugins.MCP_BRIDGE.servers[name].enabled = isEnabled;
-      if (typeof markDirty === 'function') markDirty();
-      saveConfig(true); // Auto-save on toggle
+      saveConfig(true);
     }
   }
 
   function addMCPServer() {
     const nameEl = document.getElementById('mcp-new-name');
-    const cmdEl = document.getElementById('mcp-new-cmd');
+    const cmdEl  = document.getElementById('mcp-new-cmd');
     const argsEl = document.getElementById('mcp-new-args');
     
-    const name = nameEl.value.trim().replace(/\s+/g, '_');
+    const name    = nameEl.value.trim().replace(/\s+/g, '_');
     const command = cmdEl.value.trim();
     const argsStr = argsEl.value.trim();
     
@@ -246,27 +257,22 @@
     
     const mainToggle = document.getElementById('mcp-enabled');
     if (mainToggle && !mainToggle.checked) {
-        mainToggle.checked = true;
-        window.cfg.plugins.MCP_BRIDGE.enabled = true;
+      mainToggle.checked = true;
+      window.cfg.plugins.MCP_BRIDGE.enabled = true;
     }
     
     const args = argsStr ? argsStr.split(' ').filter(a => a.trim() !== '') : [];
     
     window.cfg.plugins.MCP_BRIDGE.servers[name] = {
       command: command,
-      args: args,
+      args:    args,
       enabled: true,
-      env: {}
+      env:     {}
     };
     
-    nameEl.value = '';
-    cmdEl.value = '';
-    argsEl.value = '';
-    
+    nameEl.value = ''; cmdEl.value = ''; argsEl.value = '';
     renderMCPServers();
     saveConfig(true);
-    
-    // Refresh inventory soon after adding
     setTimeout(fetchMCPInventory, 2000);
   }
 
@@ -279,18 +285,18 @@
   }
 
   async function searchRegistry() {
-    const qEl = document.getElementById('mcp-explore-query');
-    const rEl = document.getElementById('mcp-explore-registry');
-    const btn = document.getElementById('mcp-explore-btn');
+    const qEl   = document.getElementById('mcp-explore-query');
+    const rEl   = document.getElementById('mcp-explore-registry');
+    const btn   = document.getElementById('mcp-explore-btn');
     const container = document.getElementById('mcp-explore-results');
     
-    const query = qEl.value.trim();
+    const query    = qEl.value.trim();
     const registry = rEl.value;
     if (!query) return;
 
     btn.disabled = true;
-    btn.innerText = 'Searching...';
-    container.innerHTML = `<p style="color:var(--muted); font-size:12px; grid-column:1/-1; text-align:center;">🔍 Contacting ${registry} Registry...</p>`;
+    btn.innerText = '...';
+    container.innerHTML = `<p style="color:var(--muted); font-size:12px; grid-column:1/-1; text-align:center;">🔍 Searching ${registry}...</p>`;
 
     try {
       const response = await fetch(`/api/mcp/explore?q=${encodeURIComponent(query)}&reg=${registry}`);
@@ -302,43 +308,34 @@
       }
 
       if (!data.results || data.results.length === 0) {
-        container.innerHTML = '<p style="color:var(--muted); font-size:12px; grid-column:1/-1; text-align:center;">No results found for "' + query + '" in ' + registry + '.</p>';
+        container.innerHTML = '<p style="color:var(--muted); font-size:12px; grid-column:1/-1; text-align:center;">No results found for "' + query + '".</p>';
         return;
       }
 
       let html = '';
       data.results.forEach(res => {
-        // Prepare data for the Add button
-        // For smithery, qualifiedName is npx package. 
-        // For mcp-get, res.name might be the package or we might need further lookup.
         const packageIdent = res.qualifiedName || res.name;
         let cmdArgs = `-y ${packageIdent}`;
-        
-        // Custom handling for specific registries
-        if (packageIdent.startsWith('github:')) {
-          cmdArgs = `-y ${packageIdent}`; // github:user/repo works with npx
-        } else if (packageIdent.startsWith('hf:')) {
+        if (packageIdent.startsWith('hf:')) {
           const spaceId = packageIdent.replace('hf:', '');
           cmdArgs = `-y @llmindset/hf-mcp-server --space ${spaceId}`;
         }
-
         const cardData = {
           name: res.name.split('/').pop().replace(/[^a-z0-9]/gi, '_').toLowerCase(),
-          cmd: 'npx',
+          cmd:  'npx',
           args: cmdArgs
         };
         const dataStr = btoa(JSON.stringify(cardData));
-
         html += `
-          <div style="background: var(--glass); padding: 15px; border-radius: 10px; border: 1px solid var(--glass-border); display: flex; flex-direction: column; justify-content: space-between;">
+          <div style="background:var(--glass); padding:14px; border-radius:10px; border:1px solid var(--glass-border); display:flex; flex-direction:column; justify-content:space-between;">
             <div>
-              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px;">
-                <span style="color:var(--accent); font-weight:bold; font-size:13px; font-family:'JetBrains Mono', monospace;">${res.name}</span>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+                <span style="color:var(--accent); font-weight:bold; font-size:12px; font-family:'JetBrains Mono',monospace;">${res.name}</span>
                 <span style="font-size:10px; color:var(--muted);">${res.useCount || res.downloads || 0} ${registry === 'smithery' ? 'uses' : 'dls'}</span>
               </div>
-              <p style="font-size:11px; color:var(--muted); line-height:1.4; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${res.description || 'No description available.'}</p>
+              <p style="font-size:11px; color:var(--muted); line-height:1.4; margin-bottom:10px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">${res.description || 'No description available.'}</p>
             </div>
-            <button type="button" class="btn btn-secondary" style="width:100%; font-size:11px; padding: 6px;" onclick="addFromExplore('${dataStr}')">Add to Zentra</button>
+            <button type="button" class="btn btn-secondary" style="width:100%; font-size:11px;" onclick="addFromExplore('${dataStr}')">➕ Add to Zentra</button>
           </div>
         `;
       });
@@ -355,36 +352,28 @@
   function addFromExplore(encodedData) {
     try {
       const data = JSON.parse(atob(encodedData));
-      document.getElementById('mcp-new-name').value = data.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      document.getElementById('mcp-new-cmd').value = data.cmd;
+      document.getElementById('mcp-new-name').value = data.name;
+      document.getElementById('mcp-new-cmd').value  = data.cmd;
       document.getElementById('mcp-new-args').value = data.args;
       
-      // Highlight the add section
-      const addSection = document.querySelector('h4[style*="Add New Server"]').parentNode;
-      addSection.style.boxShadow = '0 0 15px rgba(var(--accent-rgb), 0.4)';
-      setTimeout(() => { addSection.style.boxShadow = 'none'; }, 2000);
-      
-      // Auto-scroll to form
-      addSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const addSection = document.querySelector('#tab-mcp .card:nth-child(2) > div:last-child');
+      if (addSection) {
+        addSection.style.boxShadow = '0 0 15px rgba(var(--accent-rgb), 0.4)';
+        setTimeout(() => { addSection.style.boxShadow = 'none'; }, 2000);
+        addSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     } catch(e) { console.error("Failed to parse explore data", e); }
   }
 
-  // Hook into the main configuration load event
   document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
-        renderMCPServers();
-        fetchMCPInventory();
+      renderMCPServers();
+      fetchMCPInventory();
     }, 1000);
 
-    // Support Enter key in search box
     const qEl = document.getElementById('mcp-explore-query');
-    if (qEl) {
-      qEl.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') searchRegistry();
-      });
-    }
-    
-    // Periodic refresh
+    if (qEl) qEl.addEventListener('keypress', (e) => { if (e.key === 'Enter') searchRegistry(); });
+
     setInterval(renderMCPServers, 5000);
     setInterval(fetchMCPInventory, 10000);
   });

@@ -281,13 +281,6 @@ class DynamicTools:
         :param tool: Name of the tool to call
         :param arguments_json: JSON string with tool arguments
         """
-    def call_tool(self, server: str, tool: str, arguments_json: str):
-        """
-        Executes an MCP tool.
-        :param server: Name of the MCP server (e.g. 'google-maps')
-        :param tool: Name of the tool to call
-        :param arguments_json: JSON string with tool arguments
-        """
         try:
             args = json.loads(arguments_json)
         except:

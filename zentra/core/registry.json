@@ -172,5 +172,17 @@
         "is_class_based": true,
         "icon": "",
         "category": "PLUGINS"
+    },
+    "MCP_EVERYTHING": {
+        "description": "External Tool Provider (everything) via Model Context Protocol.",
+        "commands": {
+            "<dynamic_tools>": "Tools are dynamically discovered upon connection."
+        },
+        "status": "EXTERNAL",
+        "example": "",
+        "routing_instructions": "Native LLM Function Calling exposed seamlessly.",
+        "is_class_based": false,
+        "is_mcp": true,
+        "server_name": "everything"
     }
 }
