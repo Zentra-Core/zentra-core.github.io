@@ -6,7 +6,7 @@ def init_config_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
     def _sm():
         return get_sm() if callable(get_sm) else get_sm
 
-    def _build_options_dict(cfg_mgr):
+    def _build_options_dict(cfg_mgr, fast=False):
         import glob
         cfg = cfg_mgr.reload()
         
@@ -21,7 +21,7 @@ def init_config_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
             
         from app.model_manager import ModelManager
         mm = ModelManager(cfg_mgr)
-        categorized = mm.get_available_models()
+        categorized = mm.get_available_models(fast_mode=fast)
         
         ollama_models = categorized.get("Ollama (Local)", [])
         
@@ -56,7 +56,7 @@ def init_config_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
             translations = get_translator().get_translations()
             return render_template("index.html", 
                                  zconfig=cfg_mgr.config, 
-                                 zoptions=_build_options_dict(cfg_mgr),
+                                 zoptions=_build_options_dict(cfg_mgr, fast=True),
                                  translations=translations)
         except Exception as e:
             return f"<h1>Errore: index.html non trovato</h1><p>{str(e)}</p>", 500

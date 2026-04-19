@@ -96,6 +96,17 @@
   </style>
 </head>
 <body class="config-page">
+<!-- Synchronous Theme Setup to Prevent Flash of Unstyled Content -->
+<script>
+  (function() {
+    var autoTheme = localStorage.getItem('zentra-ui-auto-theme') === 'true';
+    var savedTheme = localStorage.getItem('zentra-ui-theme') || 'cyberpunk';
+    var theme = autoTheme ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'cyberpunk' : 'light') : savedTheme;
+    if (theme && theme !== 'default') {
+      document.body.classList.add('theme-' + theme);
+    }
+  })();
+</script>
 
 <header>
   <div class="logo">
@@ -325,14 +336,10 @@
       }
   };
 
-  // Load saved theme on boot
+  // Load saved theme on boot (UI bindings only, DOM was themed at body start)
   const autoTheme = localStorage.getItem('zentra-ui-auto-theme') === 'true';
   if (autoTheme) {
       document.getElementById('style_auto_mode').checked = true;
-      toggleAutoTheme(true);
-  } else {
-      const savedTheme = localStorage.getItem('zentra-ui-theme') || 'cyberpunk';
-      setTheme(savedTheme);
   }
 </script>
 </body>
