@@ -76,11 +76,11 @@ def fire_ptt(action: str, source: str = "unknown") -> bool:
         _last_source = source
         info_log(f"[{source.upper()}] PTT {'ACTIVE ▶' if ptt_active else 'STOPPED ■'}")
 
-    if _state_ref is not None:
-        try:
-            _state_ref.add_event("ptt_status", {"active": ptt_active, "source": source})
-        except Exception as e:
-            debug_log(f"Failed to notify StateManager: {e}")
+        if _state_ref is not None:
+            try:
+                _state_ref.add_event("ptt_status", {"active": ptt_active, "source": source})
+            except Exception as e:
+                debug_log(f"Failed to notify StateManager: {e}")
 
     return ptt_active
 
