@@ -4,14 +4,14 @@
     <div class="card-title">🎨 Image Generation</div>
 
     <!-- ══ PRESET TOOLBAR ══════════════════════════════════════════════════════ -->
-    <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px; padding:10px 12px; background:rgba(var(--accent-rgb,100,100,255),0.07); border:1px solid var(--border); border-radius:10px; flex-wrap:wrap;">
-      <span style="font-size:13px; font-weight:700; color:var(--text); white-space:nowrap;">⚡ Preset</span>
-      <select id="igen-preset" onchange="loadIgenPreset()" style="flex:1; min-width:180px;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px; padding:12px 14px; background:var(--bg3); border:1px solid var(--border); border-radius:12px; flex-wrap:wrap;">
+      <span style="font-size:12px; font-weight:800; color:var(--accent); text-transform:uppercase; letter-spacing:1px; white-space:nowrap;">⚡ Preset</span>
+      <select id="igen-preset" onchange="loadIgenPreset()" class="config-input" style="flex:1; min-width:180px; padding:6px 12px; font-size:13px;">
         <option value="">— Select a preset —</option>
       </select>
-      <button id="igen-preset-update-btn" onclick="updateIgenPreset()" title="Update selected user preset with current values" style="display:none; padding:5px 12px; border-radius:7px; border:1px solid var(--accent); background:rgba(var(--accent-rgb,100,100,255),0.1); color:var(--accent); cursor:pointer; font-size:12px; white-space:nowrap;">🔄 Update</button>
-      <button onclick="saveIgenPreset()" title="Save current config as a new preset" style="padding:5px 12px; border-radius:7px; border:1px solid var(--border); background:var(--bg3); color:var(--text); cursor:pointer; font-size:12px; white-space:nowrap;">💾 Save As</button>
-      <button id="igen-preset-delete-btn" onclick="deleteIgenPreset()" title="Delete selected user preset" style="padding:5px 12px; border-radius:7px; border:1px solid var(--border); background:var(--bg3); color:var(--text); cursor:pointer; font-size:12px; white-space:nowrap;">🗑️ Delete</button>
+      <button id="igen-preset-update-btn" onclick="updateIgenPreset()" title="Update selected user preset with current values" style="display:none; padding:7px 14px; border-radius:8px; border:1px solid var(--accent); background:rgba(var(--accent-rgb),0.1); color:var(--accent); cursor:pointer; font-size:12px; font-weight:700; white-space:nowrap;">🔄 Update</button>
+      <button onclick="saveIgenPreset()" title="Save current config as a new preset" class="btn btn-sm" style="white-space:nowrap;">💾 Save As</button>
+      <button id="igen-preset-delete-btn" onclick="deleteIgenPreset()" title="Delete selected user preset" class="btn btn-sm btn-danger" style="white-space:nowrap; padding:6px 12px;">🗑️ Delete</button>
     </div>
 
     <!-- ══ ENABLE TOGGLE ════════════════════════════════════════════════════════ -->
@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <details id="igen-hf-explorer-wrapper" style="margin-top:10px; display:none; background:rgba(var(--accent-rgb, 100,100,255), 0.05); padding:10px; border-radius:8px; border:1px solid var(--border);">
+    <details id="igen-hf-explorer-wrapper" style="margin-top:10px; display:none; background:var(--glass-b); padding:10px; border-radius:12px; border:1px solid var(--border);">
       <summary style="cursor:pointer; font-weight:600; color:var(--text); list-style:none; display:flex; align-items:center; gap:6px;">
         <span style="font-size:13px;">🔍 Search Hugging Face Hub <small style="font-weight:400; color:var(--muted);">— find custom models</small></span>
       </summary>
@@ -212,7 +212,7 @@
       <label class="switch"><input type="checkbox" id="igen-nologo"><span class="slider"></span></label>
     </div>
 
-    <div class="toggle-row" style="margin-top:10px; background:rgba(0,0,0,0.03); padding:8px; border-radius:8px; border:1px solid var(--border);">
+    <div class="toggle-row" style="margin-top:10px; background:var(--bg3); padding:8px; border-radius:8px; border:1px solid var(--border);">
       <div class="toggle-info">
         <strong>Show Config in Chat (Debug)</strong><br>
         <small style="color:var(--muted); font-size:10px;">Appends the exact generation parameters to your chat message.</small>
@@ -221,7 +221,7 @@
     </div>
 
     <!-- ══ FLUX PROMPT STUDIO ═══════════════════════════════════════════════════ -->
-    <div style="margin-top:20px; padding:12px; border:1px solid var(--border); border-radius:12px; background:rgba(255,165,0,0.05);">
+    <div style="margin-top:20px; padding:12px; border:1px solid var(--border); border-radius:12px; background:rgba(var(--accent-rgb), 0.04);">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div style="display:flex; align-items:center; gap:8px;">
           <span style="font-size:18px;">✨</span>
