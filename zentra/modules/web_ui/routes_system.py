@@ -7,7 +7,7 @@ import yaml
 import urllib.parse
 import psutil
 from datetime import datetime
-from flask import request, jsonify
+from flask import request, jsonify, render_template
 from zentra.core.constants import LOGS_DIR
 from zentra.core.logging.hub import get_hub
 import subprocess
@@ -55,6 +55,19 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
 
     def _sm():
         return get_sm() if callable(get_sm) else get_sm
+
+    @app.route("/zentra/logs")
+    def standalone_logs():
+        try:
+            from zentra.core.i18n.translator import get_translator
+            translations = get_translator().get_translations()
+            return render_template("standalone_logs.html", 
+                                 zconfig=cfg_mgr.config, 
+                                 translations=translations)
+        except Exception as e:
+            logger.error(f"Error serving standalone logs: {e}")
+            return str(e), 500
+
 
     @app.route("/zentra/heartbeat", methods=["POST"])
     def heartbeat():
