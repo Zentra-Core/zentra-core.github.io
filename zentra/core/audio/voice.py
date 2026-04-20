@@ -87,6 +87,14 @@ def speak(text, state=None):
         piper_path    = audio_cfg.get("piper_path", default_piper)
         model_path    = audio_cfg.get("onnx_model", default_model)
 
+        # 4. Extract and Round TTS Parameters
+        # length_scale is inverse of speed (e.g. speed 1.2 -> 0.833 duration multiplier)
+        speed            = audio_cfg.get("speed", 1.0)
+        length_scale     = round(1.0 / speed, 3) if speed > 0 else 1.0
+        noise_scale      = round(audio_cfg.get("noise_scale", 0.667), 3)
+        noise_w          = round(audio_cfg.get("noise_w", 0.8), 3)
+        sentence_silence = round(audio_cfg.get("sentence_silence", 0.2), 3)
+
         # Force project path if legacy C:\piper is found and doesn't exist
         if (r"C:\piper" in piper_path or r"C:\piper" in model_path) and not _os.path.exists(piper_path):
             logger.debug("VOICE", "Legacy Piper path not found. Switching to project-relative paths.")
