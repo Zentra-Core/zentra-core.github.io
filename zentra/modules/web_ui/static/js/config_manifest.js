@@ -22,7 +22,6 @@ window.CONFIG_HUB = {
         { id: 'ia',        label: 'hub_mod_persona',      icon: '🎭', cat: 'INTELLIGENZA', isCore: true },
         { id: 'filters',   label: 'hub_mod_filters',      icon: '📝', cat: 'INTELLIGENZA', isCore: true },
         { id: 'memory',    label: 'hub_mod_memory',       icon: '🧠', cat: 'INTELLIGENZA', pluginTag: 'MEMORY', isCore: true },
-        { id: 'neural-link', label: 'hub_mod_neural_link', icon: '🧠', cat: 'INTELLIGENZA', pluginTag: 'NEURAL_LINK', isCore: true },
         
         { id: 'voice',     label: 'hub_mod_voice',        icon: '🎙️', cat: 'MULTIMEDIA' },
         { id: 'aesthetics',label: 'hub_mod_aesthetics',   icon: '🎨', cat: 'MULTIMEDIA', isCore: true },
@@ -102,7 +101,6 @@ window.CONFIG_HUB.tagMap = {
     'REMOTE_TRIGGERS': 'remote-triggers',
     'AUTOCODER': 'studio',
     'PLUGIN_STUDIO': 'studio',
-    'NEURAL_LINK': 'neural-link',
     'DASHBOARD': 'dashboard',
     'DOMOTICA': 'domotica',
     'EXECUTOR': 'executor',
