@@ -50,6 +50,7 @@ window.CONFIG_HUB = {
         { id: 'users',     label: 'hub_mod_users',        icon: '👥', cat: 'SISTEMA', adminOnly: true, isCore: true },
         { id: 'security',  label: 'hub_mod_security',     icon: '🛡️', cat: 'SISTEMA', adminOnly: true },
         { id: 'plugins',   label: 'hub_mod_plugins',      icon: '🧩', cat: 'SISTEMA' },
+        { id: 'system',    label: 'hub_mod_system',       icon: '⚙️', cat: 'SISTEMA' },
         { id: 'logs',      label: 'hub_mod_logs',         icon: '📜', cat: 'SISTEMA' },
         { id: 'privacy',   label: 'hub_mod_privacy',      icon: '🕵️', cat: 'SISTEMA' }
     ],
