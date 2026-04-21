@@ -545,7 +545,7 @@ function escapeHtml(text) {
 }
 
 /**
- * ZENTRA HUB ENGINE v0.18.1
+ * ZENTRA HUB ENGINE v0.18.2
  */
 function renderConfigHub(mode = 'tabs') {
     const hub = window.CONFIG_HUB;

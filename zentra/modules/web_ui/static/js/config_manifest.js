@@ -1,5 +1,5 @@
 /**
- * Zentra Core v0.18.1 - Config UI Manifest
+ * Zentra Core v0.18.2 - Config UI Manifest
  * Centralized registry for configuration modules, icons, and categories.
  */
 
@@ -65,7 +65,6 @@ window.CONFIG_HUB = {
         'drive':  '🗂️',
         'tools':  '🛠️',
         'image':  '🎨',
-        'vision': '👁️',
         'audio':  '🎙️',
         'voice':  '🗣️',
         'security':'🛡️',
