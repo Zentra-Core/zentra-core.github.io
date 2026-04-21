@@ -63,11 +63,13 @@ def migrate_schema():
     """)
 
     # 2. Add session_id to history (if not already there)
-    existing_cols = [row[1] for row in cur.execute("PRAGMA table_info(history)").fetchall()]
-    if "session_id" not in existing_cols:
+    hist_cols = [row[1] for row in cur.execute("PRAGMA table_info(history)").fetchall()]
+    if "session_id" not in hist_cols:
         cur.execute("ALTER TABLE history ADD COLUMN session_id TEXT")
         logger.info("[SESSION] Added session_id column to history table.")
-    if "is_archived" not in existing_cols:
+        
+    sess_cols = [row[1] for row in cur.execute("PRAGMA table_info(sessions)").fetchall()]
+    if "is_archived" not in sess_cols:
         cur.execute("ALTER TABLE sessions ADD COLUMN is_archived INTEGER DEFAULT 0")
         logger.info("[SESSION] Added is_archived column to sessions table.")
 
