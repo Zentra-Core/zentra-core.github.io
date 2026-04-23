@@ -1,19 +1,18 @@
 @echo off
-chcp 65001 >nul
 setlocal enabledelayedexpansion
-title Zentra Core — Service Installer
+title Zentra Core - Service Installer
 color 0B
 
 echo.
-echo  ╔══════════════════════════════════════════════════╗
-echo  ║       ZENTRA CORE — SERVICE INSTALLER           ║
-echo  ║       Native Modular AI Operating System        ║
-echo  ╚══════════════════════════════════════════════════╝
+echo  +--------------------------------------------------+
+echo  ^|       ZENTRA CORE - SERVICE INSTALLER            ^|
+echo  ^|       Native Modular AI Operating System         ^|
+echo  +--------------------------------------------------+
 echo.
 
-:: ─────────────────────────────────────────────────────
+:: -----------------------------------------------------
 :: STEP 1: Auto-elevation to Administrator
-:: ─────────────────────────────────────────────────────
+:: -----------------------------------------------------
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     echo  [!] Administrator rights needed. Requesting elevation...
@@ -25,9 +24,9 @@ if %errorlevel% neq 0 (
 echo  [+] Running as Administrator.
 echo.
 
-:: ─────────────────────────────────────────────────────
+:: -----------------------------------------------------
 :: STEP 2: Find Python
-:: ─────────────────────────────────────────────────────
+:: -----------------------------------------------------
 set PYTHON_CMD=python
 if exist "%CD%\venv\Scripts\python.exe" (
     set PYTHON_CMD="%CD%\venv\Scripts\python.exe"
@@ -40,9 +39,9 @@ if exist "%CD%\venv\Scripts\python.exe" (
 )
 echo.
 
-:: ─────────────────────────────────────────────────────
+:: -----------------------------------------------------
 :: STEP 3: Install service dependencies
-:: ─────────────────────────────────────────────────────
+:: -----------------------------------------------------
 echo  [*] Installing required packages (pywin32, pystray, pillow)...
 %PYTHON_CMD% -m pip install pywin32 pystray pillow --quiet
 if %errorlevel% neq 0 (
@@ -53,9 +52,9 @@ if %errorlevel% neq 0 (
 echo  [+] Dependencies installed.
 echo.
 
-:: ─────────────────────────────────────────────────────
+:: -----------------------------------------------------
 :: STEP 4: Run post-install for pywin32 (required!)
-:: ─────────────────────────────────────────────────────
+:: -----------------------------------------------------
 echo  [*] Running pywin32 post-install...
 for /f "delims=" %%i in ('%PYTHON_CMD% -c "import site; print(site.getsitepackages()[0])"') do set SITE_PKG=%%i
 if exist "%SITE_PKG%\pywin32_system32" (
@@ -63,9 +62,9 @@ if exist "%SITE_PKG%\pywin32_system32" (
 )
 %PYTHON_CMD% "%SITE_PKG%\win32com\__init__.py" >nul 2>&1
 
-:: ─────────────────────────────────────────────────────
+:: -----------------------------------------------------
 :: STEP 5: Install the Windows Service
-:: ─────────────────────────────────────────────────────
+:: -----------------------------------------------------
 echo  [*] Registering Zentra Core as a Windows Service...
 %PYTHON_CMD% scripts\install_as_service.py --install
 if %errorlevel% neq 0 (
@@ -76,18 +75,18 @@ if %errorlevel% neq 0 (
 )
 echo.
 
-:: ─────────────────────────────────────────────────────
+:: -----------------------------------------------------
 :: DONE
-:: ─────────────────────────────────────────────────────
-echo  ╔══════════════════════════════════════════════════╗
-echo  ║   ✔  Installation Complete!                     ║
-echo  ║                                                  ║
-echo  ║   • Zentra Core is now registered as a service  ║
-echo  ║   • It will start automatically at next login   ║
-echo  ║   • Tray icon will appear in the system tray    ║
-echo  ║                                                  ║
-echo  ║   To check:  services.msc → "Zentra Core"       ║
-echo  ║   To remove: UNINSTALL_SERVICE_WIN.bat           ║
-echo  ╚══════════════════════════════════════════════════╝
+:: -----------------------------------------------------
+echo  +--------------------------------------------------+
+echo  ^|   [OK]  Installation Complete!                   ^|
+echo  ^|                                                  ^|
+echo  ^|   * Zentra Core is now registered as a service   ^|
+echo  ^|   * It will start automatically at next login    ^|
+echo  ^|   * Tray icon will appear in the system tray     ^|
+echo  ^|                                                  ^|
+echo  ^|   To check:  services.msc -- "Zentra Core"       ^|
+echo  ^|   To remove: UNINSTALL_SERVICE_WIN.bat           ^|
+echo  +--------------------------------------------------+
 echo.
 pause

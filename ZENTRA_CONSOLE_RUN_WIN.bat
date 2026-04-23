@@ -1,5 +1,4 @@
 @echo off
-chcp 65001 >nul
 setlocal enabledelayedexpansion
 title ZENTRA CORE - ACTIVE SESSION RUNNER (Native Text Console)
 cd /d "%~dp0"

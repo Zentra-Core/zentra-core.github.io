@@ -1,13 +1,12 @@
 @echo off
-chcp 65001 >nul
 setlocal enabledelayedexpansion
-title Zentra Core — Service Uninstaller
+title Zentra Core - Service Uninstaller
 color 0C
 
 echo.
-echo  ╔══════════════════════════════════════════════════╗
-echo  ║       ZENTRA CORE — SERVICE UNINSTALLER         ║
-echo  ╚══════════════════════════════════════════════════╝
+echo  +--------------------------------------------------+
+echo  ^|       ZENTRA CORE - SERVICE UNINSTALLER          ^|
+echo  +--------------------------------------------------+
 echo.
 
 :: Auto-elevation

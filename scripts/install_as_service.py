@@ -66,17 +66,17 @@ def _win_schtask_install():
 
 
 def _win_register_tray():
-    """Adds tray icon to HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"""
+    """Adds tray icon to HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"""
     try:
         import winreg
         key = winreg.OpenKey(
-            winreg.HKEY_CURRENT_USER,
+            winreg.HKEY_LOCAL_MACHINE,
             r"Software\Microsoft\Windows\CurrentVersion\Run",
             0, winreg.KEY_SET_VALUE
         )
         winreg.SetValueEx(key, "ZentraTray", 0, winreg.REG_SZ, TRAY_CMD)
         winreg.CloseKey(key)
-        print("[+] Tray icon registered for login startup (Registry HKCU\\Run).")
+        print("[+] Tray icon registered for login startup (Registry HKLM\\Run).")
     except Exception as e:
         print(f"[!] Could not register tray icon startup: {e}")
 
@@ -93,7 +93,7 @@ def _win_uninstall():
     try:
         import winreg
         key = winreg.OpenKey(
-            winreg.HKEY_CURRENT_USER,
+            winreg.HKEY_LOCAL_MACHINE,
             r"Software\Microsoft\Windows\CurrentVersion\Run",
             0, winreg.KEY_SET_VALUE
         )

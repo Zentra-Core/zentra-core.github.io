@@ -292,11 +292,21 @@ def _control_service(action: str):
 
 def _monitor_status(icon: "pystray.Icon"):
     """Background thread: periodically updates the tray icon based on service health."""
+    has_opened_browser = False
     while True:
         try:
             online = _is_zentra_online()
             icon.icon = _load_icon(online)
             icon.menu = _build_menu([icon])
+            
+            # Automatically open browser once the system becomes online
+            if online and not has_opened_browser:
+                has_opened_browser = True
+                scheme = _get_scheme()
+                url = f"{scheme}://127.0.0.1:{ZENTRA_PORT}/chat"
+                print(f"[TRAY] System is online. Auto-opening WebUI: {url}")
+                webbrowser.open(url)
+                
         except Exception:
             pass
         time.sleep(STATUS_POLL_INTERVAL)
