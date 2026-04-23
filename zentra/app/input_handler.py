@@ -180,7 +180,7 @@ class InputHandler:
             # Broadcast the response to the WebUI (so it renders the text if the Console processed it)
             self.state.add_event("system_response", {"user": text, "ai": video_response})
 
-            if self.state.voice_status and clean_voice_text and self.state.tts_destination == 'system':
+            if self.state.voice_status and clean_voice_text and self.state.tts_destination in ('system', 'auto'):
                 self.state.system_status = translator.t("speaking")
                 interface.update_status_bar_in_place(
                     self.config.config, 

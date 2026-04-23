@@ -213,8 +213,12 @@ def _maybe_generate_tts(text: str, cfg_mgr):
         voice_on   = voice_cfg.get("voice_status", False)
         tts_dest   = voice_cfg.get("tts_destination", "web")
         
-        # [INTELLIGENT ROUTING] If mode is 'auto' or 'web', force web destination 
+        # [INTELLIGENT ROUTING] If audio destination is 'auto', force web destination 
         # since we are inside the WebUI chat route.
+        if tts_dest == "auto":
+            tts_dest = "web"
+            _chat_log.debug(f"[Chat] Auto destination detected. Forcing web destination.")
+            
         audio_mode = voice_cfg.get("audio_mode", "auto")
         if audio_mode in ["auto", "web"]:
             tts_dest = "web"

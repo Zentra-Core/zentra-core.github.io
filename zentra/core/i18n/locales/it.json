@@ -591,6 +591,7 @@
         "webui_voice_hardware_config_hint": "Nota: Seleziona qui lo specifico microfono (es. Smartwatch) da usare quando 'Bus di Sistema' è attivo.",
         "webui_voice_pc_speaker": "🖥️ Hardware Locale (Casse/Cuffie PC)",
         "webui_voice_web_speaker": "🌐 Web Browser (Questo Dispositivo)",
+        "webui_voice_auto_speaker": "🔄 Auto (Client attivo)",
         "webui_voice_dynamic_mode": "🔀 Modalità Audio Dinamica",
         "webui_voice_dynamic_hint": "(dove Zentra ascolta e parla)",
         "webui_voice_mode_pc": "Console — Sempre su PC",
