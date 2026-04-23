@@ -81,12 +81,23 @@ echo.
 echo  +--------------------------------------------------+
 echo  ^|   [OK]  Installation Complete!                   ^|
 echo  ^|                                                  ^|
-echo  ^|   * Zentra Core is now registered as a service   ^|
-echo  ^|   * It will start automatically at next login    ^|
-echo  ^|   * Tray icon will appear in the system tray     ^|
+echo  ^|   * Zentra Core Windows Service  -^> AUTOMATIC     ^|
+echo  ^|     (starts at boot, runs as SYSTEM)             ^|
 echo  ^|                                                  ^|
-echo  ^|   To check:  services.msc -- "Zentra Core"       ^|
+echo  ^|   * Tray Icon  -^> registered in HKCU\Run          ^|
+echo  ^|     (auto-starts at user login, no extra admin)  ^|
+echo  ^|                                                  ^|
+echo  ^|   * Settings: zentra_tray_settings.json          ^|
+echo  ^|     service_enabled  : start service on login    ^|
+echo  ^|     autoopen_webui   : open browser when online  ^|
+echo  ^|     (toggle both from the tray right-click menu) ^|
+echo  ^|                                                  ^|
+echo  ^|   NOTE: Re-run this installer as Administrator   ^|
+echo  ^|   if you reinstall or update Zentra Core.        ^|
+echo  ^|                                                  ^|
+echo  ^|   To check:  services.msc -^> "Zentra Core"        ^|
 echo  ^|   To remove: UNINSTALL_SERVICE_WIN.bat           ^|
 echo  +--------------------------------------------------+
 echo.
 pause
+

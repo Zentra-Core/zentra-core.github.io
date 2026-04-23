@@ -36,6 +36,7 @@ if WIN32_AVAILABLE:
         _svc_name_ = SERVICE_NAME
         _svc_display_name_ = SERVICE_DISPLAY
         _svc_description_ = SERVICE_DESC
+        _svc_startType_ = win32service.SERVICE_AUTO_START
 
         def __init__(self, args):
             win32serviceutil.ServiceFramework.__init__(self, args)

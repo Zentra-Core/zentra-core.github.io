@@ -66,17 +66,33 @@ def _win_schtask_install():
 
 
 def _win_register_tray():
-    """Adds tray icon to HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"""
+    """
+    Adds tray icon to HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run.
+
+    NOTE FOR ADMINISTRATORS:
+      The Windows Service itself runs as SYSTEM (full machine access).
+      The tray icon runs as the currently logged-in user — it can still control
+      the service via 'sc' because the installer grants the user that permission.
+      HKCU does NOT require admin rights and is per-user, so the tray starts
+      correctly at login regardless of UAC settings.
+    """
     try:
+        # Prefer pythonw.exe to avoid a black console window at login
+        pythonw = sys.executable.replace("python.exe", "pythonw.exe")
+        if not os.path.exists(pythonw):
+            pythonw = sys.executable  # fallback
+
+        tray_cmd = f'"{pythonw}" -c "import os,sys; os.chdir(r\'{_ROOT}\'); sys.path.insert(0,r\'{_ROOT}\'); from zentra.tray.tray_app import run_tray; run_tray()"'
+
         import winreg
         key = winreg.OpenKey(
-            winreg.HKEY_LOCAL_MACHINE,
+            winreg.HKEY_CURRENT_USER,  # HKCU — no admin needed, per-user
             r"Software\Microsoft\Windows\CurrentVersion\Run",
             0, winreg.KEY_SET_VALUE
         )
-        winreg.SetValueEx(key, "ZentraTray", 0, winreg.REG_SZ, TRAY_CMD)
+        winreg.SetValueEx(key, "ZentraTray", 0, winreg.REG_SZ, tray_cmd)
         winreg.CloseKey(key)
-        print("[+] Tray icon registered for login startup (Registry HKLM\\Run).")
+        print("[+] Tray icon registered for login startup (Registry HKCU\\Run).")
     except Exception as e:
         print(f"[!] Could not register tray icon startup: {e}")
 
@@ -90,10 +106,11 @@ def _win_uninstall():
     except ImportError:
         subprocess.run(["schtasks", "/Delete", "/TN", "ZentraCore", "/F"], shell=True)
 
+    # Remove tray from HKCU (where it was registered)
     try:
         import winreg
         key = winreg.OpenKey(
-            winreg.HKEY_LOCAL_MACHINE,
+            winreg.HKEY_CURRENT_USER,
             r"Software\Microsoft\Windows\CurrentVersion\Run",
             0, winreg.KEY_SET_VALUE
         )
@@ -101,6 +118,16 @@ def _win_uninstall():
         winreg.CloseKey(key)
     except Exception:
         pass
+
+    # Also remove tray settings file if present
+    import os
+    settings_file = os.path.join(_ROOT, "zentra_tray_settings.json")
+    if os.path.exists(settings_file):
+        try:
+            os.remove(settings_file)
+        except Exception:
+            pass
+
     print("[+] Zentra Core service and tray startup removed.")
 
 
