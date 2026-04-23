@@ -18,6 +18,13 @@ import os
 import threading
 import time
 import webbrowser
+from datetime import datetime
+from PIL import Image, ImageDraw, ImageTk
+try:
+    import tkinter as tk
+    from tkinter import messagebox, filedialog
+except ImportError:
+    tk = None
 
 try:
     import pystray
@@ -165,6 +172,79 @@ def _build_menu(icon_ref: list):
     def quit_tray(icon, item):
         icon.stop()
 
+    def show_qr(icon, item):
+        scheme = _get_scheme()
+        lan_ip = _get_lan_ip()
+        url = f"{scheme}://{lan_ip}:{ZENTRA_PORT}/chat"
+        # Run popup in a separate thread to not block pystray
+        threading.Thread(target=_show_qr_popup, args=(url,), daemon=True).start()
+
+    def _show_qr_popup(url):
+        if not tk:
+            print("[TRAY] Tkinter non disponibile.")
+            return
+        
+        try:
+            import qrcode
+        except ImportError:
+            print("[TRAY] qrcode library not found. Install with: pip install qrcode[pil]")
+            return
+
+        # Setup Window
+        root = tk.Tk()
+        root.title("Zentra Core - Mobile Connection")
+        root.geometry("350x480")
+        root.resizable(False, False)
+        root.attributes("-topmost", True)
+        
+        # Style
+        bg_color = "#0d0e14"
+        fg_color = "#ffffff"
+        root.configure(bg=bg_color)
+
+        # Generate QR
+        qr = qrcode.QRCode(version=1, box_size=10, border=4)
+        qr.add_data(url)
+        qr.make(fit=True)
+        img_qr_pil = qr.make_image(fill_color="black", back_color="white")
+        
+        # Display Info
+        tk.Label(root, text="SCAN TO CONNECT", font=("Consolas", 12, "bold"), bg=bg_color, fg="#00e676").pack(pady=(20, 5))
+        tk.Label(root, text=f"URL: {url}", font=("Consolas", 8), bg=bg_color, fg="#aaaaaa", wraplength=300).pack(pady=5)
+
+        # Show Image
+        preview_img = img_qr_pil.resize((250, 250))
+        img_tk = ImageTk.PhotoImage(preview_img)
+        panel = tk.Label(root, image=img_tk, bg="white", bd=0)
+        panel.image = img_tk
+        panel.pack(pady=10)
+
+        # Actions
+        def copy_url():
+            root.clipboard_clear()
+            root.clipboard_append(url)
+            messagebox.showinfo("Copiato", "Indirizzo copiato negli appunti!")
+
+        def save_qr():
+            fpath = filedialog.asksaveasfilename(
+                defaultextension=".png",
+                filetypes=[("PNG files", "*.png")],
+                initialfile="zentra_mobile_connect.png"
+            )
+            if fpath:
+                img_qr_pil.save(fpath)
+                messagebox.showinfo("Salvato", f"QR Code salvato in:\n{fpath}")
+
+        btn_frame = tk.Frame(root, bg=bg_color)
+        btn_frame.pack(pady=10)
+
+        tk.Button(btn_frame, text="📋 Copy URL", command=copy_url, bg="#1e1f26", fg=fg_color, bd=0, padx=10, pady=5).pack(side="left", padx=5)
+        tk.Button(btn_frame, text="💾 Save PNG", command=save_qr, bg="#1e1f26", fg=fg_color, bd=0, padx=10, pady=5).pack(side="left", padx=5)
+        
+        tk.Button(root, text="Close", command=root.destroy, bg="#333", fg=fg_color, bd=0, padx=20).pack(pady=10)
+
+        root.mainloop()
+
     return pystray.Menu(
         pystray.MenuItem(f"ZENTRA CORE  v{version}", None, enabled=False),
         pystray.MenuItem(status_label, None, enabled=False),
@@ -179,6 +259,7 @@ def _build_menu(icon_ref: list):
         pystray.MenuItem("══ NATIVE WEB UI ══", None, enabled=False),
         pystray.MenuItem("🌐 Open Chat", open_chat),
         pystray.MenuItem("⚙️  Open Config", open_config),
+        pystray.MenuItem("📱 Connect Mobile (QR)", show_qr),
         pystray.Menu.SEPARATOR,
         
         # --- MAINTENANCE SECTION ---

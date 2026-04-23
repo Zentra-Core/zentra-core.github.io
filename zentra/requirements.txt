@@ -67,6 +67,11 @@ ruamel.yaml>=0.17.0         # Salvataggio YAML con Round-Trip (preservazione dei
 cryptography>=41.0.0        # Criptazione dati sensibili
 
 # ------------------------------
+# MOBILE CONNECTIVITY
+# ------------------------------
+qrcode[pil]>=7.4.2          # Generazione QR Code per accesso mobile
+
+# ------------------------------
 # OPZIONALI (per funzionalità estese)
 # ------------------------------
 # Flask>=3.0.0               # Per future API REST
