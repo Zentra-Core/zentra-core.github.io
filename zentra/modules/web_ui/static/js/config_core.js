@@ -497,7 +497,11 @@ async function refreshStatus() {
     setSpanText('s-model', d.model || '—');
     
     const isOnline = !!d.model;
-    setSpanText('hdr-model', isOnline ? 'Online' : (window.I18N?.webui_chat_offline || 'Offline'));
+    const hdrModel = document.getElementById('hdr-model');
+    if (hdrModel) {
+        hdrModel.textContent = isOnline ? 'Online' : (window.I18N?.webui_chat_offline || 'Offline');
+        hdrModel.style.color = isOnline ? 'var(--green)' : 'var(--red)';
+    }
     const hdrDot = document.getElementById('hdr-dot');
     if (hdrDot) {
         hdrDot.style.background = isOnline ? 'var(--green)' : 'var(--red)';
@@ -511,7 +515,11 @@ async function refreshStatus() {
         el.style.display = dashEnabled ? '' : 'none';
     });
   } catch(e) {
-    setSpanText('hdr-model', window.I18N?.webui_chat_offline || 'Offline');
+    const hdrModel = document.getElementById('hdr-model');
+    if (hdrModel) {
+        hdrModel.textContent = window.I18N?.webui_chat_offline || 'Offline';
+        hdrModel.style.color = 'var(--red)';
+    }
     const hdrDot = document.getElementById('hdr-dot');
     if (hdrDot) {
         hdrDot.style.background = 'var(--red)';
