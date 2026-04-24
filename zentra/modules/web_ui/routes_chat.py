@@ -198,55 +198,53 @@ def stop_voice_generation():
 
 def _maybe_generate_tts(text: str, cfg_mgr):
     """
-    Generate a WAV file via Piper for web playback.
+    Generate TTS audio based on tts_destination setting.
 
-    Logic:
-      - tts_destination == "system" → play via PC speakers (system audio)
-      - tts_destination == "web"    → generate WAV file for browser playback
-      - voice_status == False       → skip TTS entirely
+    Routing logic (single source of truth — tts_destination):
+      - 'auto'   → we are inside the WebUI chat route, so treat as 'web'
+      - 'web'    → generate WAV file and return URL for browser playback
+      - 'system' → play via PC speakers (system audio)
+      - anything else / voice_status=False → skip TTS
     """
     global _last_audio_path
     try:
         from zentra.core.audio.device_manager import get_audio_config
         voice_cfg  = get_audio_config()
-        
+
         voice_on   = voice_cfg.get("voice_status", False)
-        tts_dest   = voice_cfg.get("tts_destination", "web")
-        
-        # [INTELLIGENT ROUTING] If audio destination is 'auto', force web destination 
-        # since we are inside the WebUI chat route.
+        tts_dest   = voice_cfg.get("tts_destination", "auto")
+
+        # In the WebUI context, 'auto' always means 'web' — the browser is the active output.
         if tts_dest == "auto":
             tts_dest = "web"
-            _chat_log.debug(f"[Chat] Auto destination detected. Forcing web destination.")
-            
-        audio_mode = voice_cfg.get("audio_mode", "auto")
-        if audio_mode in ["auto", "web"]:
-            tts_dest = "web"
-            _chat_log.debug(f"[Chat] Auto/Web mode detected. Forcing web destination.")
+            _chat_log.debug("[Chat] tts_destination=auto → resolved to 'web' (WebUI context).")
+
+        if not voice_on:
+            _chat_log.debug("[Chat] TTS skipped: voice_status=False.")
+            return None
 
         if tts_dest == "system":
             from zentra.core.audio import voice
             import threading
-            _chat_log.info(f"[Chat] Redirecting TTS to PC speakers: {text[:30]}...")
+            _chat_log.info(f"[Chat] TTS → PC speakers: {text[:40]}...")
             threading.Thread(target=voice.speak, args=(text,), daemon=True).start()
-            return "system"  # notify UI to show Stop button
-            
-        if tts_dest != "web":
-            return None                     # Not intended for web
-            
-        if not voice_on:
-            return None                     # Voice disabled globally
+            return "system"
 
-        path = generate_voice_file(text, voice_cfg)
-        if path:
-            _last_audio_path = path
-            _chat_log.info(f"[Chat] TTS generated successfully -> {path}")
-            return "web"
+        if tts_dest == "web":
+            path = generate_voice_file(text, voice_cfg)
+            if path:
+                _last_audio_path = path
+                _chat_log.info(f"[Chat] TTS → browser WAV: {path}")
+                return "web"
+            return None
+
+        _chat_log.warning(f"[Chat] Unknown tts_destination='{tts_dest}', skipping TTS.")
         return None
 
     except Exception as e:
         _chat_log.debug(f"[Chat] TTS error: {e}")
         return None
+
 
 
 

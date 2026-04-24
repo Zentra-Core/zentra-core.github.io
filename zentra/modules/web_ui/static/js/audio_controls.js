@@ -134,14 +134,22 @@ window.setAudioRouting = async function(key, val) {
   if (key === 'stt_source' && val === 'web') {
     if (window.showToast) showToast('⚠️ L\'ascolto da browser è in sviluppo. Il MIC di sistema verrà silenziato.', 'warn');
   }
+
+  // Set guard: suppress polling overwrite for 5s after a user-initiated change
+  window._lastRoutingChange = Date.now();
+
+  // Optimistically update the local state so it reflects immediately
+  if (key === 'stt_source') window.currentSTTSource = val;
+  if (key === 'tts_destination') window.currentTTSDest = val;
+
   try {
     const payload = {};
     payload[key] = val;
-    const r = await fetch('/api/audio/config', {
+    await fetch('/api/audio/config', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload)
     });
-    // refreshStatus will pick up the changes
+    // refreshStatus will pick up the confirmed value on next cycle
   } catch(e) { console.error('[Audio] setAudioRouting failed', e); }
 };
 

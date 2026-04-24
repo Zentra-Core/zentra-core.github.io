@@ -44,9 +44,9 @@ class AudioConfig(BaseModel):
     phrase_limit: int = 15
     push_to_talk: bool = False
     ptt_hotkey: str = "ctrl+shift"
-    stt_source: str = "web"      # 'system' | 'web'
-    tts_destination: str = "web" # 'system' | 'web'
-    audio_mode: str = "console"  # 'console' | 'web' | 'auto'
+    stt_source: str = "system"    # 'system' | 'web'
+    tts_destination: str = "auto" # 'system' | 'web' | 'auto'
+    audio_mode: str = "auto"      # 'console' | 'web' | 'auto'
 
     # --- PTT Sources ---
     ptt_sources:    PttSources = PttSources()
