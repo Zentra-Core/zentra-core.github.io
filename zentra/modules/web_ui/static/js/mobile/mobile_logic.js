@@ -21,8 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
             overlay.classList.remove('active');
         });
 
-        // Optional: Close Sidebar if a nav link is clicked inside it
-        const sidebarLinks = sidebar.querySelectorAll('.sidebar-btn, .sidebar-bottom a');
+        // Optional: Close Sidebar if a nav link or history item is clicked inside it
+        const sidebarLinks = sidebar.querySelectorAll('.sidebar-btn, .history-item, .sidebar-bottom a');
         sidebarLinks.forEach(link => {
             link.addEventListener('click', () => {
                 if (window.innerWidth <= 768) {

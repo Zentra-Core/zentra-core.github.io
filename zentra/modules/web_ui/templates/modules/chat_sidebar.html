@@ -49,7 +49,6 @@
     </button>
     <div class="mode-label" style="display:flex; justify-content:space-between; align-items:center;">
       {{ t('webui_voice_routing_in') }}
-      <a href="/zentra/config/ui?tab=voice" target="_blank" style="font-size:12px; text-decoration:none;" title="Configure Hardware Devices">⚙️</a>
     </div>
     <select class="mode-selector" id="stt-source-select" onchange="setAudioRouting('stt_source', this.value)" title="Choose capture mode">
       <option value="system">{{ t('webui_voice_pc_mic') }}</option>
@@ -57,7 +56,6 @@
     </select>
     <div class="mode-label" style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
       {{ t('webui_voice_routing_out') }}
-      <a href="javascript:void(0)" onclick="testSidebarAudio()" style="font-size:10px; color:var(--accent); text-decoration:none;">🧪 Test</a>
     </div>
     <select class="mode-selector" id="tts-dest-select" onchange="setAudioRouting('tts_destination', this.value)" title="Choose output point">
       <option value="system">{{ t('webui_voice_pc_speaker') }}</option>

@@ -102,14 +102,14 @@ function renderSessionList() {
         const isNormal = s.privacy_mode === 'normal';
         const actionIcon = isNormal ? (window.chatHistoryState.showArchived ? '♻️' : '✖️') : '🗑️';
         const actionTitle = isNormal ? (window.chatHistoryState.showArchived ? 'Ripristina' : 'Chiudi (Archivia)') : 'Elimina';
-        const actionFn = isNormal ? `archiveChatSession(event, '${s.id}', ${!window.chatHistoryState.showArchived})` : `deleteChatSession(event, '${s.id}')`;
+        const actionFn = isNormal ? `window.archiveChatSession(event, '${s.id}', ${!window.chatHistoryState.showArchived})` : `window.deleteChatSession(event, '${s.id}')`;
 
         return `
-        <div class="history-item${isActive ? ' active' : ''}" data-id="${s.id}" onclick="activateChatSession('${s.id}')">
+        <div class="history-item${isActive ? ' active' : ''}" data-id="${s.id}" onclick="window.activateChatSession('${s.id}')">
           <div class="history-item-main">
             <span class="history-icon">${modeIcon || '💬'}</span>
             <div class="history-item-info">
-              <div class="history-title" title="Doppio click per rinominare" ondblclick="startRenameSession(event, '${s.id}')">${title}</div>
+              <div class="history-title" title="Doppio click per rinominare" ondblclick="window.startRenameSession(event, '${s.id}')">${title}</div>
               <div class="history-meta">${dateStr} · ${msgCount} msg</div>
             </div>
           </div>
@@ -153,9 +153,6 @@ window.newChatSession = async function (mode = null) {
 window.activateChatSession = async function (sessionId) {
     if (sessionId === window.chatHistoryState.activeSessionId) return;
 
-    // Refresh data to ensure counts are accurate
-    if (window.loadChatSessions) await window.loadChatSessions();
-
     // Fetch messages of the clicked session
     const res = await _historyGet(`/api/chat/sessions/${sessionId}/messages`);
     if (!res.ok) {
@@ -185,8 +182,16 @@ window.activateChatSession = async function (sessionId) {
         window.renderHistoryMessages(res.messages || []);
     }
 
-    renderSessionList();
-    updateModeUI();
+    // Refresh the list to reflect active state and update UI components
+    if (window.loadChatSessions) await window.loadChatSessions();
+
+    // On mobile, close the sidebar automatically when a session is activated
+    const overlay = document.getElementById('mobile-overlay');
+    if (overlay && overlay.classList.contains('active')) {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) sidebar.classList.remove('open');
+        overlay.classList.remove('active');
+    }
 };
 
 window.archiveChatSession = async function (e, sessionId, archiveState = true) {
