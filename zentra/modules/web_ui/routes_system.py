@@ -559,39 +559,35 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
             filter_ext = data.get("filter_ext", "*.exe")
             initial_dir = data.get("initial_dir", "C:\\")
 
-            import tkinter as tk
-            from tkinter import filedialog
-
-            # Open dialog in a thread-safe manner
-            result_holder = [None]
-
-            def _open_dialog():
-                root = tk.Tk()
-                root.withdraw()
-                root.attributes("-topmost", True)
-                root.focus_force()
-                root.update() # Ensure attributes are applied before dialog
+            target_dir = initial_dir if os.path.exists(initial_dir) else "C:\\\\"
+            
+            import subprocess
+            
+            # Provide isolated process execution since tk within FLask background threads causes deadlocks
+            script = f"""
+import tkinter as tk
+from tkinter import filedialog
+root = tk.Tk()
+root.withdraw()
+root.attributes('-topmost', True)
+root.focus_force()
+path = filedialog.askopenfilename(title={repr(title)}, initialdir={repr(target_dir)}, filetypes=[({repr(filter_desc)}, {repr(filter_ext)}), ("All files", "*.*")])
+if path: print(path)
+"""
+            try:
+                # hide console window popup on windows
+                startupinfo = None
+                if os.name == 'nt':
+                    startupinfo = subprocess.STARTUPINFO()
+                    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
                 
-                # Check if initial_dir exists, if not backtrack
-                target_dir = initial_dir
-                if not os.path.exists(target_dir):
-                    target_dir = "C:\\"
-
-                path = filedialog.askopenfilename(
-                    title=title,
-                    initialdir=target_dir,
-                    filetypes=[(filter_desc, filter_ext), ("All files", "*.*")]
-                )
-                result_holder[0] = path if path else None
-                root.destroy()
-
-            import threading
-            t = threading.Thread(target=_open_dialog)
-            t.daemon = True # Ensure it doesn't block server shutdown
-            t.start()
-            t.join(timeout=120)  # Wait up to 2 minutes for user interaction
-
-            return jsonify({"ok": True, "path": result_holder[0]})
+                res = subprocess.check_output([sys.executable, "-c", script], encoding="utf-8", timeout=120, startupinfo=startupinfo).strip()
+                return jsonify({"ok": True, "path": res if res else None})
+            except subprocess.TimeoutExpired:
+                return jsonify({"ok": False, "error": "Dialog interaction timed out."}), 408
+            except Exception as e:
+                logger.error(f"[WebUI] browse_file subprocess error: {e}")
+                return jsonify({"ok": False, "error": str(e)}), 500
         except Exception as e:
             logger.error(f"[WebUI] browse_file error: {e}")
             return jsonify({"ok": False, "error": str(e)}), 500

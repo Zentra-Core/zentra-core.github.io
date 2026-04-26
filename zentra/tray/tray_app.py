@@ -117,6 +117,23 @@ def _get_scheme() -> str:
     return "http"
 
 
+def _play_beep(freq: int, duration_ms: int):
+    """Universal cross-platform audio helper for system beeps/cues."""
+    import sys
+    if sys.platform == "win32":
+        try:
+            import winsound
+            winsound.Beep(int(freq), int(duration_ms))
+        except: pass
+    else:
+        try:
+            import subprocess
+            subprocess.run(["beep", "-f", str(freq), "-l", str(duration_ms)], 
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except:
+            print('\a', end='', flush=True)
+
+
 def _get_urls():
     scheme = _get_scheme()
     base = f"{scheme}://localhost:{ZENTRA_PORT}"
@@ -286,6 +303,8 @@ def _build_menu(icon_ref: list):
     def restart_service(icon, item):
         """Stop + Start the backend service. The tray stays alive."""
         def _do_restart():
+            _play_beep(400, 100)
+            _play_beep(300, 150)
             _terminate_consoles() # Close consoles on restart too
             _control_service("restart")
 
@@ -296,6 +315,8 @@ def _build_menu(icon_ref: list):
     def stop_service(icon, item):
         """Stop only the backend service. The tray stays alive."""
         def _do_stop():
+            _play_beep(400, 100)
+            _play_beep(300, 150)
             _terminate_consoles() # Close consoles when stopping service
             _control_service("stop")
 
@@ -306,6 +327,8 @@ def _build_menu(icon_ref: list):
     def stop_service_and_quit(icon, item):
         """Stop the backend service AND close the tray icon."""
         def _do_quit():
+            _play_beep(400, 100)
+            _play_beep(300, 150)
             _control_service("stop")
             time.sleep(1)
             icon.stop()
@@ -541,11 +564,18 @@ def _monitor_status(icon: "pystray.Icon"):
     """
     has_opened_browser = False
     attempted_service_start = False
+    was_online = False
 
     while True:
         try:
             settings = _load_settings()
             online = _is_zentra_online()
+            
+            # Audible ascending ping when coming online
+            if online and not was_online:
+                _play_beep(400, 100)
+                _play_beep(600, 150)
+            was_online = online
 
             # Auto-start service if the toggle says it should be running
             if settings["service_enabled"] and not online and not attempted_service_start:
