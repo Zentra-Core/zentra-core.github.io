@@ -2,6 +2,7 @@
 MODULE: Extension Loader
 DESCRIPTION: Handles discovery and JIT loading of Plugin Extensions.
 Extensions are optional sub-modules stored under plugins/<name>/extensions/<ext>/
+WEB_UI Shared Extensions live under modules/web_ui/extensions/<ext>/
 Each extension follows the same manifest contract as a plugin.
 """
 
@@ -68,6 +69,36 @@ def get_extension_config(plugin_tag: str, ext_id: str) -> dict:
 def get_registered_extensions(plugin_tag: str) -> dict:
     """Returns all registered extension manifests for a given plugin."""
     return _extension_registry.get(plugin_tag, {})
+
+
+def get_sidebar_widgets() -> list:
+    """
+    Returns all WEB_UI extensions that declare 'sidebar_widget': true.
+    Each entry is a manifest dict enriched with a 'template_name' key.
+    """
+    return [
+        manifest
+        for manifest in _extension_registry.get("WEB_UI", {}).values()
+        if manifest.get("sidebar_widget", False)
+    ]
+
+
+def discover_webui_extensions(webui_module_dir: str):
+    """
+    Scans modules/web_ui/extensions/ and registers found extensions under
+    the synthetic 'WEB_UI' parent tag.  Called once during server boot.
+    """
+    discover_extensions("WEB_UI", webui_module_dir)
+
+
+def load_eager_extensions(app, plugin_tag: str):
+    """
+    Immediately loads all extensions for *plugin_tag* that have 'eager_load': true.
+    Should be called after discover_extensions() so the registry is populated.
+    """
+    for ext_id, manifest in _extension_registry.get(plugin_tag, {}).items():
+        if manifest.get("eager_load", False):
+            load_extension_routes(app, plugin_tag, ext_id)
 
 
 def load_extension_routes(app, plugin_tag: str, ext_id: str):

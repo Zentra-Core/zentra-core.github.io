@@ -73,6 +73,25 @@ class ZentraWebUIServer:
         # Inject translation system and version into Jinja2 templates
         app.jinja_env.globals.update(t=t, version=VERSION)
 
+        # ── Extend Jinja loader to include WEB_UI extension template dirs ──
+        # This allows {% include 'quick_links_widget.html' %} to resolve
+        # templates stored in modules/web_ui/extensions/<ext>/templates/
+        try:
+            from jinja2 import FileSystemLoader, ChoiceLoader
+            _ext_root = os.path.join(base_dir, "extensions")
+            _extra_loaders = []
+            if os.path.isdir(_ext_root):
+                for _ext_name in os.listdir(_ext_root):
+                    _ext_tpl = os.path.join(_ext_root, _ext_name, "templates")
+                    if os.path.isdir(_ext_tpl):
+                        _extra_loaders.append(FileSystemLoader(_ext_tpl))
+            if _extra_loaders:
+                app.jinja_loader = ChoiceLoader([app.jinja_loader] + _extra_loaders)
+        except Exception as _jinja_e:
+            self.logger.warning(f"[WebUI] Could not extend Jinja loader: {_jinja_e}")
+        # ───────────────────────────────────────────────────────────────────
+
+
         # --- ZENTRA AUTH SYSTEM ---
         app.secret_key = self.config_manager.config.get("system", {}).get("flask_secret_key", "zentra_default_secret_key_84nd")
         
@@ -148,6 +167,19 @@ class ZentraWebUIServer:
 
             from .routes_remote_triggers import init_remote_trigger_routes
             init_remote_trigger_routes(app, self.logger, get_state_manager)
+
+            # ── WEB_UI Shared Extensions (sidebar widgets etc.) ──────────────
+            try:
+                from zentra.core.system.extension_loader import (
+                    discover_webui_extensions, load_eager_extensions
+                )
+                _webui_dir = os.path.dirname(__file__)
+                discover_webui_extensions(_webui_dir)
+                load_eager_extensions(app, "WEB_UI")
+                self.logger.info("[WebUI] WEB_UI extensions loaded.")
+            except Exception as _ext_e:
+                self.logger.warning(f"[WebUI] WEB_UI extension discovery error: {_ext_e}")
+            # ─────────────────────────────────────────────────────────────────
 
         except Exception as e:
             import traceback

@@ -15,6 +15,8 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 </noscript>
 <link rel="stylesheet" href="/assets/css/mobile/responsive.css?v={{ version }}">
+<!-- WEB_UI Sidebar Widget Extensions -->
+<link rel="stylesheet" href="/ext/quick_links/static/css/quick_links.css?v={{ version }}">
 <!-- CRITICAL: inline mobile overrides - cache-proof -->
 <style>
   /* Default: hide hamburger/mobile elements on desktop */
@@ -128,5 +130,8 @@
 {% if zconfig.plugins.REMOTE_TRIGGERS and zconfig.plugins.REMOTE_TRIGGERS.enabled != False %}
 <script src="/remote_triggers_static/js/remote_triggers.js"></script>
 {% endif %}
+<!-- WEB_UI Sidebar Widget Extensions -->
+<script src="/ext/quick_links/static/js/quick_links.js?v={{ version }}"></script>
 </body>
 </html>
+

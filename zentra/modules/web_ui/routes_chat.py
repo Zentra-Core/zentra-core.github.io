@@ -273,16 +273,35 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
         from flask_login import current_user
         from zentra.core.auth.auth_manager import auth_mgr
         from zentra.core.i18n.translator import get_translator
+        from zentra.core.system.extension_loader import get_sidebar_widgets
         try:
             profile = auth_mgr.get_profile(current_user.username) if current_user.is_authenticated else None
             translations = get_translator().get_translations()
+
+            # Build the list of sidebar widget template paths for Jinja {% include %}
+            # Extension templates dirs are registered in the Jinja ChoiceLoader at boot,
+            # so we only need the bare filename here.
+            _widgets_templates = []
+            for manifest in get_sidebar_widgets():
+                ext_id = manifest.get("extension_id", "")
+                if ext_id:
+                    _widgets_templates.append(f"{ext_id}_widget.html")
+
+
             # Pass Zentra config as 'zconfig' to avoid conflict with Flask's 'config'
-            resp = make_response(render_template("chat.html", profile=profile, zconfig=cfg_mgr.config, translations=translations))
+            resp = make_response(render_template(
+                "chat.html",
+                profile=profile,
+                zconfig=cfg_mgr.config,
+                translations=translations,
+                sidebar_widgets=_widgets_templates,
+            ))
             resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
             resp.headers["Pragma"] = "no-cache"
             return resp
         except Exception as e:
             return f"<h1>chat.html non trovato</h1><p>{e}</p>", 500
+
 
     @app.route("/api/chat", methods=["POST"])
     def api_chat():

@@ -26,7 +26,17 @@
 
   {% include 'modules/chat_history_panel.html' %}
 
+  <!-- ── WEB_UI Sidebar Widgets (Shared Extensions) ── -->
+  {% if sidebar_widgets %}
+  <div id="sidebar-widgets-zone">
+    {% for widget in sidebar_widgets %}
+      {% include widget %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
   <!-- ── Audio Controls ── -->
+
   <div class="audio-controls">
     <div class="sidebar-label" style="padding:0 2px;margin-bottom:8px;">🔊 AUDIO</div>
     <div class="audio-toggle-row">
