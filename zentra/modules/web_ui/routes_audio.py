@@ -8,6 +8,10 @@ def init_audio_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
     def _sm():
         return get_sm() if callable(get_sm) else get_sm
 
+    # ── Audio Serving API ─────────────────────────────────────────────────────
+
+    # (Note: /api/audio is natively handled by routes_chat.py)
+
     # ── Audio Control API ─────────────────────────────────────────────────────
 
     @app.route("/api/audio/transcribe", methods=["POST"])
@@ -195,7 +199,7 @@ def init_audio_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
             logger.error(f"[WebUI] toggle_ptt error: {exc}")
             return jsonify({"ok": False, "error": str(exc)}), 500
 
-    # ── Audio Controls API ───────────────────────────────────────────
+    # ── Audio Controls API ───────────────────────────────────────
 
     @app.route("/api/audio/config", methods=["GET", "POST"])
     def manage_audio_config():
@@ -242,3 +246,89 @@ def init_audio_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
             except Exception as exc:
                 logger.error(f"[WebUI] manage_audio_config POST error: {exc}")
                 return jsonify({"ok": False, "error": str(exc)}), 500
+
+    # ── Piper TTS Test API ────────────────────────────────────────────────────
+
+    @app.route("/api/audio/test", methods=["POST"])
+    def test_audio():
+        """Test Piper TTS with a custom text.
+        mode='web': generates WAV and returns a URL for browser playback.
+        mode='console': generates WAV and plays it server-side.
+        """
+        try:
+            data = request.get_json(force=True) or {}
+            text = data.get("text", "Test di Zentra Core, sistema vocale operativo.").strip()
+            mode = data.get("mode", "web")  # 'web' or 'console'
+
+            from zentra.core.audio.device_manager import get_audio_config
+            voice_cfg = get_audio_config()
+
+            # Dynamic root resolution: routes_audio.py is in zentra/modules/web_ui/
+            # Going up 3 levels from that folder gives the project root (c:/Zentra-Core)
+            this_file = os.path.abspath(__file__)
+            zentra_root = os.path.normpath(os.path.join(os.path.dirname(this_file), "..", "..", ".."))
+            default_piper_dir = os.path.join(zentra_root, "bin", "piper")
+            piper_exe_name = "piper.exe" if os.name == "nt" else "piper"
+
+            piper_path = voice_cfg.get("piper_path") or os.path.join(default_piper_dir, piper_exe_name)
+            onnx_model = voice_cfg.get("onnx_model") or ""
+
+            # If onnx_model is just a filename, resolve it to the default directory
+            if onnx_model and not os.path.isabs(onnx_model):
+                onnx_model = os.path.join(default_piper_dir, onnx_model)
+
+            logger.info(f"[WebUI] TTS Test — piper: {piper_path}, model: {onnx_model}")
+
+            if not os.path.exists(piper_path):
+                return jsonify({
+                    "ok": False,
+                    "error": f"Piper executable not found at: {piper_path}. Please use the Auto button or check the path."
+                }), 400
+
+            if not onnx_model or not os.path.exists(onnx_model):
+                # Try to find any .onnx in the default directory
+                import glob as _glob
+                found_onnx = _glob.glob(os.path.join(default_piper_dir, "*.onnx"))
+                if found_onnx:
+                    onnx_model = found_onnx[0]
+                    logger.info(f"[WebUI] TTS Test — using fallback ONNX model: {onnx_model}")
+                else:
+                    return jsonify({
+                        "ok": False,
+                        "error": f"ONNX model not found at: {onnx_model}. Please select a valid voice in configuration."
+                    }), 400
+
+            # Inject resolved paths into voice_cfg for generate_voice_file()
+            voice_cfg["piper_path"] = piper_path
+            voice_cfg["onnx_model"] = onnx_model
+
+            # Generate the WAV file
+            from modules.web_ui.routes_chat import generate_voice_file, set_last_audio_path
+            wav_path = generate_voice_file(text, voice_cfg)
+
+            if not wav_path:
+                return jsonify({
+                    "ok": False,
+                    "error": "Piper synthesis failed. Check Zentra logs for details."
+                }), 500
+
+            if mode == "web":
+                # Expose the generated WAV via the existing /api/audio endpoint
+                set_last_audio_path(wav_path)
+                return jsonify({"ok": True, "url": "/api/audio"})
+            else:
+                # Console mode: play server-side in a background thread
+                def _play_server_side():
+                    try:
+                        from zentra.core.audio.voice import _play_wav
+                        _play_wav(wav_path)
+                    except Exception as play_e:
+                        logger.error(f"[WebUI] Console TTS play error: {play_e}")
+
+                threading.Thread(target=_play_server_side, daemon=True).start()
+                return jsonify({"ok": True, "msg": "Playing on server speakers..."})
+
+        except Exception as exc:
+            import traceback
+            logger.error(f"[WebUI] test_audio error: {exc}\n{traceback.format_exc()}")
+            return jsonify({"ok": False, "error": str(exc)}), 500

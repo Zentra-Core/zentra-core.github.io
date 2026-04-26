@@ -130,6 +130,15 @@ class ZentraApplication:
 
         self.bootstrapper.show_welcome()
 
+        # Avvia bus audio PTT (necessario per Console autonoma)
+        try:
+            from zentra.core.audio import ptt_bus, smartwatch_bus
+            ptt_bus.start(state=self.state_manager)
+            smartwatch_bus.start(state=self.state_manager)
+            logger.info("[APP] PTT and Smartwatch Bus started.")
+        except Exception as e:
+            logger.warning(f"[APP] Could not start audio bus: {e}")
+
         # Avvia thread ascolto
         ascolto_thread = AscoltoThread(self.state_manager)
         ascolto_thread.start()

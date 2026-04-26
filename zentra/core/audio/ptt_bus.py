@@ -37,6 +37,7 @@ _log_file = os.path.join(_log_dir, "ptt_bus.log")
 fh = logging.FileHandler(_log_file, encoding='utf-8', mode='a')
 fh.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
 ptt_log.addHandler(fh)
+ptt_log.propagate = False  # Avoid double-logging to root
 
 def debug_log(msg: str):
     """Log to both Zentra system log and dedicated ptt_bus.log"""
@@ -94,6 +95,15 @@ def _beep_async(freq, duration_ms):
             threading.Thread(target=winsound.Beep, args=(freq, duration_ms), daemon=True).start()
         except:
             pass
+
+def is_session_0():
+    """Detects if we are running in Windows Session 0 (service mode)."""
+    if os.name != 'nt': return False
+    try:
+        import ctypes
+        return ctypes.windll.kernel32.ProcessIdToSessionId(os.getpid()) == 0
+    except:
+        return False
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CORE SIGNAL — called by ALL sources
@@ -239,7 +249,7 @@ def _heartbeat_loop(stop_event: threading.Event):
     last_hb = 0
     while not stop_event.is_set():
         now = time.time()
-        if now - last_hb > 15:
+        if now - last_hb > 300:  # 5 minutes
             debug_log("[HEARTBEAT] PTT Bus Listener active (pynput engine).")
             # Flush log handlers
             for h in ptt_log.handlers:
@@ -262,14 +272,17 @@ def start(state=None):
 
     try:
         update_cache() # Sync cache before starting
-        from pynput import keyboard
         
-        # Start the global keyboard listener
-        l = keyboard.Listener(on_press=_on_press, on_release=_on_release)
-        l.daemon = True
-        l.start()
-        _listeners.append(l)
-        debug_log("Pynput Global Keyboard Listener started.")
+        if is_session_0():
+            info_log("Skipping pynput listener (Windows Session 0 detected). Relying on Tray/WebUI PTT triggers.")
+        else:
+            from pynput import keyboard
+            # Start the global keyboard listener
+            l = keyboard.Listener(on_press=_on_press, on_release=_on_release)
+            l.daemon = True
+            l.start()
+            _listeners.append(l)
+            debug_log("Pynput Global Keyboard Listener started.")
 
         # Start Heartbeat thread
         _hb_stop_event = threading.Event()

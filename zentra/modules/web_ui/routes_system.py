@@ -548,3 +548,53 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
         except Exception as e:
             return jsonify({"ok": False, "error": str(e)}), 500
 
+    @app.route("/api/system/browse-file", methods=["POST"])
+    def browse_file():
+        """Opens a native Windows file dialog to let the user pick a file path.
+        Returns the selected path as a string, or null if cancelled."""
+        try:
+            data = request.get_json(force=True) or {}
+            title = data.get("title", "Select file")
+            filter_desc = data.get("filter_desc", "Executable files")
+            filter_ext = data.get("filter_ext", "*.exe")
+            initial_dir = data.get("initial_dir", "C:\\")
+
+            import tkinter as tk
+            from tkinter import filedialog
+
+            # Open dialog in a thread-safe manner
+            result_holder = [None]
+
+            def _open_dialog():
+                root = tk.Tk()
+                root.withdraw()
+                root.attributes("-topmost", True)
+                root.focus_force()
+                root.update() # Ensure attributes are applied before dialog
+                
+                # Check if initial_dir exists, if not backtrack
+                target_dir = initial_dir
+                if not os.path.exists(target_dir):
+                    target_dir = "C:\\"
+
+                path = filedialog.askopenfilename(
+                    title=title,
+                    initialdir=target_dir,
+                    filetypes=[(filter_desc, filter_ext), ("All files", "*.*")]
+                )
+                result_holder[0] = path if path else None
+                root.destroy()
+
+            import threading
+            t = threading.Thread(target=_open_dialog)
+            t.daemon = True # Ensure it doesn't block server shutdown
+            t.start()
+            t.join(timeout=120)  # Wait up to 2 minutes for user interaction
+
+            return jsonify({"ok": True, "path": result_holder[0]})
+        except Exception as e:
+            logger.error(f"[WebUI] browse_file error: {e}")
+            return jsonify({"ok": False, "error": str(e)}), 500
+
+
+

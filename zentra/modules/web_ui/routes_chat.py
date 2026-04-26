@@ -43,7 +43,7 @@ def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr, i
 
     try:
         from zentra.core.agent.loop import AgentExecutor
-        from modules.web_ui.server import get_state_manager
+        from zentra.modules.web_ui.server import get_state_manager
         
         # Instantiate AgentExecutor with shared config and live StateManager
         sm = get_state_manager()
@@ -129,21 +129,31 @@ def generate_voice_file(text: str, voice_cfg: dict) -> str:
         is_windows = os.name == 'nt'
         piper_exe_name = 'piper.exe' if is_windows else 'piper'
         
-        piper_path = voice_cfg.get("piper_path", os.path.join(default_piper_dir, piper_exe_name))
-        model_path = voice_cfg.get("onnx_model", "")
+        default_piper = os.path.join(default_piper_dir, piper_exe_name)
+        default_model = os.path.join(default_piper_dir, "it_IT-paola-medium.onnx")
+
+        piper_path = voice_cfg.get("piper_path", default_piper)
+        model_path = voice_cfg.get("onnx_model", default_model)
         
-        if not os.path.exists(piper_path):
-            _chat_log.info(f"[Audio] Piper.exe not found at {piper_path}")
-            return None
-        if not os.path.exists(model_path):
-            _chat_log.info(f"[Audio] ONNX model not found at {model_path}")
-            return None
+        if not piper_path or not os.path.exists(piper_path):
+            if os.path.exists(default_piper):
+                piper_path = default_piper
+            else:
+                _chat_log.info(f"[Audio] Piper executable not found at {piper_path}")
+                return None
+                
+        if not model_path or not os.path.exists(model_path):
+            if os.path.exists(default_model):
+                model_path = default_model
+            else:
+                _chat_log.info(f"[Audio] ONNX model not found at {model_path}")
+                return None
 
         # Build flags
-        length_scale     = 1.0 / max(0.1, voice_cfg.get("speed", 1.0))
-        noise_scale      = voice_cfg.get("noise_scale", 0.667)
-        noise_w          = voice_cfg.get("noise_w", 0.8)
-        sentence_silence = voice_cfg.get("sentence_silence", 0.2)
+        length_scale     = round(1.0 / max(0.1, voice_cfg.get("speed", 1.0)), 3)
+        noise_scale      = round(voice_cfg.get("noise_scale", 0.667), 3)
+        noise_w          = round(voice_cfg.get("noise_w", 0.8), 3)
+        sentence_silence = round(voice_cfg.get("sentence_silence", 0.2), 3)
 
         # risposta.wav in zentra/media/audio/
         out = os.path.join(AUDIO_DIR, "risposta.wav")
@@ -161,15 +171,28 @@ def generate_voice_file(text: str, voice_cfg: dict) -> str:
         
         _chat_log.info(f"[Audio] Piper command: {' '.join(command)}")
         global _current_piper_proc
-        proc = subprocess.Popen(
-            command,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
+        
+        kwargs = {
+            "stdin": subprocess.PIPE,
+            "stdout": subprocess.PIPE,
+            "stderr": subprocess.PIPE
+        }
+        import sys
+        if sys.platform == "win32":
+            kwargs["creationflags"] = 0x08000000 # CREATE_NO_WINDOW
+            
+        proc = subprocess.Popen(command, **kwargs)
         _current_piper_proc = proc
-        stdout, stderr = proc.communicate(input=clean_text.encode("utf-8"))
-        _current_piper_proc = None
+        
+        try:
+            stdout, stderr = proc.communicate(input=clean_text.encode("utf-8"), timeout=60)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            stdout, stderr = proc.communicate()
+            _chat_log.error("[Audio] Piper TTS generation timed out after 60 seconds")
+            return None
+        finally:
+            _current_piper_proc = None
 
         if proc.returncode != 0:
             _chat_log.error(f"[Audio] Piper failed (code {proc.returncode}): {stderr.decode('utf-8', errors='ignore')}")
@@ -206,7 +229,7 @@ def _maybe_generate_tts(text: str, cfg_mgr):
     try:
         from zentra.core.audio.device_manager import get_audio_config
         voice_cfg  = get_audio_config()
-        voice_on   = voice_cfg.get("voice_status", False)
+        voice_on   = voice_cfg.get("voice_status", True)
 
         if not voice_on:
             _chat_log.debug("[Chat] TTS skipped: voice_status=False.")

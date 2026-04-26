@@ -163,25 +163,38 @@ def start_and_monitor(script_to_run):
     
     _current_child_process = process
 
+    start_time = time.time()
     try:
         iterations = 0
         while process.poll() is None:
             time.sleep(2)  # Increased sleep for stability
             iterations += 1
             
+            # Grace period logic: skip checks for the first 10 seconds to allow app stabilization
+            uptime = time.time() - start_time
+            if uptime < 10:
+                # Still in grace period, but keep updating base timestamps to match current state
+                last_config_time = get_file_timestamp(CONFIG_FILE)
+                last_code_time = get_max_py_mtime(zentra_folder)
+                continue
+            
             # 1. system.yaml check (every 2 seconds)
             current_config_time = get_file_timestamp(CONFIG_FILE)
-            if current_config_time > last_config_time + 1:
+            
+            # Use a slightly more precise threshold check
+            if current_config_time > (last_config_time + 0.1):
                 flag_path = os.path.join(_ROOT, ".config_saved_by_app")
-                if os.path.exists(flag_path):
-                    try:
-                        os.remove(flag_path)
-                        monitor_log("Config save by app acknowledged (ignoring restart).")
-                    except: pass
+                flag_mtime = get_file_timestamp(flag_path)
+                
+                # Safely attribute the config change to the app if the flag was updated roughly at the same time
+                if flag_mtime > 0 and abs(current_config_time - flag_mtime) < 5.0:
+                    monitor_log(f"Config save by app acknowledged (ignoring restart). Timestamp diff: {current_config_time - last_config_time:.3f}s")
                     last_config_time = current_config_time
                     continue
+
                 
-                monitor_log(f"system.yaml change detected. Terminating...")
+                # Unsanctioned change detected
+                monitor_log(f"system.yaml change detected! DIFF: {current_config_time - last_config_time:.3f}s (Old: {last_config_time}, New: {current_config_time}). Terminating...")
                 process.terminate()
                 process.wait(timeout=5)
                 _current_child_process = None

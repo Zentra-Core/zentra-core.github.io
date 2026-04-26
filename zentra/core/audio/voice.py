@@ -8,8 +8,8 @@ import subprocess
 import os
 import json
 import time
-import keyboard
 import msvcrt
+import sys
 
 from zentra.core.logging import logger
 from zentra.core.constants import AUDIO_DIR
@@ -128,13 +128,16 @@ def speak(text, state=None):
             "-f", _RISPOSTA_WAV
         ]
 
-        proc = subprocess.Popen(
-            command,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=False
-        )
+        kwargs = {
+            "stdin": subprocess.PIPE,
+            "stdout": subprocess.PIPE,
+            "stderr": subprocess.PIPE,
+            "text": False
+        }
+        if sys.platform == "win32":
+            kwargs["creationflags"] = 0x08000000 # CREATE_NO_WINDOW
+        
+        proc = subprocess.Popen(command, **kwargs)
         _current_piper_proc = proc
         stdout, stderr = proc.communicate(input=clean_text.encode('utf-8'))
         _current_piper_proc = None
@@ -159,11 +162,6 @@ def speak(text, state=None):
                     if not is_speaking:  # API stop_voice() sets this to False
                         sd.stop()
                         break
-                    if keyboard.is_pressed("esc"):
-                        while msvcrt.kbhit(): msvcrt.getch()
-                        if state: state.last_voice_stop = time.time()
-                        stop_voice()
-                        break
                     time.sleep(0.05)
             else:
                 # winsound async path: estimate duration then watch for ESC
@@ -171,11 +169,6 @@ def speak(text, state=None):
                 start_time = time.time()
                 while (time.time() - start_time) < estimated_duration:
                     if not is_speaking:
-                        break
-                    if keyboard.is_pressed("esc"):
-                        while msvcrt.kbhit(): msvcrt.getch()
-                        if state: state.last_voice_stop = time.time()
-                        stop_voice()
                         break
                     time.sleep(0.05)
 

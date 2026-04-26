@@ -51,86 +51,138 @@ function buildAudioPayload() {
     const obj = {};
     obj.listening_status = document.getElementById('sys-mic-status').checked;
     obj.voice_status     = document.getElementById('sys-voice-status').checked;
-    
+
     obj.piper_path       = document.getElementById('v-piper').value;
     const pdir = sysOptions.piper_dir || 'C:\\piper';
     const sel  = document.getElementById('v-onnx-model').value;
     obj.onnx_model       = (sel.includes('\\') || sel.includes('/')) ? sel : pdir + '\\' + sel;
-    
+
     obj.speed            = parseFloat(document.getElementById('v-speed').value) || 1.0;
     obj.noise_scale      = parseFloat(document.getElementById('v-noise').value) || 0.8;
     obj.noise_w          = parseFloat(document.getElementById('v-noisew').value) || 1.0;
     obj.sentence_silence = parseFloat(document.getElementById('v-silence').value) || 0.2;
-    
+
     obj.energy_threshold = parseInt(document.getElementById('a-threshold').value) || 450;
     obj.silence_timeout  = parseInt(document.getElementById('a-timeout').value) || 5;
     obj.phrase_limit     = parseInt(document.getElementById('a-limit').value) || 15;
-    
+
     return obj;
 }
 
 let currentTestAudio = null;
+
 async function testVoice(mode) {
     const vTextEl = document.getElementById('v-test-text');
-    const text = (vTextEl ? vTextEl.value : "") || "Test di Zentra Core, tutto funziona correttamente.";
+    const text = (vTextEl ? vTextEl.value : '') || 'Zentra Core test, everything is working correctly.';
     const sts = document.getElementById('v-test-status');
     const stopBtn = document.getElementById('v-test-stop');
-    if (sts) sts.textContent = mode === 'web' ? "Generating..." : "Playing on console...";
-    if(stopBtn) stopBtn.style.display = 'inline-block';
-    
+    if (sts) sts.textContent = mode === 'web' ? 'Generating audio...' : 'Playing on server...';
+    if (stopBtn) stopBtn.style.display = 'inline-block';
+
     try {
         const r = await fetch('/api/audio/test', {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: text, mode: mode })
         });
         const data = await r.json();
         if (data.ok) {
             if (mode === 'web' && data.url) {
-                if (sts) sts.textContent = "Playing...";
+                if (sts) sts.textContent = 'Playing...';
                 if (currentTestAudio) currentTestAudio.pause();
                 currentTestAudio = new Audio(data.url);
                 currentTestAudio.play();
-                currentTestAudio.onended = () => { 
-                    if (sts) sts.textContent = "Done."; 
-                    if(stopBtn) stopBtn.style.display='none'; 
+                currentTestAudio.onended = () => {
+                    if (sts) sts.textContent = 'Completed.';
+                    if (stopBtn) stopBtn.style.display = 'none';
                     currentTestAudio = null;
                 };
             } else {
-                if (sts) sts.textContent = data.msg || "Done.";
-                if(mode === 'console') {
-                   setTimeout(() => { if(sts && sts.textContent!=="Generating...") if(stopBtn) stopBtn.style.display='none'; }, 8000);
+                if (sts) sts.textContent = data.msg || 'Completed.';
+                if (mode === 'console') {
+                    setTimeout(() => { if (stopBtn) stopBtn.style.display = 'none'; }, 8000);
                 }
             }
         } else {
-            if (sts) sts.textContent = "Error: " + data.error;
-            if(stopBtn) stopBtn.style.display='none';
+            if (sts) sts.textContent = '❌ ' + (data.error || 'Unknown error.');
+            if (stopBtn) stopBtn.style.display = 'none';
         }
-    } catch(e) {
-        if (sts) sts.textContent = "Request failed.";
-        if(stopBtn) stopBtn.style.display='none';
+    } catch (e) {
+        if (sts) sts.textContent = '❌ Request failed: ' + e.message;
+        if (stopBtn) stopBtn.style.display = 'none';
     }
 }
 
 async function stopVoice() {
     if (currentTestAudio) {
         currentTestAudio.pause();
-        currentTestAudio.src = "";
+        currentTestAudio.src = '';
         currentTestAudio = null;
     }
-    try { await fetch('/api/audio/stop', {method: 'POST'}); } catch(e) {}
+    try { await fetch('/api/audio/stop', { method: 'POST' }); } catch (e) {}
     const stopBtn = document.getElementById('v-test-stop');
-    if(stopBtn) stopBtn.style.display = 'none';
+    if (stopBtn) stopBtn.style.display = 'none';
     const sts = document.getElementById('v-test-status');
-    if(sts) sts.textContent = "Stopped.";
+    if (sts) sts.textContent = 'Stopped.';
 }
 
-// Key Listener
+// Key Listener: ESC stops any playing test audio
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') stopVoice();
 });
 
+// ── Auto-detect Piper path (calls the diagnostic fix-paths API) ────────────────
+async function autoFixPiperPath() {
+    const sts = document.getElementById('v-test-status');
+    if (sts) sts.textContent = window.t ? window.t('webui_conf_voice_detecting') : 'Auto-detecting Piper...';
+
+    try {
+        const r = await fetch('/api/system/diagnostic/fix-paths', { method: 'POST' });
+        const data = await r.json();
+        if (data.ok) {
+            if (sts) sts.textContent = 'Path found! Reloading...';
+            setTimeout(() => window.location.reload(), 800);
+        } else {
+            if (sts) sts.textContent = '❌ ' + (data.error || 'Detection failed.');
+        }
+    } catch (e) {
+        if (sts) sts.textContent = '❌ Request failed.';
+    }
+}
+
+// ── Browse for piper.exe via native server-side file dialog ───────────────────
+async function browsePiperPath() {
+    const sts = document.getElementById('v-test-status');
+    if (sts) sts.textContent = 'Opening file picker...';
+    try {
+        const r = await fetch('/api/system/browse-file', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: 'Select Piper Executable (piper.exe)',
+                filter_desc: 'Executable',
+                filter_ext: '*.exe',
+                initial_dir: 'C:\\Zentra-Core\\bin\\piper'
+            })
+        });
+        const data = await r.json();
+        if (data.ok && data.path) {
+            document.getElementById('v-piper').value = data.path;
+            if (sts) sts.textContent = '✅ Path selected. Press Save.';
+        } else if (data.ok && !data.path) {
+            if (sts) sts.textContent = 'Selection cancelled.';
+        } else {
+            if (sts) sts.textContent = '❌ Error: ' + (data.error || 'Could not open picker.');
+        }
+    } catch (e) {
+        if (sts) sts.textContent = '❌ Server request error.';
+    }
+}
+
 // Exports for Global Scope
-window.populateAudioUI = populateAudioUI;
+window.populateAudioUI  = populateAudioUI;
 window.buildAudioPayload = buildAudioPayload;
-window.testVoice = testVoice;
-window.stopVoice = stopVoice;
+window.testVoice        = testVoice;
+window.stopVoice        = stopVoice;
+window.autoFixPiperPath = autoFixPiperPath;
+window.browsePiperPath  = browsePiperPath;

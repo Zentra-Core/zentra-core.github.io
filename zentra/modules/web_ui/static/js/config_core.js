@@ -763,6 +763,18 @@ document.addEventListener('change', (e) => {
   const tag = e.target.tagName;
   const type = e.target.type;
   if (tag === 'SELECT' || tag === 'TEXTAREA' || type === 'checkbox' || (tag === 'INPUT' && type !== 'file')) {
+    
+    // Universal Sync for data-plugin toggles to prevent duplicated checkbox shadow state overwrites
+    if (e.target.dataset.plugin) {
+        const pluginTag = e.target.dataset.plugin;
+        document.querySelectorAll(`[data-plugin="${pluginTag}"]`).forEach(cb => {
+            if (cb !== e.target) cb.checked = e.target.checked;
+        });
+        if (typeof syncPluginStateToMemory === 'function') {
+            syncPluginStateToMemory(pluginTag, e.target.checked);
+        }
+    }
+
     // Sync Image Gen enabled status between different UI locations
     if (e.target.id === 'igen-enabled') {
         const other = document.querySelector('[data-plugin="IMAGE_GEN"]');
