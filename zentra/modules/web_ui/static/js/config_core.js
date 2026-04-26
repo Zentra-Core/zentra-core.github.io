@@ -817,3 +817,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+
+
+// Zentra File Picker integration is now handled by zentra_file_picker.js

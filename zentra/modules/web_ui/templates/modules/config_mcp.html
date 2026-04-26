@@ -61,7 +61,10 @@
       </div>
       <div class="field">
         <label>Arguments</label>
-        <input type="text" id="mcp-new-args" placeholder="e.g. -y @modelcontextprotocol/server-google-maps">
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="mcp-new-args" placeholder="e.g. -y @modelcontextprotocol/server-google-maps" style="flex:1;">
+          <button type="button" class="btn btn-secondary" onclick="ZentraFilePicker.open({title: 'Select Folder/Path', initialPath: 'C:\\Zentra-Core', onSelect: p => document.getElementById('mcp-new-args').value += ' ' + p})" title="Browse Path">📁</button>
+        </div>
       </div>
       <div style="text-align: right; margin-top: 8px;">
         <button type="button" class="btn btn-primary" onclick="addMCPServer()">➕ Add Server</button>

@@ -150,33 +150,20 @@ async function autoFixPiperPath() {
     }
 }
 
-// ── Browse for piper.exe via native server-side file dialog ───────────────────
+// ── Browse for piper.exe via NEW web-native explorer ─────────────────────────
 async function browsePiperPath() {
-    const sts = document.getElementById('v-test-status');
-    if (sts) sts.textContent = 'Opening file picker...';
-    try {
-        const r = await fetch('/api/system/browse-file', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                title: 'Select Piper Executable (piper.exe)',
-                filter_desc: 'Executable',
-                filter_ext: '*.exe',
-                initial_dir: 'C:\\Zentra-Core\\bin\\piper'
-            })
-        });
-        const data = await r.json();
-        if (data.ok && data.path) {
-            document.getElementById('v-piper').value = data.path;
-            if (sts) sts.textContent = '✅ Path selected. Press Save.';
-        } else if (data.ok && !data.path) {
-            if (sts) sts.textContent = 'Selection cancelled.';
-        } else {
-            if (sts) sts.textContent = '❌ Error: ' + (data.error || 'Could not open picker.');
+    const currentPath = document.getElementById('v-piper').value || 'C:\\Zentra-Core\\bin\\piper';
+    ZentraFilePicker.open({
+        title: window.t('webui_conf_voice_select_piper'),
+        initialPath: currentPath,
+        onSelect: (path) => {
+            document.getElementById('v-piper').value = path;
+            const sts = document.getElementById('v-test-status');
+            if (sts) sts.textContent = '✅ Path selected: ' + path.split('\\').pop();
+            // Trigger auto-save sync if needed
+            if (typeof syncPluginStateToMemory === 'function') syncPluginStateToMemory('VOICE');
         }
-    } catch (e) {
-        if (sts) sts.textContent = '❌ Server request error.';
-    }
+    });
 }
 
 // Exports for Global Scope
@@ -185,4 +172,6 @@ window.buildAudioPayload = buildAudioPayload;
 window.testVoice        = testVoice;
 window.stopVoice        = stopVoice;
 window.autoFixPiperPath = autoFixPiperPath;
+
 window.browsePiperPath  = browsePiperPath;
+

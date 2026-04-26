@@ -151,10 +151,20 @@ async function refreshImageModels(restoreValue) {
 }
 
 async function openMediaVault() {
-  try {
-    const res = await fetch('/zentra/api/media/open-folder', { method: 'POST' });
-    if (!res.ok) alert('Impossibile aprire la cartella.');
-  } catch(e) { console.error(e); }
+  const rootDir = 'C:\\Zentra-Core\\zentra\\media';
+  if (typeof ZentraFilePicker !== 'undefined') {
+    ZentraFilePicker.open({
+      title: 'Zentra Media Vault',
+      initialPath: rootDir,
+      hideSelect: true
+    });
+  } else {
+    // Fallback if core is not loaded properly
+    try {
+      const res = await fetch('/zentra/api/media/open-folder', { method: 'POST' });
+      if (!res.ok) alert('Impossibile aprire la cartella.');
+    } catch(e) { console.error(e); }
+  }
 }
 
 async function clearMediaVault() {
