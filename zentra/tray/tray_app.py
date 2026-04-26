@@ -597,6 +597,34 @@ def _monitor_status(icon: "pystray.Icon"):
                 print(f"[TRAY] System online. Auto-opening WebUI: {url}")
                 webbrowser.open(url)
 
+            # Polling for GUI Bridge Commands (file-based, avoids HTTP issues)
+            _bridge_file = os.path.join(_ROOT, ".bridge_queue.json")
+            try:
+                if os.path.exists(_bridge_file):
+                    with open(_bridge_file, "r", encoding="utf-8") as f:
+                        cmds = json.load(f)
+                    if cmds:
+                        # Immediately clear the file to prevent re-processing
+                        with open(_bridge_file, "w", encoding="utf-8") as f:
+                            json.dump([], f)
+                        for command in cmds:
+                            cmd  = command.get("cmd")
+                            path = command.get("path")
+                            if cmd == "open_folder" and path:
+                                clean_path = os.path.normpath(path)
+                                print(f"[TRAY] Opening folder: {clean_path}")
+                                if os.path.exists(clean_path):
+                                    if sys.platform == "win32":
+                                        os.startfile(clean_path)
+                                    elif sys.platform == "darwin":
+                                        subprocess.Popen(["open", clean_path])
+                                    else:
+                                        subprocess.Popen(["xdg-open", clean_path])
+                                else:
+                                    print(f"[TRAY] Path not found: {clean_path}")
+            except Exception as e:
+                print(f"[TRAY] Bridge file error: {e}")
+
         except Exception as e:
             print(f"[TRAY] Monitor error: {e}")
 

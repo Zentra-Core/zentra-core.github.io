@@ -530,9 +530,11 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
         except Exception as e:
             return jsonify({"ok": False, "error": str(e)}), 500
 
-    # ── Explorer Roots ───────────────────────────────────────────────────────
+    # ── Explorer & Bridge Roots ──────────────────────────────────────────────
     from zentra.modules.web_ui.routes_explorer import init_explorer_routes
+    from zentra.modules.web_ui.routes_bridge import init_bridge_routes
     init_explorer_routes(app, logger)
+    init_bridge_routes(app, logger)
 
     @app.route("/api/system/diagnostic/service", methods=["POST"])
     def diagnostic_service_manage():

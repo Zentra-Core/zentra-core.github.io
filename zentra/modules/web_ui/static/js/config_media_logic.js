@@ -152,18 +152,30 @@ async function refreshImageModels(restoreValue) {
 
 async function openMediaVault() {
   const rootDir = 'C:\\Zentra-Core\\zentra\\media';
+  
+  // Use the Tray App Bridge to open the folder natively in Windows
+  try {
+    const res = await fetch('/api/bridge/command', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cmd: 'open_folder', path: rootDir })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      // Command queued for tray app
+      return;
+    }
+  } catch(e) {
+    console.warn("Bridge failed, falling back to Picker:", e);
+  }
+
+  // Fallback to Picker if bridge fails (e.g. tray app not running)
   if (typeof ZentraFilePicker !== 'undefined') {
     ZentraFilePicker.open({
-      title: 'Zentra Media Vault',
+      title: 'Zentra Media Vault (Picker Fallback)',
       initialPath: rootDir,
       hideSelect: true
     });
-  } else {
-    // Fallback if core is not loaded properly
-    try {
-      const res = await fetch('/zentra/api/media/open-folder', { method: 'POST' });
-      if (!res.ok) alert('Impossibile aprire la cartella.');
-    } catch(e) { console.error(e); }
   }
 }
 
