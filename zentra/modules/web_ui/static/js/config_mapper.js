@@ -187,6 +187,13 @@ function populateUI() {
     populatePrivacyUI();
     populateWebUIConfig();
 
+    // Sync Dashboard specialized toggles
+    const dsb = c.plugins?.DASHBOARD || {};
+    setCheck('dashboard-webui-enabled', dsb.webui_dashboard_enabled ?? true);
+    setCheck('telemetry-webui-enabled', dsb.webui_telemetry_enabled ?? true);
+    setCheck('dashboard-console-enabled', dsb.console_dashboard_enabled ?? true);
+    setCheck('telemetry-console-enabled', dsb.console_telemetry_enabled ?? true);
+
     // Sync all standalone plugin toggles
     document.querySelectorAll('[data-plugin]').forEach(cb => {
         const tag = cb.dataset.plugin;
@@ -580,6 +587,15 @@ function buildPayload() {
       out.plugins[parentTag].extensions[extId].enabled = cb.checked;
     });
 
+    // Dashboard specialized toggles extraction
+    if (document.getElementById('dashboard-webui-enabled')) {
+        out.plugins['DASHBOARD'] = out.plugins['DASHBOARD'] || {};
+        out.plugins['DASHBOARD'].webui_dashboard_enabled = getC('dashboard-webui-enabled');
+        out.plugins['DASHBOARD'].webui_telemetry_enabled = getC('telemetry-webui-enabled');
+        out.plugins['DASHBOARD'].console_dashboard_enabled = getC('dashboard-console-enabled');
+        out.plugins['DASHBOARD'].console_telemetry_enabled = getC('telemetry-console-enabled');
+    }
+
     // Remote Triggers Payload Part
     const rtPart = buildRemoteTriggersPayload();
     if (rtPart && rtPart.plugins && rtPart.plugins.REMOTE_TRIGGERS) {
@@ -775,6 +791,17 @@ window.renderPlugins = renderPlugins;
 window.buildPayload = buildPayload;
 window.isRestartNeeded = isRestartNeeded;
 window.populatePrivacyUI = populatePrivacyUI;
+
+window.saveDsb = function(key, val) {
+    if (!window.cfg.plugins) window.cfg.plugins = {};
+    if (!window.cfg.plugins.DASHBOARD) window.cfg.plugins.DASHBOARD = {};
+    window.cfg.plugins.DASHBOARD[key] = val;
+    
+    // Trigger immediate UI update (hiding/showing status bar/telemetry)
+    if (typeof window.refreshStatus === 'function') window.refreshStatus();
+    
+    // We let the global change listener in config_core.js handle the actual saveConfig(true)
+};
 
 // --- CUSTOM TEXT FILTERS HANDLER ---
 window.ZentraTextFilters = {

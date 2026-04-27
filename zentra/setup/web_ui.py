@@ -14,7 +14,7 @@ from .utils import (
 )
 from .engine import (
     check_python_version, check_dependencies, install_dependencies,
-    auto_fix_piper_path, manage_service, set_system_language, download_voice,
+    auto_fix_piper_path, set_system_language, download_voice,
     unattended_onboarding, fetch_piper_voices
 )
 
@@ -88,10 +88,6 @@ class SetupHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 check_python_version()
                 check_dependencies()
                 auto_fix_piper_path()
-            elif self.path == '/service_install':
-                manage_service("install")
-            elif self.path == '/service_uninstall':
-                manage_service("uninstall")
 
         out_text = output.getvalue().strip()
         if out_text:
@@ -238,14 +234,6 @@ class SetupHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                             <div class="diag-item">
                                 <span class="diag-tip">{T('tip_fix_paths')}</span>
                                 <form action="/fix" method="POST"><button class="btn btn-secondary" style="width:100%">{T('btn_fix_paths')}</button></form>
-                            </div>
-                            <div class="diag-item">
-                                <span class="diag-tip">{T('tip_install_svc')}</span>
-                                <form action="/service_install" method="POST"><button class="btn btn-secondary" style="width:100%">{T('btn_install_svc')}</button></form>
-                            </div>
-                            <div class="diag-item">
-                                <span class="diag-tip">{T('tip_uninstall_svc')}</span>
-                                <form action="/service_uninstall" method="POST"><button class="btn btn-danger" style="width:100%">{T('btn_uninstall_svc')}</button></form>
                             </div>
                         </div>
                     </div>

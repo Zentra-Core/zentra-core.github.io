@@ -37,9 +37,15 @@ _cpu_thread.start()
 def get_vram_usage():
     """Returns VRAM usage percentage via nvidia-smi, or 0 if fails."""
     try:
-        # Query used and total memory in MiB
         cmd = ["nvidia-smi", "--query-gpu=memory.used,memory.total", "--format=csv,noheader,nounits"]
-        res = subprocess.check_output(cmd, encoding="utf-8", timeout=2).strip()
+        kwargs = {}
+        if sys.platform == "win32":
+            kwargs["creationflags"] = 0x08000000 # CREATE_NO_WINDOW
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            kwargs["startupinfo"] = startupinfo
+            
+        res = subprocess.check_output(cmd, encoding="utf-8", timeout=2, **kwargs).strip()
         if res:
             used, total = [int(x.strip()) for x in res.split(",")]
             if total > 0:
@@ -181,6 +187,18 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
                             encoded_path = urllib.parse.quote(data.get("avatar_image"))
                             avatar_path = "/assets/" + encoded_path
             except Exception: pass
+            
+            telemetry_enabled = False
+            # Check global dashboard flag and the specific webui_telemetry flag
+            dsb_cfg = cfg.get("plugins", {}).get("DASHBOARD", {})
+            if dsb_cfg.get("enabled", True):
+                if dsb_cfg.get("webui_telemetry_enabled", True):
+                    telemetry_enabled = True
+                    _cpu_cache["enabled"] = True
+                else:
+                    _cpu_cache["enabled"] = False
+            else:
+                _cpu_cache["enabled"] = False
 
             return jsonify({
                 "backend":    backend.upper(),
@@ -193,9 +211,9 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
                 "mic":        mic_status,
                 "tts":        tts_status,
                 "ptt":        ptt_status,
-                "cpu":        _cpu_cache["value"] if _cpu_cache["enabled"] else None,
-                "ram":        psutil.virtual_memory().percent if _cpu_cache["enabled"] else None,
-                "vram":       get_vram_usage() if _cpu_cache["enabled"] else None,
+                "cpu":        _cpu_cache["value"] if telemetry_enabled else None,
+                "ram":        psutil.virtual_memory().percent if telemetry_enabled else None,
+                "vram":       get_vram_usage() if telemetry_enabled else None,
                 "config":     f"last save {ts}",
             })
         except Exception as exc:
@@ -536,23 +554,6 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
     init_explorer_routes(app, logger)
     init_bridge_routes(app, logger)
 
-    @app.route("/api/system/diagnostic/service", methods=["POST"])
-    def diagnostic_service_manage():
-        try:
-            data = request.get_json(force=True) or {}
-            action = data.get("action", "install") # "install" or "uninstall"
-            
-            from zentra.setup.engine import manage_service
-            import io
-            from contextlib import redirect_stdout
-            
-            output = io.StringIO()
-            with redirect_stdout(output):
-                success = manage_service(action)
-            
-            return jsonify({"ok": success, "log": output.getvalue()})
-        except Exception as e:
-            return jsonify({"ok": False, "error": str(e)}), 500
 
 
 

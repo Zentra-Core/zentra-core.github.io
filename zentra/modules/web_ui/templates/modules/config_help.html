@@ -56,8 +56,6 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <button type="button" class="btn btn-secondary" onclick="runDiagnostic('full-check')" style="font-size: 11px;">🔍 {{ t('webui_help_full_check') }}</button>
                 <button type="button" class="btn btn-secondary" onclick="runDiagnostic('fix-paths')" style="font-size: 11px;">📂 {{ t('webui_help_fix_paths') }}</button>
-                <button type="button" class="btn btn-secondary" onclick="runDiagnostic('service', 'install')" style="font-size: 11px;">⚙️ {{ t('webui_help_install_svc') }}</button>
-                <button type="button" class="btn btn-danger" onclick="runDiagnostic('service', 'uninstall')" style="font-size: 11px;">🗑️ {{ t('webui_help_uninstall_svc') }}</button>
             </div>
             
             <div id="diag-log-container" style="display: none; margin-top: 15px;">

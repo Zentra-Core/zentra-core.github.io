@@ -187,6 +187,13 @@ def get_hardware_row(config=None, dashboard_mod=None):
     
     if dashboard_mod is None:
         dashboard_mod = module_loader.get_plugin_module("DASHBOARD")
+        
+    dsb_config = config.get("plugins", {}).get("DASHBOARD", {}) if config else {}
+    col_dsb = dsb_config.get("console_dashboard_enabled", True)
+    col_tel = dsb_config.get("console_telemetry_enabled", True)
+    
+    if not col_dsb:
+        return f"{Fore.CYAN}{' ' * L}{Style.RESET_ALL}"
     
     if dashboard_mod:
         try:
@@ -216,10 +223,22 @@ def get_hardware_row(config=None, dashboard_mod=None):
                 display_status = backend_status if backend_status else "--"
                 status_color = Fore.YELLOW
 
-            info_hw = translator.t("hardware_line", 
-                cpu=cpu_bar, ram=ram_bar, gpu=stats.get('gpu_load', 'N/D'), vram=vram, 
-                backend=f"{status_color}{display_status}{Style.RESET_ALL}"
-            )
+            if col_tel:
+                info_hw = translator.t("hardware_line", 
+                    cpu=cpu_bar, ram=ram_bar, gpu=stats.get('gpu_load', 'N/D'), vram=vram, 
+                    backend=f"{status_color}{display_status}{Style.RESET_ALL}"
+                )
+            else:
+                # Se la telemetria è disattivata, mostriamo solo lo stato del backend
+                padded = f" BACKEND AI: {status_color}{display_status}{Style.RESET_ALL} "
+                # Center ignoring ansi
+                import re
+                ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+                v_len = len(ansi_escape.sub('', padded))
+                p_l = max(0, L - v_len) // 2
+                p_r = max(0, L - v_len) - p_l
+                info_hw = f"{' ' * p_l}{padded}{' ' * p_r}"
+                
         except Exception as e:
             info_hw = f"{Fore.RED}-- HARDWARE ERROR: {e} --{Style.RESET_ALL}"
     else:

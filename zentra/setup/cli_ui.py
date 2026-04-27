@@ -4,7 +4,7 @@ from .i18n import T
 from .utils import VOICE_MAP, get_current_system_lang
 from .engine import (
     check_python_version, install_dependencies, auto_fix_piper_path, 
-    manage_service, set_system_language, download_voice, check_dependencies
+    set_system_language, download_voice, check_dependencies
 )
 
 def voice_selection_menu():
@@ -115,7 +115,6 @@ def start_cli_wizard():
         print(f" 4) {T('menu_opt_3')}")
         print(f" 5) {T('menu_opt_4')}")
         print(f" 6) {T('menu_opt_5')}")
-        print(f" 7) Manage System Service")
         print(f" 9) Start WEB Setup Wizard")
         print(f" 10) Toggle Setup Language (Current: {i18n.UI_LANG.upper()})")
         print(f" 0) Exit")
@@ -130,11 +129,6 @@ def start_cli_wizard():
             auto_fix_piper_path()
         elif choice == '5': lang_selection_menu()
         elif choice == '6': voice_selection_menu()
-        elif choice == '7':
-            print(" 1) Install Service\n 2) Uninstall Service")
-            c = input("--> ")
-            if c == '1': manage_service("install")
-            elif c == '2': manage_service("uninstall")
         elif choice == '9': 
             from .web_ui import start_web_setup
             start_web_setup()

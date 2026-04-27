@@ -435,7 +435,8 @@ async function saveConfig(silent = false) {
           // setTimeout(() => location.reload(), 1500);
       } else {
           // Provide clear visual feedback for silent background saves
-          setSaveMsg('✓ Changes auto-saved', 'ok');
+          const syncedMsg = (I18N.webui_conf_msg_synced || '✓ Changes auto-saved').replace('✅ ', '✓ ');
+          setSaveMsg(syncedMsg, 'ok');
           // Reset any designated elements that should only be active for one save cycle
           document.querySelectorAll('.save-reset').forEach(el => {
               if (el.type === 'checkbox') el.checked = false;
@@ -510,7 +511,17 @@ async function refreshStatus() {
     }
     
     // Conditional visibility for system metrics
-    const dashEnabled = window.cfg?.plugins?.DASHBOARD?.enabled !== false;
+    const dsb = window.cfg?.plugins?.DASHBOARD || {};
+    const globalDashEnabled = dsb.enabled !== false;
+    const webuiDashEnabled = dsb.webui_dashboard_enabled !== false;
+    const webuiTelemetryEnabled = dsb.webui_telemetry_enabled !== false;
+    
+    const liveStatusEl = document.getElementById('live-status');
+    if (liveStatusEl) {
+        liveStatusEl.style.display = (globalDashEnabled && webuiDashEnabled) ? 'flex' : 'none';
+    }
+
+    const dashEnabled = globalDashEnabled && webuiDashEnabled && webuiTelemetryEnabled;
     document.querySelectorAll('.dashboard-only').forEach(el => {
         el.style.display = dashEnabled ? '' : 'none';
     });
