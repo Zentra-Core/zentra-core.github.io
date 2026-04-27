@@ -58,8 +58,9 @@ def _monitor_status(icon: "pystray.Icon"):
 
 def run_tray():
     # Redirect all stdout/stderr to a log file to avoid pythonw.exe silent crashing
-    os.makedirs(os.path.join(_ROOT, "logs"), exist_ok=True)
-    log_file = os.path.join(_ROOT, "logs", "zentra_tray.log")
+    log_dir = os.path.join(_ROOT, "zentra", "logs")
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, "zentra_tray.log")
     try:
         sys.stdout = sys.stderr = open(log_file, "a", encoding="utf-8")
     except Exception:
@@ -98,7 +99,7 @@ def run_tray():
         icon.run()
     finally:
         # Guarantee that if tray drops unexpectedly, we don't leave zombie subprocesses
-        # stop_zentra()
+        stop_zentra()
         pass
 
 

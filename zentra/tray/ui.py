@@ -105,6 +105,7 @@ def build_menu(icon_ref: list):
 
     def quit_tray(icon, item):
         terminate_consoles()
+        stop_zentra()
         icon.stop()
 
     def show_qr(icon, item):
