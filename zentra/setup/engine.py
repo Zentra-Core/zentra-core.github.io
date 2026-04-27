@@ -57,20 +57,19 @@ def install_dependencies():
         print(f"[-] Error: {e}")
         return False
 
-def manage_service(action="install"):
+def enable_autostart():
     if os.name == 'nt':
-        script = os.path.join("scripts", "windows", "service", "INSTALL_SERVICE_WIN.bat" if action == "install" else "UNINSTALL_SERVICE_WIN.bat")
+        script = os.path.join("scripts", "windows", "setup", "ENABLE_TRAY_AUTOSTART.bat")
     else:
-        script = os.path.join("scripts", "linux", "service", "INSTALL_SERVICE_LINUX.sh" if action == "install" else "UNINSTALL_SERVICE_LINUX.sh")
+        script = os.path.join("scripts", "linux", "setup", "ENABLE_TRAY_AUTOSTART.sh")
     
     script_path = os.path.join(CWD, script)
     if not os.path.exists(script_path):
         print(f"[-] {script} not found.")
         return False
     
-    print(T(f"{action}_service_start"))
+    print("[*] Configuring Zentra Core Autostart...")
     env = os.environ.copy()
-    env["ZENTRA_SETUP_UNATTENDED"] = "1"
     
     try:
         if os.name == 'nt':
@@ -193,9 +192,9 @@ def unattended_onboarding(target_voices=None):
     print("\n[*] " + T('step_finish'))
     auto_fix_piper_path()
     
-    # Step 5: Service
+    # Step 5: Autostart Link
     print("\n[*] Setting up System Infrastructure...")
-    manage_service("install")
+    enable_autostart()
     
     print("\n" + "=" * 60)
     print(f"  {T('onboarding_done')}")

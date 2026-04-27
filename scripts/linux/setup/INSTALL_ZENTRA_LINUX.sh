@@ -39,5 +39,5 @@ echo " [*] Installing requirements..."
 # 4. Success
 echo ""
 echo " [+] Installation complete!"
-echo " [*] To start Zentra, use: bash scripts/linux/run/zentra_web_run.sh"
+echo " [*] To start Zentra, use: bash scripts/linux/run/ZENTRA_TRAY_LINUX.sh"
 echo ""

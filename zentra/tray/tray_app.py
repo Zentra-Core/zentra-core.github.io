@@ -1,674 +1,105 @@
 """
 MODULE: zentra/tray/tray_app.py
-PURPOSE: Zentra Core System Tray icon — lightweight control panel for the background service.
-REQUIREMENTS: pystray, pillow (pip install pystray pillow)
+PURPOSE: Zentra Core System Tray icon — lightweight control panel for the background process.
 
 USAGE:
   Run standalone: python -m zentra.tray.tray_app
-  Auto-launched at user login via Registry HKCU\\Run (set by install_as_service.py).
-
-DESC:
-  Displays the Zentra logo in the system notification area. Right-clicking
-  opens a context menu. The icon glows green (online) or red (offline)
-  depending on whether the Zentra backend is reachable on port 7070.
-
-  SETTINGS (saved to zentra_tray_settings.json in the project root):
-    service_enabled  — if True, the service is started automatically when the tray launches
-    autoopen_webui   — if True, the browser opens automatically when the service comes online
+  Auto-launched at user login via Registry HKCU\\Run
 """
 
-import sys
 import os
+import sys
 import json
-import threading
 import time
+import threading
 import webbrowser
-import subprocess
-from datetime import datetime
 
-try:
-    from PIL import Image, ImageDraw, ImageTk
-except ImportError:
-    Image = None
-    ImageDraw = None
-    ImageTk = None
-
-try:
-    import tkinter as tk
-    from tkinter import messagebox, filedialog
-except ImportError:
-    tk = None
+from zentra.tray.config import SETTINGS_FILE, _DEFAULTS, ZENTRA_PORT, _ROOT, load_settings, save_settings
+from zentra.tray.utils import is_zentra_online, play_beep, get_scheme
+from zentra.tray.orchestrator import start_zentra, stop_zentra, is_zentra_running
+from zentra.tray.hotkeys import tray_hotkeys
+from zentra.tray.ui import load_icon, build_menu, refresh_ui, TRAY_AVAILABLE
 
 try:
     import pystray
-    from PIL import Image, ImageDraw
-    TRAY_AVAILABLE = True
 except ImportError:
-    TRAY_AVAILABLE = False
-    class Image:
-        class Image: pass
-    class ImageDraw: pass
+    pass
 
-_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# === Configuration ===
-ZENTRA_PORT = 7070
-STATUS_POLL_INTERVAL = 3  # seconds (reduced for better responsiveness)
-LOGO_PATH = os.path.join(_ROOT, "zentra", "assets", "Zentra_Core_Logo_NBG - SQR.png")
-VERSION_FILE = os.path.join(_ROOT, "zentra", "core", "version")
-SYSTEM_YAML = os.path.join(_ROOT, "zentra", "config", "data", "system.yaml")
-SETTINGS_FILE = os.path.join(_ROOT, "zentra_tray_settings.json")
-
-# Global list of Popen objects for tracked console windows
-_managed_consoles = []
-
-
-# ─────────────────────────────────────────────────────────────
-#  Settings persistence
-# ─────────────────────────────────────────────────────────────
-
-_DEFAULTS = {
-    "service_enabled": True,   # start the Windows service at tray startup
-    "autoopen_webui": True,    # open the browser automatically when service comes online
-}
-
-
-def _load_settings() -> dict:
-    try:
-        with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        # Fill any missing keys with defaults
-        for k, v in _DEFAULTS.items():
-            data.setdefault(k, v)
-        return data
-    except Exception:
-        return dict(_DEFAULTS)
-
-
-def _save_settings(settings: dict):
-    try:
-        with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
-            json.dump(settings, f, indent=2)
-    except Exception as e:
-        print(f"[TRAY] Could not save settings: {e}")
-
-
-# ─────────────────────────────────────────────────────────────
-#  Helpers
-# ─────────────────────────────────────────────────────────────
-
-def _get_scheme() -> str:
-    """Reads system.yaml to detect if HTTPS is enabled."""
-    try:
-        with open(SYSTEM_YAML, "r", encoding="utf-8") as f:
-            content = f.read()
-        in_webui = False
-        for line in content.splitlines():
-            stripped = line.strip()
-            if "WEB_UI:" in stripped:
-                in_webui = True
-            if in_webui and "https_enabled:" in stripped:
-                value = stripped.split(":", 1)[1].strip().lower()
-                if value in ("true", "yes", "1"):
-                    return "https"
-                break
-    except Exception:
-        pass
-    return "http"
-
-
-def _play_beep(freq: int, duration_ms: int):
-    """Universal cross-platform audio helper for system beeps/cues."""
-    import sys
-    if sys.platform == "win32":
-        try:
-            import winsound
-            winsound.Beep(int(freq), int(duration_ms))
-        except: pass
-    else:
-        try:
-            import subprocess
-            subprocess.run(["beep", "-f", str(freq), "-l", str(duration_ms)], 
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except:
-            print('\a', end='', flush=True)
-
-
-def _get_urls():
-    scheme = _get_scheme()
-    base = f"{scheme}://localhost:{ZENTRA_PORT}"
-    return f"{base}/chat", f"{base}/zentra/config/ui"
-
-
-def _get_version():
-    try:
-        with open(VERSION_FILE, "r") as f:
-            return f.read().strip()
-    except Exception:
-        return "0.19.0"
-
-
-def _is_zentra_online():
-    """Checks if the Zentra backend is responding on port 7070."""
-    import socket
-    try:
-        with socket.create_connection(("localhost", ZENTRA_PORT), timeout=2):
-            return True
-    except OSError:
-        return False
-
-
-def _get_lan_ip() -> str:
-    import socket
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("10.254.254.254", 1))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except Exception:
-        return "N/A"
-
-
-def _control_service(action: str):
-    """Sends start/stop/restart command to the OS service manager."""
-    import subprocess
-    try:
-        if sys.platform == "win32":
-            if action == "restart":
-                # sc.exe has no 'restart' subcommand — stop then start
-                subprocess.run(["sc", "stop", "ZentraCore"], capture_output=True)
-                time.sleep(3)  # Give the service time to fully stop
-                subprocess.run(["sc", "start", "ZentraCore"], check=True, capture_output=True)
-            else:
-                subprocess.run(["sc", action, "ZentraCore"], check=True, capture_output=True)
-        else:
-            subprocess.run(["systemctl", "--user", action, "zentra"], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"[TRAY] Service control failed ({action}): {e}")
-    except FileNotFoundError:
-        print(f"[TRAY] Service manager not found for action: {action}")
-
-
-def _is_service_running() -> bool:
-    """Returns True if the ZentraCore Windows service is in a running state."""
-    if sys.platform != "win32":
-        return _is_zentra_online()
-    import subprocess
-    try:
-        result = subprocess.run(
-            ["sc", "query", "ZentraCore"],
-            capture_output=True, text=True
-        )
-        return "RUNNING" in result.stdout
-    except Exception:
-        return False
-
-
-def _load_icon(online: bool) -> "Image.Image":
-    try:
-        if os.path.exists(LOGO_PATH):
-            img = Image.open(LOGO_PATH).convert("RGBA").resize((64, 64))
-            overlay = Image.new("RGBA", img.size, (0, 200, 80, 80) if online else (200, 40, 40, 80))
-            return Image.alpha_composite(img, overlay)
-    except Exception:
-        pass
-    size = 64
-    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-    color = (0, 220, 100, 240) if online else (200, 40, 40, 240)
-    draw.ellipse([4, 4, size - 4, size - 4], fill=color)
-    return img
-
-
-def _launch_console(script_path: str):
-    """Launches a script in a new tracked console window."""
-    global _managed_consoles
-    # Clean up dead handles first
-    _managed_consoles = [p for p in _managed_consoles if p.poll() is None]
-    
-    try:
-        if sys.platform == "win32":
-            # CREATE_NEW_CONSOLE = 0x00000010
-            # We launch cmd.exe directly to keep the handle
-            p = subprocess.Popen(
-                ["cmd.exe", "/c", script_path],
-                creationflags=0x00000010,
-                cwd=_ROOT
-            )
-            _managed_consoles.append(p)
-        else:
-            p = subprocess.Popen(["x-terminal-emulator", "-e", script_path], cwd=_ROOT)
-            _managed_consoles.append(p)
-    except Exception as e:
-        print(f"[TRAY] Failed to launch console: {e}")
-
-
-def _terminate_consoles():
-    """Closes all console windows tracked by the Tray App."""
-    global _managed_consoles
-    for p in _managed_consoles:
-        if p.poll() is None:
-            try:
-                p.terminate()
-            except: pass
-    _managed_consoles = []
-
-
-def _refresh_ui(icon: "pystray.Icon"):
-    """Forces an immediate update of the icon and menu based on current online status."""
-
-    if not icon: return
-    online = _is_zentra_online()
-    icon.icon = _load_icon(online)
-    icon.menu = _build_menu([icon])
-
-
-
-# ─────────────────────────────────────────────────────────────
-#  Menu builder
-# ─────────────────────────────────────────────────────────────
-
-def _build_menu(icon_ref: list):
-    """Builds (or rebuilds) the System Tray context menu."""
-    settings = _load_settings()
-    online = _is_zentra_online()
-    status_label = "🟢 Online" if online else "🔴 Offline"
-    version = _get_version()
-    scheme = _get_scheme()
-    base_url = f"{scheme}://localhost:{ZENTRA_PORT}"
-    chat_url = f"{base_url}/chat"
-    config_url = f"{base_url}/zentra/config/ui"
-    lan_ip = _get_lan_ip()
-
-    svc_check = "✅" if settings["service_enabled"] else "⬜"
-    web_check = "✅" if settings["autoopen_webui"] else "⬜"
-
-    # ── Actions ──────────────────────────────────────────────
-
-    def open_chat(icon, item):
-        webbrowser.open(chat_url)
-
-    def open_console(icon, item):
-        if sys.platform == "win32":
-            script = os.path.join(_ROOT, "scripts", "windows", "run", "ZENTRA_CONSOLE_RUN_WIN.bat")
-        else:
-            script = os.path.join(_ROOT, "scripts", "linux", "run", "ZENTRA_CONSOLE_RUN.sh")
-        _launch_console(script)
-
-
-    def open_config(icon, item):
-        webbrowser.open(config_url)
-
-    def restart_service(icon, item):
-        """Stop + Start the backend service. The tray stays alive."""
-        def _do_restart():
-            _play_beep(400, 100)
-            _play_beep(300, 150)
-            _terminate_consoles() # Close consoles on restart too
-            _control_service("restart")
-
-            time.sleep(2)  # Wait for service to settle
-            _refresh_ui(icon)
-        threading.Thread(target=_do_restart, daemon=True).start()
-
-    def stop_service(icon, item):
-        """Stop only the backend service. The tray stays alive."""
-        def _do_stop():
-            _play_beep(400, 100)
-            _play_beep(300, 150)
-            _terminate_consoles() # Close consoles when stopping service
-            _control_service("stop")
-
-            time.sleep(1.5)  # Wait for service to settle
-            _refresh_ui(icon)
-        threading.Thread(target=_do_stop, daemon=True).start()
-
-    def stop_service_and_quit(icon, item):
-        """Stop the backend service AND close the tray icon."""
-        def _do_quit():
-            _play_beep(400, 100)
-            _play_beep(300, 150)
-            _control_service("stop")
-            time.sleep(1)
-            icon.stop()
-        threading.Thread(target=_do_quit, daemon=True).start()
-
-
-    def show_about(icon, item):
-        icon.notify(
-            f"Zentra Core — v{version}\nAgentic OS & Orchestrator\nStatus: {status_label}\nLAN: {scheme}://{lan_ip}:{ZENTRA_PORT}/chat",
-            "About Zentra Core"
-        )
-
-    def quit_tray(icon, item):
-        _terminate_consoles() # Ensure consoles die with the tray
-        icon.stop()
-
-
-    def show_qr(icon, item):
-        threading.Thread(target=_show_qr_popup, args=(_get_scheme(), _get_lan_ip(), ZENTRA_PORT), daemon=True).start()
-
-    # ── Toggle: Service Enabled ───────────────────────────────
-
-    def toggle_service(icon, item):
-        s = _load_settings()
-        s["service_enabled"] = not s["service_enabled"]
-        _save_settings(s)
-        if s["service_enabled"]:
-            print("[TRAY] Service toggled ON — starting service…")
-            _control_service("start")
-        else:
-            print("[TRAY] Service toggled OFF — stopping service…")
-            _control_service("stop")
-        
-        # Rebuild menu after a short delay so sc has time to respond
-        time.sleep(2.0)
-        _refresh_ui(icon)
-
-
-    # ── Toggle: Auto-open WebUI ───────────────────────────────
-
-    def toggle_autoopen(icon, item):
-        s = _load_settings()
-        s["autoopen_webui"] = not s["autoopen_webui"]
-        _save_settings(s)
-        icon.menu = _build_menu([icon])
-
-    # ── QR popup helper ───────────────────────────────────────
-
-    return pystray.Menu(
-        pystray.MenuItem(f"ZENTRA CORE  v{version}", None, enabled=False),
-        pystray.MenuItem(status_label, None, enabled=False),
-        pystray.Menu.SEPARATOR,
-
-        # --- TERMINAL SECTION ---
-        pystray.MenuItem("══ TERMINAL CONSOLE ══", None, enabled=False),
-        pystray.MenuItem("🖥️  Launch Console", open_console),
-        pystray.Menu.SEPARATOR,
-
-        # --- WEB UI SECTION ---
-        pystray.MenuItem("══ NATIVE WEB UI ══", None, enabled=False),
-        pystray.MenuItem("🌐 Open Chat", open_chat),
-        pystray.MenuItem("⚙️  Open Config", open_config),
-        pystray.MenuItem("📱 Connect Mobile (QR)", show_qr),
-        pystray.Menu.SEPARATOR,
-
-        # --- SETTINGS / TOGGLES ---
-        pystray.MenuItem("══ STARTUP SETTINGS ══", None, enabled=False),
-        pystray.MenuItem(f"{svc_check} Service Active in Background", toggle_service),
-        pystray.MenuItem(f"{web_check} Auto-open WebUI on Startup", toggle_autoopen),
-        pystray.Menu.SEPARATOR,
-
-        # --- MAINTENANCE SECTION ---
-        pystray.MenuItem("🔄 Restart Service", restart_service),
-        pystray.MenuItem("⏹  Stop Service", stop_service),
-        pystray.MenuItem("⏹  Stop Service + Quit Tray", stop_service_and_quit),
-        pystray.Menu.SEPARATOR,
-
-        pystray.MenuItem(f"🖧  LAN: {lan_ip}:{ZENTRA_PORT}", None, enabled=False),
-        pystray.MenuItem(f"🔌 {scheme.upper()} | {scheme}://localhost:{ZENTRA_PORT}/chat", None, enabled=False),
-        pystray.Menu.SEPARATOR,
-        pystray.MenuItem("ℹ️  About", show_about),
-        pystray.MenuItem("✖  Quit Tray", quit_tray),
-    )
-
-
-# ─────────────────────────────────────────────────────────────
-#  QR popup (Tkinter)
-# ─────────────────────────────────────────────────────────────
-
-def _show_qr_popup(scheme: str, lan_ip: str, port: int):
-    url = f"{scheme}://{lan_ip}:{port}/chat"
-    if not tk:
-        print("[TRAY] Tkinter non disponibile.")
-        return
-    try:
-        import qrcode
-    except ImportError:
-        print("[TRAY] qrcode library not found. Install with: pip install qrcode[pil]")
-        return
-
-    root = tk.Tk()
-    root.title("Zentra Core - Mobile Connection")
-    root.geometry("350x480")
-    root.resizable(False, False)
-    root.attributes("-topmost", True)
-
-    bg_color = "#0d0e14"
-    fg_color = "#ffffff"
-    root.configure(bg=bg_color)
-
-    qr = qrcode.QRCode(version=1, box_size=10, border=4)
-    qr.add_data(url)
-    qr.make(fit=True)
-    img_qr_pil = qr.make_image(fill_color="black", back_color="white")
-
-    tk.Label(root, text="SCAN TO CONNECT", font=("Consolas", 12, "bold"), bg=bg_color, fg="#00e676").pack(pady=(20, 5))
-    tk.Label(root, text=f"URL: {url}", font=("Consolas", 8), bg=bg_color, fg="#aaaaaa", wraplength=300).pack(pady=5)
-
-    preview_img = img_qr_pil.resize((250, 250))
-    img_tk = ImageTk.PhotoImage(preview_img)
-    panel = tk.Label(root, image=img_tk, bg="white", bd=0)
-    panel.image = img_tk
-    panel.pack(pady=10)
-
-    def copy_url():
-        root.clipboard_clear()
-        root.clipboard_append(url)
-        messagebox.showinfo("Copiato", "Indirizzo copiato negli appunti!")
-
-    def save_qr():
-        fpath = filedialog.asksaveasfilename(
-            defaultextension=".png",
-            filetypes=[("PNG files", "*.png")],
-            initialfile="zentra_mobile_connect.png"
-        )
-        if fpath:
-            img_qr_pil.save(fpath)
-            messagebox.showinfo("Salvato", f"QR Code salvato in:\n{fpath}")
-
-    btn_frame = tk.Frame(root, bg=bg_color)
-    btn_frame.pack(pady=10)
-    tk.Button(btn_frame, text="📋 Copy URL", command=copy_url, bg="#1e1f26", fg=fg_color, bd=0, padx=10, pady=5).pack(side="left", padx=5)
-    tk.Button(btn_frame, text="💾 Save PNG", command=save_qr, bg="#1e1f26", fg=fg_color, bd=0, padx=10, pady=5).pack(side="left", padx=5)
-    tk.Button(root, text="Close", command=root.destroy, bg="#333", fg=fg_color, bd=0, padx=20).pack(pady=10)
-    root.mainloop()
-
-
-# ─────────────────────────────────────────────────────────────
-#  Global Hotkeys for PTT (Session 1 Override)
-# ─────────────────────────────────────────────────────────────
-
-class TrayHotKeyManager:
-    """
-    Manages the Ctrl+Shift global hotkey directly from the user's active graphical
-    session. Because the Zentra core runs as a Window Service in Session 0, it cannot
-    see the interactive keyboard. This hooks from the Tray App and fires an HTTP webhook.
-    """
-    def __init__(self):
-        self.listener = None
-        self.pressed = set()
-        self.is_active = False
-
-    def start(self):
-        try:
-            from pynput.keyboard import Key, Listener
-        except ImportError:
-            print("[TRAY-PTT] pynput not installed. Global hotkeys via Tray App disabled.")
-            return
-
-        def _is_mod(target):
-            if target == "ctrl":
-                return Key.ctrl in self.pressed or Key.ctrl_l in self.pressed or Key.ctrl_r in self.pressed
-            if target == "shift":
-                return Key.shift in self.pressed or Key.shift_l in self.pressed or Key.shift_r in self.pressed
-            return False
-
-        def on_press(key):
-            try:
-                self.pressed.add(key)
-                
-                # We need Ctrl + Shift exclusively or alongside other keys? The old ptt_bus triggered on just Ctrl+Shift.
-                if _is_mod("ctrl") and _is_mod("shift") and not self.is_active:
-                    self.is_active = True
-                    self._fire_trigger("start")
-            except Exception:
-                pass
-
-        def on_release(key):
-            if key in self.pressed:
-                try:
-                    self.pressed.remove(key)
-                except KeyError:
-                    pass
-
-            if self.is_active and not (_is_mod("ctrl") and _is_mod("shift")):
-                self.is_active = False
-                self._fire_trigger("stop")
-
-        self.listener = Listener(on_press=on_press, on_release=on_release)
-        self.listener.daemon = True
-        self.listener.start()
-        print("[TRAY-PTT] Global Hotkey (Ctrl+Shift) Listener started in User Session.")
-
-    def _fire_trigger(self, action):
-        def _do_fire():
-            import urllib.request
-            import ssl
-            scheme = _get_scheme()
-            url = f"{scheme}://127.0.0.1:{ZENTRA_PORT}/api/remote-triggers/ptt/{action}"
-            try:
-                ctx = ssl.create_default_context()
-                ctx.check_hostname = False
-                ctx.verify_mode = ssl.CERT_NONE
-                urllib.request.urlopen(url, timeout=2, context=ctx)
-            except Exception as e:
-                pass
-                
-        # Fire in a background thread so we don't block the pynput loop
-        threading.Thread(target=_do_fire, daemon=True).start()
-
-_tray_hotkeys = TrayHotKeyManager()
-
-# ─────────────────────────────────────────────────────────────
-#  Background monitor
-# ─────────────────────────────────────────────────────────────
+STATUS_POLL_INTERVAL = 3
 
 def _monitor_status(icon: "pystray.Icon"):
-    """
-    Background thread:
-      - Periodically updates tray icon color (green/red) based on service health.
-      - Once the service comes online, opens the browser IF autoopen_webui is enabled.
-      - If service_enabled=True and the service is stopped, tries to start it once.
-    """
-    has_opened_browser = False
-    attempted_service_start = False
+    attempted_start = False
     was_online = False
 
     while True:
         try:
-            settings = _load_settings()
-            online = _is_zentra_online()
+            settings = load_settings()
+            online = is_zentra_running()
             
             # Audible ascending ping when coming online
             if online and not was_online:
-                _play_beep(400, 100)
-                _play_beep(600, 150)
+                play_beep(400, 100)
+                play_beep(600, 150)
             was_online = online
 
             # Auto-start service if the toggle says it should be running
-            if settings["service_enabled"] and not online and not attempted_service_start:
-                attempted_service_start = True
-                print("[TRAY] service_enabled=True but service offline — starting service…")
-                threading.Thread(target=_control_service, args=("start",), daemon=True).start()
+            if settings["start_zentra_on_launch"] and not online and not attempted_start:
+                attempted_start = True
+                print("[TRAY] start_zentra_on_launch=True but offline — starting Zentra subprocess…")
+                threading.Thread(target=start_zentra, daemon=True).start()
 
-            # icon.icon = _load_icon(online)
-            # icon.menu = _build_menu([icon])
-            # Use centralized refresh for consistency
-            _refresh_ui(icon)
-
-
-            # Open browser once when the service first comes online
-            if online and not has_opened_browser and settings["autoopen_webui"]:
-                has_opened_browser = True
-                scheme = _get_scheme()
-                url = f"{scheme}://127.0.0.1:{ZENTRA_PORT}/chat"
-                print(f"[TRAY] System online. Auto-opening WebUI: {url}")
-                webbrowser.open(url)
-
-            # Polling for GUI Bridge Commands (file-based, avoids HTTP issues)
-            _bridge_file = os.path.join(_ROOT, ".bridge_queue.json")
-            try:
-                if os.path.exists(_bridge_file):
-                    with open(_bridge_file, "r", encoding="utf-8") as f:
-                        cmds = json.load(f)
-                    if cmds:
-                        # Immediately clear the file to prevent re-processing
-                        with open(_bridge_file, "w", encoding="utf-8") as f:
-                            json.dump([], f)
-                        for command in cmds:
-                            cmd  = command.get("cmd")
-                            path = command.get("path")
-                            if cmd == "open_folder" and path:
-                                clean_path = os.path.normpath(path)
-                                print(f"[TRAY] Opening folder: {clean_path}")
-                                if os.path.exists(clean_path):
-                                    if sys.platform == "win32":
-                                        os.startfile(clean_path)
-                                    elif sys.platform == "darwin":
-                                        subprocess.Popen(["open", clean_path])
-                                    else:
-                                        subprocess.Popen(["xdg-open", clean_path])
-                                else:
-                                    print(f"[TRAY] Path not found: {clean_path}")
-            except Exception as e:
-                print(f"[TRAY] Bridge file error: {e}")
+            refresh_ui(icon)
 
         except Exception as e:
-            print(f"[TRAY] Monitor error: {e}")
+            pass
 
         time.sleep(STATUS_POLL_INTERVAL)
 
 
-# ─────────────────────────────────────────────────────────────
-#  Entry point
-# ─────────────────────────────────────────────────────────────
-
 def run_tray():
+    # Redirect all stdout/stderr to a log file to avoid pythonw.exe silent crashing
+    os.makedirs(os.path.join(_ROOT, "logs"), exist_ok=True)
+    log_file = os.path.join(_ROOT, "logs", "zentra_tray.log")
+    try:
+        sys.stdout = sys.stderr = open(log_file, "a", encoding="utf-8")
+    except Exception:
+        pass
+
     if not TRAY_AVAILABLE:
         print("\n[!] ERRORE: Dipendenze mancanti per la Tray Icon.")
         print("    Esegui questo comando nel terminale:")
         print("    pip install pystray pillow")
         sys.exit(1)
 
-    # On first run, create the settings file with defaults if missing
     if not os.path.exists(SETTINGS_FILE):
-        _save_settings(_DEFAULTS)
+        save_settings(_DEFAULTS)
         print(f"[TRAY] Settings file created: {SETTINGS_FILE}")
 
-    settings = _load_settings()
-    print(f"[TRAY] Settings loaded — service_enabled={settings['service_enabled']}, autoopen_webui={settings['autoopen_webui']}")
+    settings = load_settings()
+    print(f"[TRAY] Settings loaded: {settings}")
 
-    online = _is_zentra_online()
-    icon_image = _load_icon(online)
+    online = is_zentra_running()
+    icon_image = load_icon(online)
 
     icon = pystray.Icon(
         name="zentra_core",
         icon=icon_image,
         title="Zentra Core — Agentic OS",
-        menu=_build_menu([None])
+        menu=build_menu([None])
     )
 
-    # Start background health monitor thread
     monitor_thread = threading.Thread(target=_monitor_status, args=(icon,), daemon=True)
     monitor_thread.start()
 
-    # Start the global PTT hotkey listener (Session 1 Cross-Boundary)
-    _tray_hotkeys.start()
+    tray_hotkeys.start()
 
     print("[TRAY] Zentra Core tray icon started.")
-    icon.run()
+    try:
+        icon.run()
+    finally:
+        # Guarantee that if tray drops unexpectedly, we don't leave zombie subprocesses
+        # stop_zentra()
+        pass
 
 
 if __name__ == "__main__":

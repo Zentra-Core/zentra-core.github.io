@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import threading
+import subprocess
 from flask import request, jsonify
 
 # File-based queue for cross-process communication (avoids multi-worker isolation)
@@ -47,22 +48,21 @@ def init_bridge_routes(app, logger):
             if not cmd:
                 return jsonify({"ok": False, "error": "Missing command"}), 400
                 
-            command_item = {
-                "id": os.urandom(4).hex(),
-                "cmd": cmd,
-                "path": path,
-            }
-            
-            with _QUEUE_LOCK:
-                cmds = _read_queue()
-                cmds.append(command_item)
-                # Cap queue size
-                if len(cmds) > 20:
-                    cmds = cmds[-20:]
-                _write_queue(cmds)
-                
-            logger.info(f"[BRIDGE] Queued command: {cmd} for {path}")
-            return jsonify({"ok": True, "msg": "Command queued"})
+            if cmd == "open_folder" and path:
+                clean_path = os.path.normpath(path)
+                if os.path.exists(clean_path):
+                    if sys.platform == "win32":
+                        os.startfile(clean_path)
+                    elif sys.platform == "darwin":
+                        subprocess.Popen(["open", clean_path])
+                    else:
+                        subprocess.Popen(["xdg-open", clean_path])
+                    logger.info(f"[BRIDGE] Opened folder natively: {clean_path}")
+                    return jsonify({"ok": True, "msg": "Folder opened"})
+                else:
+                    return jsonify({"ok": False, "error": "Path not found"}), 404
+                    
+            return jsonify({"ok": False, "error": "Unknown command"}), 400
         except Exception as e:
             return jsonify({"ok": False, "error": str(e)}), 500
 
