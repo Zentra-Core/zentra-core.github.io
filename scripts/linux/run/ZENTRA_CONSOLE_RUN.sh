@@ -1,7 +1,7 @@
 #!/bin/bash
 # ZENTRA CORE - ACTIVE SESSION RUNNER (Native Text Console)
 
-# Spostati nella cartella principale del progetto
+# Spostati nella cartella root del progetto
 cd "$(dirname "$0")/../../.."
 ROOT_DIR=$(pwd)
 

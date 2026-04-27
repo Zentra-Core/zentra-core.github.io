@@ -1,7 +1,11 @@
 @echo off
 @chcp 65001 >nul
 title ZENTRA CORE - NVIDIA AI ACCELERATED
-cd /d "%~dp0.."
+pushd "%~dp0"
+cd ..\..\..
+set ROOT_DIR=%CD%
+popd
+cd /d "%ROOT_DIR%"
 color 0E
 
 echo.

@@ -1,7 +1,8 @@
 #!/bin/bash
 # ZENTRA Config Editor (Standalone TUI)
 
-cd "$(dirname "$0")/../.."
+# Spostati nella cartella root del progetto
+cd "$(dirname "$0")/../../.."
 
 echo "Starting Configuration Editor..."
 if [ -f "venv/bin/activate" ]; then

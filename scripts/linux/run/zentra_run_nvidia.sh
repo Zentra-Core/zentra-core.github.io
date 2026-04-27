@@ -1,8 +1,8 @@
 #!/bin/bash
 # ZENTRA CORE - NVIDIA AI ACCELERATED RUNNER
 
-# Spostati nella cartella in cui si trova questo script
-cd "$(dirname "$0")/../.."
+# Spostati nella cartella root del progetto
+cd "$(dirname "$0")/../../.."
 
 VERSION=$(cat zentra/core/version 2>/dev/null || echo "Unknown")
 

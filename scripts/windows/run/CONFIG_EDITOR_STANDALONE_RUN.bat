@@ -1,4 +1,10 @@
 @echo off
-start "ZENTRA Config Editor" cmd /c "cd /d %~dp0.. && python -c \"from zentra.ui.config_editor.core import ConfigEditor; ConfigEditor().run()\" && pause"
+pushd "%~dp0"
+cd ..\..\..
+set ROOT_DIR=%CD%
+popd
+cd /d "%ROOT_DIR%"
+
+start "ZENTRA Config Editor" cmd /c "python -c \"from zentra.ui.config_editor.core import ConfigEditor; ConfigEditor().run()\" && pause"
 echo Editor started in a new window!
 timeout /t 2 /nobreak >nul
