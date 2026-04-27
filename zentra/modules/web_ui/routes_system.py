@@ -57,7 +57,10 @@ def get_vram_usage():
 def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
     # Set global telemetry flag based on DASHBOARD plugin status
     global _cpu_cache
-    _cpu_cache["enabled"] = cfg_mgr.config.get("plugins", {}).get("DASHBOARD", {}).get("enabled", True)
+    dsb_cfg = cfg_mgr.config.get("plugins", {}).get("DASHBOARD", {})
+    global_enabled = dsb_cfg.get("enabled", True)
+    webui_telemetry = dsb_cfg.get("webui_telemetry_enabled", True)
+    _cpu_cache["enabled"] = global_enabled and webui_telemetry
 
     def _sm():
         return get_sm() if callable(get_sm) else get_sm
@@ -112,7 +115,7 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
         resp.headers["Pragma"] = "no-cache"
         resp.headers["Expires"] = "0"
         return resp
-
+    
     @app.route("/zentra/status", methods=["GET"])
     def get_status():
         try:
@@ -124,16 +127,13 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
             else: model = "?"
 
             br      = cfg.get("bridge", {})
-            voice   = cfg.get("voice", {})
-            listen  = cfg.get("listening", {})
-
             flags = [k for k, v in [
                 ("proc",        br.get("use_processor")),
                 ("think-strip", br.get("remove_think_tags")),
                 ("tools",       br.get("enable_tools")),
             ] if v]
 
-            # Read live state from state_manager if available, else fall back to config
+            # Read live state from state_manager if available
             sm = _sm()
             if sm is not None:
                 mic_on     = sm.listening_status
@@ -150,19 +150,11 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
             from zentra.core.audio.device_manager import get_audio_config, _save_audio_config
             acfg = get_audio_config()
             ptt_on = acfg.get("push_to_talk", False)
-            
-            # ── Integrity Guard ────────────────────────────────────────────────────
-            # PTT requires MIC (continuous listening) to be enabled.
-            # If MIC is OFF but PTT is still ON in config (stale state), correct it
-            # here to ensure the frontend always receives a coherent state.
             if not mic_on and ptt_on:
                 ptt_on = False
                 acfg["push_to_talk"] = False
-                try:
-                    _save_audio_config(acfg)
-                except Exception:
-                    pass
-            # ──────────────────────────────────────────────────────────────────────
+                try: _save_audio_config(acfg)
+                except Exception: pass
             
             ptt_status = "ON" if ptt_on else "OFF"
 
@@ -176,30 +168,34 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
             
             avatar_path = "/assets/Zentra_Core_Logo_NBG.png"
             try:
-                # Retrieve the full path to the personality folder
                 p_dir = os.path.join(root_dir, "zentra", "personality")
                 p_file = os.path.join(p_dir, f"{persona}.yaml")
                 if os.path.exists(p_file):
                     with open(p_file, "r", encoding="utf-8") as f:
                         data = yaml.safe_load(f)
                         if data and data.get("avatar_image"):
-                            # URL encode the path to handle spaces safely
                             encoded_path = urllib.parse.quote(data.get("avatar_image"))
                             avatar_path = "/assets/" + encoded_path
             except Exception: pass
             
-            telemetry_enabled = False
-            # Check global dashboard flag and the specific webui_telemetry flag
+            # --- Optimized Telemetry ---
             dsb_cfg = cfg.get("plugins", {}).get("DASHBOARD", {})
-            if dsb_cfg.get("enabled", True):
-                if dsb_cfg.get("webui_telemetry_enabled", True):
-                    telemetry_enabled = True
-                    _cpu_cache["enabled"] = True
-                else:
-                    _cpu_cache["enabled"] = False
-            else:
-                _cpu_cache["enabled"] = False
+            global_enabled = dsb_cfg.get("enabled", True)
+            webui_telemetry = dsb_cfg.get("webui_telemetry_enabled", True)
+            telemetry_active = global_enabled and webui_telemetry
+            
+            # Sync background CPU thread enabled state
+            _cpu_cache["enabled"] = telemetry_active
 
+            cpu_val  = None
+            ram_val  = None
+            vram_val = None
+
+            if telemetry_active:
+                cpu_val  = _cpu_cache.get("value", 0)
+                ram_val  = psutil.virtual_memory().percent
+                vram_val = get_vram_usage()
+            
             return jsonify({
                 "backend":    backend.upper(),
                 "model":      model,
@@ -207,13 +203,12 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
                 "avatar":     avatar_path,
                 "avatar_size": cfg.get("ai", {}).get("avatar_size", "medium"),
                 "bridge":     ", ".join(flags) if flags else "default",
-
                 "mic":        mic_status,
                 "tts":        tts_status,
                 "ptt":        ptt_status,
-                "cpu":        _cpu_cache["value"] if telemetry_enabled else None,
-                "ram":        psutil.virtual_memory().percent if telemetry_enabled else None,
-                "vram":       get_vram_usage() if telemetry_enabled else None,
+                "cpu":        cpu_val,
+                "ram":        ram_val,
+                "vram":       vram_val,
                 "config":     f"last save {ts}",
             })
         except Exception as exc:
