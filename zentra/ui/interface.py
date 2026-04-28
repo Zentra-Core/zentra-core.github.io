@@ -80,9 +80,8 @@ def setup_console():
     update_cached_L()
     
     # Clear screen fully and reset any previous scrolling region
-    sys.stdout.write("\033[r\033[2J")
-    # Position cursor at Row 6 (body start, right after the 5-row header)
-    sys.stdout.write("\033[6;1H")
+    # \033[H homing prevents the header from being drawn twice
+    sys.stdout.write("\033[r\033[2J\033[H")
     sys.stdout.flush()
 
 def move_to_body():
