@@ -101,7 +101,7 @@ def update_ui_in_place(icon_instance, config, state, dashboard_mod):
     if not _updater_active:
         return
         
-    stats = dashboard_mod.get_hardware_stats(config)
+    stats = dashboard_mod.get_stats(config)
     L = get_cached_L()
     
     # Render rows
