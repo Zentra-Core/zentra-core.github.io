@@ -702,6 +702,16 @@
         "webui_help_install_svc": "Install Service",
         "webui_help_uninstall_svc": "Uninstall Service",
         "webui_help_diag_log_title": "Diagnostic Output",
-        "webui_media_clear_all": "Clear All Generated Media"
+        "webui_media_clear_all": "Clear All Generated Media",
+        "webui_chat_archive_open": "Open Archive",
+        "webui_chat_archive_close": "Hide Archive",
+        "webui_chat_archive_view_active": "View Active Chats",
+        "webui_chat_archive_restore": "Restore",
+        "webui_chat_archive_confirm": "Archive this conversation? It will be hidden but not deleted.",
+        "webui_chat_unarchive_confirm": "Restore this conversation from the archive?",
+        "webui_chat_delete": "Delete",
+        "webui_chat_delete_confirm": "Delete this conversation? This operation cannot be undone.",
+        "webui_chat_rename_hint": "Double click to rename",
+        "webui_chat_rename_prompt": "Rename conversation:"
     }
 }

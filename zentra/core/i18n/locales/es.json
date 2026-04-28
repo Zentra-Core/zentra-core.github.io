@@ -144,6 +144,16 @@
         "webui_conf_voice_detecting": "Detección en curso...",
         "webui_conf_voice_detect_title": "Detectar automáticamente la ruta de Piper",
         "webui_conf_voice_select_piper": "Seleccionar ejecutable Piper.exe",
-        "webui_conf_voice_browse_title": "Buscar archivo"
+        "webui_conf_voice_browse_title": "Buscar archivo",
+        "webui_chat_archive_open": "Abrir Archivo",
+        "webui_chat_archive_close": "Ocultar Archivo",
+        "webui_chat_archive_view_active": "Ver Chats Activos",
+        "webui_chat_archive_restore": "Restaurar",
+        "webui_chat_archive_confirm": "¿Archivar esta conversación? Se ocultará pero no se eliminará.",
+        "webui_chat_unarchive_confirm": "¿Restaurar esta conversación del archivo?",
+        "webui_chat_delete": "Eliminar",
+        "webui_chat_delete_confirm": "¿Eliminar esta conversación? Esta operación no se puede deshacer.",
+        "webui_chat_rename_hint": "Doble clic para renombrar",
+        "webui_chat_rename_prompt": "Renombrar conversación:"
     }
 }

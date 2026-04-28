@@ -716,6 +716,16 @@
         "webui_help_install_svc": "Installa Servizio",
         "webui_help_uninstall_svc": "Rimuovi Servizio",
         "webui_help_diag_log_title": "Output Diagnostica",
-        "webui_media_clear_all": "Svuota Tutti i Media Generati"
+        "webui_media_clear_all": "Svuota Tutti i Media Generati",
+        "webui_chat_archive_open": "Apri Archivio",
+        "webui_chat_archive_close": "Nascondi Archivio",
+        "webui_chat_archive_view_active": "Vedi Chat Attive",
+        "webui_chat_archive_restore": "Ripristina",
+        "webui_chat_archive_confirm": "Chiudere questa conversazione? Verrà nascosta ma non eliminata dal database.",
+        "webui_chat_unarchive_confirm": "Ripristinare questa conversazione dall'archivio?",
+        "webui_chat_delete": "Elimina",
+        "webui_chat_delete_confirm": "Eliminare questa conversazione? L'operazione non è reversibile.",
+        "webui_chat_rename_hint": "Doppio click per rinominare",
+        "webui_chat_rename_prompt": "Rinomina conversazione:"
     }
 }
