@@ -2,7 +2,7 @@
 # Zentra Core - Restart Tray Icon
 
 echo ""
-echo " [*] Ripristino icona della barra delle applicazioni (Tray Icon)..."
+echo " [*] Restoring system tray icon..."
 echo ""
 
 # Detect Python
@@ -17,7 +17,7 @@ fi
 # Run the tray app in background (quietly)
 nohup $PY_CMD -m zentra.tray.tray_app >/dev/null 2>&1 &
 
-echo " [+] Comando inviato. L'icona apparira' a breve."
+echo " [+] Command sent. The icon will appear shortly."
 echo ""
 sleep 1
 exit 0

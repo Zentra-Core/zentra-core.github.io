@@ -4,7 +4,7 @@ title Zentra Core - Restart Tray Icon
 color 0B
 
 echo.
-echo  [*] Ripristino icona della barra delle applicazioni (Tray Icon)...
+echo  [*] Restoring system tray icon...
 echo.
 
 :: Detect PythonW (Windowless)
@@ -20,8 +20,8 @@ if exist "venv\Scripts\pythonw.exe" (
 :: Run the tray app in detached mode
 start "" %PYTHONW_CMD% -m zentra.tray.tray_app
 
-echo  [+] Comando inviato. L'icona apparira' nella barra di sistema.
-echo  [!] Questa finestra si chiudera' tra 2 secondi...
+echo  [+] Command sent. The icon will appear in the system tray.
+echo  [!] This window will close in 2 seconds...
 echo.
 timeout /t 2 >nul
 exit

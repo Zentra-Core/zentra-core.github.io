@@ -142,7 +142,7 @@ function renderSessionList() {
             const title      = escapeHistoryHtml(s.title || 'Chat senza titolo');
             const isNormal   = s.privacy_mode === 'normal';
             const actionIcon  = isNormal ? (window.chatHistoryState.showArchived ? '♻️' : '✖️') : '🗑️';
-            const actionTitle = isNormal ? (window.chatHistoryState.showArchived ? 'Ripristina' : 'Chiudi (Archivia)') : 'Elimina';
+            const actionTitle = isNormal ? (window.chatHistoryState.showArchived ? (window.I18N?.webui_chat_archive_restore || 'Restore') : (window.I18N?.webui_chat_archive_close || 'Archive')) : (window.I18N?.webui_chat_delete || 'Delete');
             const actionFn    = isNormal
                 ? `window.archiveChatSession(event, '${s.id}', ${!window.chatHistoryState.showArchived})`
                 : `window.deleteChatSession(event, '${s.id}')`;
@@ -152,7 +152,7 @@ function renderSessionList() {
           <div class="history-item-main">
             <span class="history-icon">${modeIcon || '💬'}</span>
             <div class="history-item-info">
-              <div class="history-title" title="Doppio click per rinominare" ondblclick="window.startRenameSession(event, '${s.id}')">${title}</div>
+              <div class="history-title" title="${window.I18N?.webui_chat_rename_hint || 'Double click to rename'}" ondblclick="window.startRenameSession(event, '${s.id}')">${title}</div>
               <div class="history-meta">${timeStr} · ${msgCount} msg</div>
             </div>
           </div>
@@ -243,8 +243,8 @@ window.activateChatSession = async function (sessionId) {
 window.archiveChatSession = async function (e, sessionId, archiveState = true) {
     e.stopPropagation();
     const msg = archiveState 
-        ? "Chiudere questa conversazione? Verrà nascosta ma non eliminata dal database."
-        : "Ripristinare questa conversazione dall'archivio?";
+        ? (window.I18N?.webui_chat_archive_confirm || "Archive this conversation? It will be hidden but not deleted.")
+        : (window.I18N?.webui_chat_unarchive_confirm || "Restore this conversation from the archive?");
         
     if (!confirm(msg)) return;
     
@@ -273,7 +273,9 @@ window.toggleShowArchived = async function() {
     const btn = document.getElementById('toggle-archive-btn');
     if (btn) {
         btn.textContent = window.chatHistoryState.showArchived ? '💬' : '📂';
-        btn.title = window.chatHistoryState.showArchived ? 'Vedi Chat Attive' : 'Vedi Archivio';
+        btn.title = window.chatHistoryState.showArchived 
+            ? (window.I18N?.webui_chat_archive_view_active || 'View Active Chats') 
+            : (window.I18N?.webui_chat_archive_open || 'Open Archive');
         btn.style.opacity = window.chatHistoryState.showArchived ? '1' : '0.5';
     }
     await window.loadChatSessions();
@@ -281,7 +283,7 @@ window.toggleShowArchived = async function() {
 
 window.deleteChatSession = async function (e, sessionId) {
     e.stopPropagation();
-    if (!confirm('Eliminare questa conversazione? L\'operazione non è reversibile.')) return;
+    if (!confirm(window.I18N?.webui_chat_delete_confirm || 'Delete this conversation? This cannot be undone.')) return;
     await _historyPost(`/api/chat/sessions/${sessionId}`, {}, 'DELETE');
     if (window.chatHistoryState.activeSessionId === sessionId) {
         if (window._clearChatDOM) window._clearChatDOM();
@@ -318,7 +320,7 @@ window.startRenameSession = async function (e, sessionId) {
     e.stopPropagation();
     const item = e.currentTarget;
     const current = item.textContent.trim();
-    const newName = prompt('Rinomina conversazione:', current);
+    const newName = prompt(window.I18N?.webui_chat_rename_prompt || 'Rename conversation:', current);
     if (!newName || newName === current) return;
     const res = await _historyPost(`/api/chat/sessions/${sessionId}`, { title: newName }, 'PATCH');
     if (res.ok) await window.loadChatSessions();
