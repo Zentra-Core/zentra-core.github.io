@@ -631,14 +631,38 @@ def show_web_access_info(config):
     from zentra.ui.ui_updater import get_cached_L
     L = get_cached_L()
     
-    # We do NOT use print_scrolling here because we want natural flow from Row 6 at boot
-    print(f"{Fore.CYAN}┌{'─' * (L-2)}┐{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}│{Style.RESET_ALL} {Fore.YELLOW}{'WEB INTERFACE ACCESS'.center(L-4)}{Style.RESET_ALL} {Fore.CYAN}│{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}├{'─' * (L-2)}┤{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}│{Style.RESET_ALL}  • {Fore.WHITE}Chat:  {Style.RESET_ALL} {base_url}/chat".ljust(L-1+13) + f"{Fore.CYAN}│{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}│{Style.RESET_ALL}  • {Fore.WHITE}Config:{Style.RESET_ALL} {base_url}/zentra/config/ui".ljust(L-1+13) + f"{Fore.CYAN}│{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}│{Style.RESET_ALL}  • {Fore.WHITE}Drive: {Style.RESET_ALL} {base_url}/drive".ljust(L-1+13) + f"{Fore.CYAN}│{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}└{'─' * (L-2)}┘{Style.RESET_ALL}")
+    # Helper specifically for this function to calculate visible width
+    import re
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    def get_visible_len(s):
+        return len(ansi_escape.sub('', s))
+
+    # Box Drawing
+    border_color = Fore.CYAN
+    title_color = Fore.YELLOW
+    label_color = Fore.WHITE
+    
+    # Top border
+    print(f"{border_color}┌{'─' * (L-2)}┐{RESET}")
+    
+    # Title row
+    title_text = "WEB INTERFACE ACCESS"
+    pad = (L - 2 - len(title_text)) // 2
+    pad_r = (L - 2 - len(title_text)) - pad
+    print(f"{border_color}│{RESET}{' ' * pad}{title_color}{title_text}{RESET}{' ' * pad_r}{border_color}│{RESET}")
+    
+    # Separator
+    print(f"{border_color}├{'─' * (L-2)}┤{RESET}")
+    
+    # Rows
+    for label, url_path in [("Chat:  ", "/chat"), ("Config:", "/zentra/config/ui"), ("Drive: ", "/drive")]:
+        left_part = f"  • {label_color}{label}{RESET} {base_url}{url_path}"
+        visible_l = get_visible_len(left_part)
+        padding = max(0, L - 2 - visible_l)
+        print(f"{border_color}│{RESET}{left_part}{' ' * padding}{border_color}│{RESET}")
+
+    # Bottom border
+    print(f"{border_color}└{'─' * (L-2)}┘{RESET}")
     print()
 
 # --- Readline-style prompt state ---
