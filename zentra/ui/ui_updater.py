@@ -14,17 +14,35 @@ from zentra.ui import graphics
 from zentra.core.system import module_loader
 from zentra.ui.interface import get_hardware_row
 
-# Blocco globale per proteggere l'accesso simultaneo allo stdout
-stdout_lock = threading.Lock()
-
-DASHBOARD_ROW = 3
-_L = 90
-
 _config_ref     = None
 _state_ref      = None
 _dashboard_mod  = None
 _updater_active = False
 _updater_thread = None
+_cached_L       = 115
+_cached_H       = 30
+
+# Global block to protect simultaneous stdout access
+stdout_lock = threading.Lock()
+
+def get_cached_L():
+    global _cached_L
+    return _cached_L
+
+def get_cached_H():
+    global _cached_H
+    return _cached_H
+
+def update_cached_L():
+    global _cached_L, _cached_H
+    try:
+        import shutil
+        size = shutil.get_terminal_size((115, 30))
+        _cached_L = max(90, size.columns - 1)
+        _cached_H = max(20, size.lines)
+    except:
+        pass
+    return _cached_L
 
 # --- Win32 API per il cursore (già presente nel tuo file, lo manteniamo)
 if os.name == 'nt':
@@ -77,61 +95,65 @@ def _update_title_bar(row_text):
     except:
         pass
 
+def update_ui_in_place(icon_instance, config, state, dashboard_mod):
+    """Updates the TUI header Rows 1-5 using ANSI absolute positioning."""
+    from zentra.ui import interface
+    if not _updater_active:
+        return
+        
+    L = get_cached_L()
+    
+    # Render rows
+    row1 = interface.get_header_row(L)
+    row2 = interface.get_system_menu_row(L)
+    row3 = interface.get_status_bar(config, state.voice_status, state.listening_status, state.system_status, L, ptt_status=state.push_to_talk)
+    row4 = interface.get_hardware_row(config, dashboard_mod)
+    row5 = interface.get_ptt_hint_row(L)
+    
+    with stdout_lock:
+        # Save cursor position before touching the header rows
+        sys.stdout.write("\0337")
+        # Update rows 1-5 with absolute ANSI positioning
+        sys.stdout.write("\033[1;1H" + row1)
+        sys.stdout.write("\033[2;1H" + row2)
+        sys.stdout.write("\033[3;1H" + row3)
+        sys.stdout.write("\033[4;1H" + row4)
+        sys.stdout.write("\033[5;1H" + row5)
+        # Restore cursor to exactly where it was before (prompt line during input, body during boot)
+        sys.stdout.write("\0338")
+        sys.stdout.flush()
+
 def _update_dashboard_os(text, row_index):
     """
-    Intelligent Console Update.
-    - If user is scrolling history: Updates absolute buffer rows 1-3 (Safe).
-    - If user is at prompt: Updates Row 1-3 only if they are still visible.
-    - Prevents duplication in history and viewport jumps.
+    Intelligent Console Update using ANSI and Win32 fallback.
     """
-    if os.name == 'nt':
-        try:
-            handle = kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
-            csbi = CONSOLE_SCREEN_BUFFER_INFO()
-            if kernel32.GetConsoleScreenBufferInfo(handle, ctypes.byref(csbi)):
-                # Detect if we are at the bottom of the prompt
-                at_bottom = csbi.srWindow.Bottom >= csbi.dwCursorPosition.Y - 2
-                
-                if at_bottom:
-                    # If we are at the bottom, Row 3 must be visible to be updated.
-                    # Typical terminal height is 30, so if prompt is > 30, Row 3 is gone.
-                    if csbi.dwCursorPosition.Y > 30:
-                        return # Scrolled off, stop console updates to keep history clean
-                
-                # Use absolute Buffer positioning (Safe, prevents jumps)
-                old_pos = csbi.dwCursorPosition
-                target_pos = COORD(0, row_index - 1)
-                kernel32.SetConsoleCursorPosition(handle, target_pos)
-                sys.stdout.write(text.rstrip() + "\033[K")
-                sys.stdout.flush()
-                kernel32.SetConsoleCursorPosition(handle, old_pos)
-                return
-        except: pass
-
-    # Non-Windows fallback
+    # Generic ANSI fallback (Safe, but might flicker on some terminals)
     sys.stdout.write(f"\0337\033[{row_index};1H\033[K{text}\033[0m\0338")
     sys.stdout.flush()
 
 def _update_cycle(interval: float):
     global _updater_active
     while _updater_active:
-        row = get_hardware_row(config=None, dashboard_mod=_dashboard_mod)
-        if _updater_active:
-            with stdout_lock:
-                # 1. Update title bar (Clean)
-                _update_title_bar("")
-                
-                # 2. RESTORED: Update dashboard in Row 4 of the screen
-                # ONLY if we are at the bottom to prevent scroll-jumps.
-                if is_viewport_at_bottom():
-                    # Row 4 is the hardware row in the five-row layout
-                    _update_dashboard_os(row, 4)
-        
-        # Wait in small intervals to allow prompt termination
-        for _ in range(int(interval * 10)):
-            if not _updater_active:
-                break
-            time.sleep(0.1)
+        try:
+            # Reload config to pick up changes from the WebUI (separate process)
+            cfg_manager = _config_ref
+            if cfg_manager:
+                # We call the full update that handles rows 1-5
+                update_ui_in_place(None, cfg_manager.config, _state_ref, _dashboard_mod)
+            
+            # Wait in small intervals to allow prompt termination
+            for _ in range(int(interval * 10)):
+                if not _updater_active:
+                    break
+                time.sleep(0.1)
+        except Exception as e:
+            # Prevent thread death, log error to standard logger if available
+            try:
+                from zentra.core.logging import logger
+                logger.debug(f"UI Updater Thread Error: {e}")
+            except:
+                pass
+            time.sleep(1) # Prevent tight crash loop
 
 def start(config_manager, state_manager, dashboard_module, interval: float = 2.0):
     global _config_ref, _state_ref, _dashboard_mod, _updater_active, _updater_thread

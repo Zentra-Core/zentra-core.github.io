@@ -1,4 +1,19 @@
 {
+    "DASHBOARD": {
+        "description": "Hardware monitoring and AI backend status.",
+        "commands": {
+            "get_backend_status": "Verifies if the AI backend (Ollama, Kobold, or Cloud) is online and ready.",
+            "get_full_dashboard": "Returns a complete report of all hardware resources and AI backend status.",
+            "get_gpu_status": "Returns the video card (GPU) status, including VRAM usage and thermal/computational load.",
+            "get_system_resources": "Returns a summary of system CPU and RAM usage."
+        },
+        "status": "ONLINE (Telemetry active)",
+        "example": "",
+        "routing_instructions": "",
+        "is_class_based": true,
+        "icon": "",
+        "category": "PLUGINS"
+    },
     "EXECUTOR": {
         "description": "Safe Python execution (AST Sandbox) and System Control.",
         "commands": {
@@ -21,23 +36,6 @@
             "refresh_registry": "Forces a re-read and update of the central capabilities registry (rescans plugins)."
         },
         "status": "ONLINE",
-        "example": "",
-        "routing_instructions": "",
-        "is_class_based": true,
-        "icon": "",
-        "category": "PLUGINS"
-    },
-    "MCP_BRIDGE": {
-        "description": "Bridge to Model Context Protocol (MCP) servers",
-        "commands": {
-            "call_tool": "Executes an MCP tool.",
-            "get_mcp_schemas": "Hook used by Zentra's module_docs.py to merge tools.",
-            "list": "Method",
-            "reload": "Method",
-            "search": "Search for MCP servers on Smithery or MCPSkills (mcp-get).",
-            "status": "Method"
-        },
-        "status": "No MCP servers connected.",
         "example": "",
         "routing_instructions": "",
         "is_class_based": true,
@@ -172,17 +170,5 @@
         "is_class_based": true,
         "icon": "",
         "category": "PLUGINS"
-    },
-    "MCP_EVERYTHING": {
-        "description": "External Tool Provider (everything) via Model Context Protocol.",
-        "commands": {
-            "<dynamic_tools>": "Tools are dynamically discovered upon connection."
-        },
-        "status": "EXTERNAL",
-        "example": "",
-        "routing_instructions": "Native LLM Function Calling exposed seamlessly.",
-        "is_class_based": false,
-        "is_mcp": true,
-        "server_name": "everything"
     }
 }

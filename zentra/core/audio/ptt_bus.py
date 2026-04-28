@@ -37,6 +37,7 @@ _log_file = os.path.join(_log_dir, "ptt_bus.log")
 fh = logging.FileHandler(_log_file, encoding='utf-8', mode='a')
 fh.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
 ptt_log.addHandler(fh)
+ptt_log.propagate = False  # Avoid double-logging to root
 
 def debug_log(msg: str):
     """Log to both Zentra system log and dedicated ptt_bus.log"""
@@ -51,7 +52,7 @@ def info_log(msg: str):
 info_log(f"PTT Bus Module loaded (pynput engine initialized). Log: {_log_file}")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SHARED STATE
+# SHARED STATE & CACHE
 # ─────────────────────────────────────────────────────────────────────────────
 
 ptt_active: bool = False          # Read by listen.py
@@ -59,6 +60,31 @@ _state_ref = None                 # Optional StateManager reference
 _last_source: str = ""            # For UI feedback / debugging
 _listeners: list = []             # Active pynput listeners
 _hb_stop_event = None
+
+# Cache for PTT configuration to avoid reloading inside hooks
+_ptt_cache = {
+    "enabled": False,
+    "hotkey": "ctrl+shift",
+    "custom_key": "",
+    "sources": {"keyboard_hotkey": True, "media_play_pause": False, "custom_key": False}
+}
+
+def update_cache():
+    """Updates the local cache from the actual device_manager config."""
+    global _ptt_cache
+    try:
+        from zentra.core.audio.device_manager import get_audio_config
+        cfg = get_audio_config()
+        _ptt_cache["enabled"]    = cfg.get("push_to_talk", False)
+        _ptt_cache["hotkey"]     = cfg.get("ptt_hotkey", "ctrl+shift").lower()
+        _ptt_cache["custom_key"] = cfg.get("custom_ptt_key", "").lower().strip()
+        _ptt_cache["sources"]    = cfg.get("ptt_sources", {"keyboard_hotkey": True})
+        debug_log(f"PTT-BUS: Cache updated. Enabled: {_ptt_cache['enabled']}")
+    except Exception as e:
+        debug_log(f"PTT-BUS: Failed to update cache: {e}")
+
+# Call once immediately to initialize
+update_cache()
 
 
 def _beep_async(freq, duration_ms):
@@ -69,6 +95,15 @@ def _beep_async(freq, duration_ms):
             threading.Thread(target=winsound.Beep, args=(freq, duration_ms), daemon=True).start()
         except:
             pass
+
+def is_session_0():
+    """Detects if we are running in Windows Session 0 (service mode)."""
+    if os.name != 'nt': return False
+    try:
+        import ctypes
+        return ctypes.windll.kernel32.ProcessIdToSessionId(os.getpid()) == 0
+    except:
+        return False
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CORE SIGNAL — called by ALL sources
@@ -133,8 +168,12 @@ _pressed_keys = set()
 
 def _on_press(key):
     """Global key press handler."""
-    global _pressed_keys
+    global _pressed_keys, _ptt_cache
     try:
+        # 1. Check enabled flag from cache
+        if not _ptt_cache["enabled"]:
+            return
+
         from pynput.keyboard import Key
 
         # IGNORE AUTO-REPEAT: If key is already pressed, don't fire events
@@ -147,31 +186,19 @@ def _on_press(key):
         key_name = getattr(key, 'name', None) or getattr(key, 'char', None) or str(key)
         vk = getattr(key, 'vk', None)
 
-        # Log hardware signal to debug log
-        ptt_log.debug(f"[RAW-INPUT] Key: {key_name} | Raw: {key} | VK: {vk}")
-
-        # Extract config for matching
-        from zentra.core.audio.device_manager import get_audio_config
-        cfg = get_audio_config()
-        sources = cfg.get("ptt_sources", {})
-        hotkey_str = cfg.get("ptt_hotkey", "ctrl+shift").lower()
-        custom_key_str = cfg.get("custom_ptt_key", "").lower().strip()
-        push_to_talk_enabled = cfg.get("push_to_talk", False)
-
-        if not push_to_talk_enabled:
-            # Visible in log even when PTT is disabled — useful for diagnostics
-            ptt_log.debug(f"[SIGNAL-IGNORED] PTT disabled in config. Key: {key_name}")
-            return
+        # 2. Use cached settings
+        sources    = _ptt_cache["sources"]
+        hotkey_str = _ptt_cache["hotkey"]
+        custom_key = _ptt_cache["custom_key"]
 
         # 1. Media Play/Pause (BT headset or other HID media key, VK 179)
         if sources.get("media_play_pause", False):
             if key == Key.media_play_pause or key_name == 'media_play_pause' or vk == 179:
-                debug_log(f"HID MEDIA: Play/Pause key detected ({key_name}/VK:{vk}).")
                 fire_ptt("toggle", "media_play_pause")
 
         # 2. Custom Hotkey (Hold behavior)
-        if sources.get("custom_key", False) and custom_key_str:
-            if key_name and key_name.lower() == custom_key_str:
+        if sources.get("custom_key", False) and custom_key:
+            if key_name and key_name.lower() == custom_key:
                 fire_ptt("start", "custom_key")
 
         # 3. Standard Hotkey (Ctrl+Shift) - DEFAULT
@@ -181,30 +208,26 @@ def _on_press(key):
             if is_ctrl and is_shift:
                 fire_ptt("start", "keyboard_hotkey")
 
-    except Exception as e:
-        ptt_log.error(f"Error in on_press handler: {e}")
+    except Exception:
+        pass
 
 def _on_release(key):
     """Global key release handler."""
-    global _pressed_keys
+    global _pressed_keys, _ptt_cache
     try:
+        if not _ptt_cache["enabled"]:
+            if key in _pressed_keys: _pressed_keys.remove(key)
+            return
+
         from pynput.keyboard import Key
         if key in _pressed_keys:
             _pressed_keys.remove(key)
 
         key_name = getattr(key, 'name', None) or getattr(key, 'char', None) or str(key)
-
-        from zentra.core.audio.device_manager import get_audio_config
-        cfg = get_audio_config()
-        sources = cfg.get("ptt_sources", {})
-        hotkey_str = cfg.get("ptt_hotkey", "ctrl+shift").lower()
-        custom_key_str = cfg.get("custom_ptt_key", "").lower().strip()
-        push_to_talk_enabled = cfg.get("push_to_talk", False)
-
-        if not push_to_talk_enabled:
-            return
-
-
+        
+        sources    = _ptt_cache["sources"]
+        hotkey_str = _ptt_cache["hotkey"]
+        custom_key = _ptt_cache["custom_key"]
 
         # 1. Standard Hotkey (Ctrl+Shift) release
         if sources.get("keyboard_hotkey", True) and hotkey_str == "ctrl+shift":
@@ -214,7 +237,7 @@ def _on_release(key):
                 fire_ptt("stop", "keyboard_hotkey")
 
         # 2. Custom key release
-        if custom_key_str and key_name and key_name.lower() == custom_key_str:
+        if custom_key and key_name and key_name.lower() == custom_key:
             fire_ptt("stop", "custom_key")
 
     except Exception:
@@ -222,17 +245,44 @@ def _on_release(key):
 
 
 def _heartbeat_loop(stop_event: threading.Event):
-    """Separate loop just for heartbeat and log flushing."""
-    last_hb = 0
+    """Separate loop for heartbeat, log flushing, and hardware key polling watchdog."""
+    global ptt_active, _pressed_keys, _ptt_cache
+    
+    last_hb = time.time()
     while not stop_event.is_set():
         now = time.time()
-        if now - last_hb > 15:
+        
+        # 1. Hardware watchdog to prevent "stuck" keys (Windows OS often drops Ctrl+Shift releases)
+        if ptt_active and _last_source == "keyboard_hotkey" and _ptt_cache.get("hotkey") == "ctrl+shift" and sys.platform == "win32":
+            try:
+                import ctypes
+                # VK_CONTROL = 0x11, VK_SHIFT = 0x10. Most significant bit is set if pressed.
+                ctrl_down = (ctypes.windll.user32.GetAsyncKeyState(0x11) & 0x8000) != 0
+                shift_down = (ctypes.windll.user32.GetAsyncKeyState(0x10) & 0x8000) != 0
+                
+                if not (ctrl_down and shift_down):
+                    # Hardware disagrees with pynput (key was released but event dropped)
+                    debug_log("PTT-BUS WATCHDOG: Keys physically released, overriding pynput state.")
+                    
+                    # Force clear the pressed keys array of the modifiers
+                    from pynput.keyboard import Key
+                    for k in [Key.ctrl, Key.ctrl_l, Key.ctrl_r, Key.shift, Key.shift_l, Key.shift_r]:
+                        if k in _pressed_keys:
+                            _pressed_keys.remove(k)
+                            
+                    fire_ptt("stop", "keyboard_hotkey")
+            except Exception as e:
+                pass
+        
+        # 2. Status heartbeat
+        if now - last_hb > 300:  # 5 minutes
             debug_log("[HEARTBEAT] PTT Bus Listener active (pynput engine).")
-            # Flush log handlers
             for h in ptt_log.handlers:
                 h.flush()
             last_hb = now
-        time.sleep(1)
+            
+        # Poll faster if PTT is active to make the watchdog responsive (100ms)
+        time.sleep(0.1 if ptt_active else 1.0)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -248,14 +298,18 @@ def start(state=None):
     time.sleep(0.1)
 
     try:
-        from pynput import keyboard
+        update_cache() # Sync cache before starting
         
-        # Start the global keyboard listener
-        l = keyboard.Listener(on_press=_on_press, on_release=_on_release)
-        l.daemon = True
-        l.start()
-        _listeners.append(l)
-        debug_log("Pynput Global Keyboard Listener started.")
+        if is_session_0():
+            info_log("Skipping pynput listener (Windows Session 0 detected). Relying on Tray/WebUI PTT triggers.")
+        else:
+            from pynput import keyboard
+            # Start the global keyboard listener
+            l = keyboard.Listener(on_press=_on_press, on_release=_on_release)
+            l.daemon = True
+            l.start()
+            _listeners.append(l)
+            debug_log("Pynput Global Keyboard Listener started.")
 
         # Start Heartbeat thread
         _hb_stop_event = threading.Event()
@@ -287,6 +341,7 @@ def stop():
 
 def reload(state=None):
     stop()
+    update_cache()
     start(state)
     info_log("PTT Bus reloaded.")
 

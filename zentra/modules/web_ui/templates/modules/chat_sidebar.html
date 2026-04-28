@@ -26,7 +26,17 @@
 
   {% include 'modules/chat_history_panel.html' %}
 
+  <!-- ── WEB_UI Sidebar Widgets (Shared Extensions) ── -->
+  {% if sidebar_widgets %}
+  <div id="sidebar-widgets-zone">
+    {% for widget in sidebar_widgets %}
+      {% include widget %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
   <!-- ── Audio Controls ── -->
+
   <div class="audio-controls">
     <div class="sidebar-label" style="padding:0 2px;margin-bottom:8px;">🔊 AUDIO</div>
     <div class="audio-toggle-row">
@@ -47,22 +57,7 @@
         transition:opacity .2s;">
       ⏹ Stop Voice
     </button>
-    <div class="mode-label" style="display:flex; justify-content:space-between; align-items:center;">
-      {{ t('webui_voice_routing_in') }}
-      <a href="/zentra/config/ui?tab=voice" target="_blank" style="font-size:12px; text-decoration:none;" title="Configure Hardware Devices">⚙️</a>
-    </div>
-    <select class="mode-selector" id="stt-source-select" onchange="setAudioRouting('stt_source', this.value)" title="Choose capture mode">
-      <option value="system">{{ t('webui_voice_pc_mic') }}</option>
-      <option value="web">{{ t('webui_voice_web_mic') }}</option>
-    </select>
-    <div class="mode-label" style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
-      {{ t('webui_voice_routing_out') }}
-      <a href="javascript:void(0)" onclick="testSidebarAudio()" style="font-size:10px; color:var(--accent); text-decoration:none;">🧪 Test</a>
-    </div>
-    <select class="mode-selector" id="tts-dest-select" onchange="setAudioRouting('tts_destination', this.value)" title="Choose output point">
-      <option value="system">{{ t('webui_voice_pc_speaker') }}</option>
-      <option value="web">{{ t('webui_voice_web_speaker') }}</option>
-    </select>
+
   </div>
 
 

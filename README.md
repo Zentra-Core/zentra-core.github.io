@@ -3,7 +3,7 @@
   <img src="https://raw.githubusercontent.com/Zentra-Core/zentra-core.github.io/main/zentra/assets/Zentra_Core_Logo.jpg" width="400" alt="Zentra Logo">
 </p>
 
-# Zentra Core - Version 0.18.2 (Runtime Alpha)
+# Zentra Core - Version 0.19.0 (Runtime Alpha)
 Language: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP.md)
 
 # 🤖 Zentra Core
@@ -12,7 +12,7 @@ Language: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_E
 ---
 
 > [!IMPORTANT]
-> **Runtime Alpha Status**: Zentra Core is currently in `v0.18.2`. This is a Local AI Operating Layer that bridges high-level reasoning with root-level system execution.
+> **Runtime Alpha Status**: Zentra Core is currently in `v0.19.0`. This is a Local AI Operating Layer that bridges high-level reasoning with root-level system execution.
 
 ## 🚀 Overview
 **Zentra Core** is a **Native Modular AI Operating System**: a private, local-first ecosystem that bridges AI reasoning with root-level system execution and advanced networking. It transforms local hardware into a sovereign digital entity through an integrated OS-style dashboard and professional-grade security infrastructure.
@@ -22,11 +22,11 @@ Built on three core pillars:
 * ⚡ **Extreme Speed** — Optimized native architecture and high-performance plugin system for real-time responsiveness.
 * 🧊 **Total Simplicity** — Professional OS-style dashboard and a modular design that makes advanced AI orchestration intuitive.
 
-Now fully migrated to a **stable Runtime Alpha architecture**, Zentra 0.18.2 offers a dedicated Web Interface (Chat + Config) and complete Internationalization. Powered by **LiteLLM**, it supports Ollama, KoboldCpp, and major cloud providers with real-time streaming and local TTS.
+Now fully migrated to a **stable Runtime Alpha architecture**, Zentra 0.19.0 offers a dedicated Web Interface (Chat + Config) and complete Internationalization. Powered by **LiteLLM**, it supports Ollama, KoboldCpp, and major cloud providers with real-time streaming and local TTS.
 
 ---
 
-## ✨ Key Features (v0.18.2)
+## ✨ Key Features (v0.19.0)
 * 🎨 **Flux Prompt Studio** — Real-time prompt engineering for Flux.1 with automatic sidecar metadata persistence.
 * 🖼️ **Image Metadata Injection** — Generative AI results now include hidden JSON sidecars (.txt) containing prompt, seed, and sampler info for professional workflows.
 * 🎭 **Enhanced Chat UI** — New Chat headers with visible User/Persona names, timestamps, and improved message action positioning (Copy/Edit/Regenerate).
@@ -52,7 +52,8 @@ The AI generates structured commands that are interpreted and executed through t
 
 ---
 
-## ⚡ Quick Start
+## ⚡ Quick Start (One-Click Installation)
+The easiest way to install and configure Zentra Core from scratch is using the **Universal Setup Wizard**.
 
 ### 1. Clone the repository
 ```bash
@@ -60,15 +61,34 @@ git clone https://github.com/Zentra-Core/zentra-core.github.io.git
 cd zentra-core.github.io
 ```
 
-### 2. Install dependencies
-```bash
-pip install -r requirements.txt
+### 2. Launch the Setup Wizard
+Run the bootstrap script for your platform. This will automatically check for Python, install dependencies, and launch the configuration wizard in your browser.
+
+**Windows:**
+```powershell
+.\START_SETUP_HERE_WIN.bat
 ```
 
-### 3. Run Zentra:
+**Linux:**
 ```bash
-python main.py
+bash START_SETUP_HERE_LINUX.sh
 ```
+
+### 3. Manual Components & Utility Scripts
+If you prefer to run specific components or perform maintenance manually, use these dedicated scripts:
+
+| Platform | Script | Description |
+| :--- | :--- | :--- |
+| **All** | `main.py` | Starts the full system (Tray + WebUI + Backend) |
+| **Windows** | `RESTART_TRAY_ICON_WIN.bat` | Restore the tray icon if accidentally closed |
+| **Linux** | `RESTART_TRAY_ICON_LINUX.sh` | Restore the tray icon if accidentally closed |
+| **Windows** | `scripts\windows\run\ZENTRA_WEB_RUN_WIN.bat` | Launches ONLY the Web Interface & Server |
+| **Linux** | `scripts/linux/run/zentra_web_run.sh` | Launches ONLY the Web Interface & Server |
+| **Windows** | `scripts\windows\run\ZENTRA_CONSOLE_RUN_WIN.bat` | Launches ONLY the Terminal Console (TUI) |
+| **Linux** | `scripts/linux/run/ZENTRA_CONSOLE_RUN.sh` | Launches ONLY the Terminal Console (TUI) |
+| **Windows** | `scripts\windows\setup\INSTALL_ZENTRA_WIN.bat` | Manual dependency install & Piper setup |
+| **Linux** | `scripts/linux/setup/INSTALL_ZENTRA_LINUX.sh` | Manual dependency install & Piper setup |
+
 ### 4. Configuration & First Run
 Zentra is designed for a professional "download-and-play" experience.
 - On your first run, the system will detect that `system.yaml` and `routing_overrides.yaml` are missing.
@@ -85,6 +105,12 @@ We strongly recommend changing the password immediately from the **Users Tab** i
 
 **Password Recovery:**
 If you get locked out, run `python scripts/reset_admin.py` from the terminal to force a new password, or manually delete the `memory/users.db` file to reset the system defaults.
+
+### 🛡️ Stealth Mode (No Windows)
+If you want Zentra Core to run completely in the background without any visible terminal windows:
+1.  **Use the Tray Icon**: Launch Zentra via the tray icon. It will manage the system components invisibly in the background.
+3.  **Silent Startup**: Use `START_ZENTRA_SILENT_WIN.vbs` for a 100% invisible launch (no console window).
+3.  **Manual Recovery**: If you accidentally close the tray icon, use `START_ZENTRA_TRAY_WIN.bat`.
 
 ---
 
@@ -169,7 +195,7 @@ Zentra Core uses a modular documentation system localized in EN, IT, and ES.
 
 ### Local Access (Modular)
 Detailed guides are located in the `docs/` folder:
-- 📖 **[Unified Guide](docs/UNIFIED_GUIDE_EN.md)**: Everything you need to know about v0.17.0.
+- 📖 **[Unified Guide](docs/UNIFIED_GUIDE_EN.md)**: Everything you need to know about v0.19.0.
 - 🏗️ **[Technical Guide](docs/tech/)**: (Admin/Dev) System architecture and OOP details.
 
 

@@ -20,9 +20,6 @@ function populateAudioUI() {
 
     setCheck('sys-mic-status', (audioConfig || {}).listening_status ?? false);
     setCheck('sys-voice-status', (audioConfig || {}).voice_status ?? false);
-    setVal('stt-source', (audioConfig || {}).stt_source || 'system');
-    setVal('tts-destination', (audioConfig || {}).tts_destination || 'web');
-    setVal('audio-mode', (audioConfig || {}).audio_mode || 'console');
 
     if (audioDevices) {
         const inSel = document.getElementById('audio-input-device');
@@ -54,151 +51,127 @@ function buildAudioPayload() {
     const obj = {};
     obj.listening_status = document.getElementById('sys-mic-status').checked;
     obj.voice_status     = document.getElementById('sys-voice-status').checked;
-    
+
     obj.piper_path       = document.getElementById('v-piper').value;
     const pdir = sysOptions.piper_dir || 'C:\\piper';
     const sel  = document.getElementById('v-onnx-model').value;
     obj.onnx_model       = (sel.includes('\\') || sel.includes('/')) ? sel : pdir + '\\' + sel;
-    
+
     obj.speed            = parseFloat(document.getElementById('v-speed').value) || 1.0;
     obj.noise_scale      = parseFloat(document.getElementById('v-noise').value) || 0.8;
     obj.noise_w          = parseFloat(document.getElementById('v-noisew').value) || 1.0;
     obj.sentence_silence = parseFloat(document.getElementById('v-silence').value) || 0.2;
-    
+
     obj.energy_threshold = parseInt(document.getElementById('a-threshold').value) || 450;
     obj.silence_timeout  = parseInt(document.getElementById('a-timeout').value) || 5;
     obj.phrase_limit     = parseInt(document.getElementById('a-limit').value) || 15;
-    
-    obj.stt_source = document.getElementById('stt-source').value;
-    obj.tts_destination = document.getElementById('tts-destination').value;
-    const modeEl = document.getElementById('audio-mode');
-    if (modeEl) obj.audio_mode = modeEl.value;
-    
-    const inSel = document.getElementById('audio-input-device');
-    const outSel = document.getElementById('audio-output-device');
-    if (inSel && inSel.value !== "") {
-        obj.input_device_index = parseInt(inSel.value);
-        let txt = inSel.options[inSel.selectedIndex]?.text || '';
-        obj.input_device_name = txt.includes(':') ? txt.split(': ').slice(1).join(': ') : txt;
-    }
-    if (outSel && outSel.value !== "") {
-        obj.output_device_index = parseInt(outSel.value);
-        let txt = outSel.options[outSel.selectedIndex]?.text || '';
-        obj.output_device_name = txt.includes(':') ? txt.split(': ').slice(1).join(': ') : txt;
-    }
-    
+
     return obj;
 }
 
 let currentTestAudio = null;
+
 async function testVoice(mode) {
     const vTextEl = document.getElementById('v-test-text');
-    const text = (vTextEl ? vTextEl.value : "") || "Test di Zentra Core, tutto funziona correttamente.";
+    const text = (vTextEl ? vTextEl.value : '') || 'Zentra Core test, everything is working correctly.';
     const sts = document.getElementById('v-test-status');
     const stopBtn = document.getElementById('v-test-stop');
-    if (sts) sts.textContent = mode === 'web' ? "Generating..." : "Playing on console...";
-    if(stopBtn) stopBtn.style.display = 'inline-block';
-    
+    if (sts) sts.textContent = mode === 'web' ? 'Generating audio...' : 'Playing on server...';
+    if (stopBtn) stopBtn.style.display = 'inline-block';
+
     try {
         const r = await fetch('/api/audio/test', {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: text, mode: mode })
         });
         const data = await r.json();
         if (data.ok) {
             if (mode === 'web' && data.url) {
-                if (sts) sts.textContent = "Playing...";
+                if (sts) sts.textContent = 'Playing...';
                 if (currentTestAudio) currentTestAudio.pause();
                 currentTestAudio = new Audio(data.url);
                 currentTestAudio.play();
-                currentTestAudio.onended = () => { 
-                    if (sts) sts.textContent = "Done."; 
-                    if(stopBtn) stopBtn.style.display='none'; 
+                currentTestAudio.onended = () => {
+                    if (sts) sts.textContent = 'Completed.';
+                    if (stopBtn) stopBtn.style.display = 'none';
                     currentTestAudio = null;
                 };
             } else {
-                if (sts) sts.textContent = data.msg || "Done.";
-                if(mode === 'console') {
-                   setTimeout(() => { if(sts && sts.textContent!=="Generating...") if(stopBtn) stopBtn.style.display='none'; }, 8000);
+                if (sts) sts.textContent = data.msg || 'Completed.';
+                if (mode === 'console') {
+                    setTimeout(() => { if (stopBtn) stopBtn.style.display = 'none'; }, 8000);
                 }
             }
         } else {
-            if (sts) sts.textContent = "Error: " + data.error;
-            if(stopBtn) stopBtn.style.display='none';
+            if (sts) sts.textContent = '❌ ' + (data.error || 'Unknown error.');
+            if (stopBtn) stopBtn.style.display = 'none';
         }
-    } catch(e) {
-        if (sts) sts.textContent = "Request failed.";
-        if(stopBtn) stopBtn.style.display='none';
+    } catch (e) {
+        if (sts) sts.textContent = '❌ Request failed: ' + e.message;
+        if (stopBtn) stopBtn.style.display = 'none';
     }
 }
 
 async function stopVoice() {
     if (currentTestAudio) {
         currentTestAudio.pause();
-        currentTestAudio.src = "";
+        currentTestAudio.src = '';
         currentTestAudio = null;
     }
-    try { await fetch('/api/audio/stop', {method: 'POST'}); } catch(e) {}
+    try { await fetch('/api/audio/stop', { method: 'POST' }); } catch (e) {}
     const stopBtn = document.getElementById('v-test-stop');
-    if(stopBtn) stopBtn.style.display = 'none';
+    if (stopBtn) stopBtn.style.display = 'none';
     const sts = document.getElementById('v-test-status');
-    if(sts) sts.textContent = "Stopped.";
+    if (sts) sts.textContent = 'Stopped.';
 }
 
-async function scanAudioDevices() {
-    const sts = document.getElementById('audio-scan-status');
-    if (sts) sts.textContent = "Scanning... (Wait for beep)";
-    try {
-        const r = await fetch('/api/audio/devices/scan', { method: 'POST' });
-        const data = await r.json();
-        if (data.ok) {
-            if (sts) sts.textContent = `Done. Selected In: ${data.input_device_index}, Out: ${data.output_device_index}`;
-            const rr = await fetch('/api/audio/devices');
-            const rrData = await rr.json();
-            if (rrData.ok) {
-                audioDevices = rrData;
-                if (typeof populateUI === 'function') populateUI();
-            }
-        } else {
-            if (sts) sts.textContent = "Error: " + data.error;
-        }
-    } catch(e) {
-        if (sts) sts.textContent = "Request failed.";
-    }
-}
-
-async function applyAudioDevice() {
-    const sts = document.getElementById('audio-scan-status');
-    const inIdx = document.getElementById('audio-input-device').value;
-    const outIdx = document.getElementById('audio-output-device').value;
-    
-    if (sts) sts.textContent = "Applying...";
-    try {
-        const r = await fetch('/api/audio/devices/select', {
-            method: 'POST',
-            body: JSON.stringify({ input_index: inIdx, output_index: outIdx })
-        });
-        const data = await r.json();
-        if (data.ok) {
-            if (sts) sts.textContent = "Saved to audio configuration.";
-            setTimeout(() => { if(sts && sts.textContent.includes("Saved")) sts.textContent = ""; }, 3000);
-        } else {
-            if (sts) sts.textContent = "Error: " + data.error;
-        }
-    } catch(e) {
-        if (sts) sts.textContent = "Request failed.";
-    }
-}
-
-// Key Listener
+// Key Listener: ESC stops any playing test audio
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') stopVoice();
 });
 
+// ── Auto-detect Piper path (calls the diagnostic fix-paths API) ────────────────
+async function autoFixPiperPath() {
+    const sts = document.getElementById('v-test-status');
+    if (sts) sts.textContent = window.t ? window.t('webui_conf_voice_detecting') : 'Auto-detecting Piper...';
+
+    try {
+        const r = await fetch('/api/system/diagnostic/fix-paths', { method: 'POST' });
+        const data = await r.json();
+        if (data.ok) {
+            if (sts) sts.textContent = 'Path found! Reloading...';
+            setTimeout(() => window.location.reload(), 800);
+        } else {
+            if (sts) sts.textContent = '❌ ' + (data.error || 'Detection failed.');
+        }
+    } catch (e) {
+        if (sts) sts.textContent = '❌ Request failed.';
+    }
+}
+
+// ── Browse for piper.exe via NEW web-native explorer ─────────────────────────
+async function browsePiperPath() {
+    const currentPath = document.getElementById('v-piper').value || 'C:\\Zentra-Core\\bin\\piper';
+    ZentraFilePicker.open({
+        title: window.t('webui_conf_voice_select_piper'),
+        initialPath: currentPath,
+        onSelect: (path) => {
+            document.getElementById('v-piper').value = path;
+            const sts = document.getElementById('v-test-status');
+            if (sts) sts.textContent = '✅ Path selected: ' + path.split('\\').pop();
+            // Trigger auto-save sync if needed
+            if (typeof syncPluginStateToMemory === 'function') syncPluginStateToMemory('VOICE');
+        }
+    });
+}
+
 // Exports for Global Scope
-window.populateAudioUI = populateAudioUI;
+window.populateAudioUI  = populateAudioUI;
 window.buildAudioPayload = buildAudioPayload;
-window.testVoice = testVoice;
-window.stopVoice = stopVoice;
-window.scanAudioDevices = scanAudioDevices;
-window.applyAudioDevice = applyAudioDevice;
+window.testVoice        = testVoice;
+window.stopVoice        = stopVoice;
+window.autoFixPiperPath = autoFixPiperPath;
+
+window.browsePiperPath  = browsePiperPath;
+

@@ -43,7 +43,7 @@ def _run_inference(session_id: str, user_message: str, history: list, cfg_mgr, i
 
     try:
         from zentra.core.agent.loop import AgentExecutor
-        from modules.web_ui.server import get_state_manager
+        from zentra.modules.web_ui.server import get_state_manager
         
         # Instantiate AgentExecutor with shared config and live StateManager
         sm = get_state_manager()
@@ -129,21 +129,31 @@ def generate_voice_file(text: str, voice_cfg: dict) -> str:
         is_windows = os.name == 'nt'
         piper_exe_name = 'piper.exe' if is_windows else 'piper'
         
-        piper_path = voice_cfg.get("piper_path", os.path.join(default_piper_dir, piper_exe_name))
-        model_path = voice_cfg.get("onnx_model", "")
+        default_piper = os.path.join(default_piper_dir, piper_exe_name)
+        default_model = os.path.join(default_piper_dir, "it_IT-paola-medium.onnx")
+
+        piper_path = voice_cfg.get("piper_path", default_piper)
+        model_path = voice_cfg.get("onnx_model", default_model)
         
-        if not os.path.exists(piper_path):
-            _chat_log.info(f"[Audio] Piper.exe not found at {piper_path}")
-            return None
-        if not os.path.exists(model_path):
-            _chat_log.info(f"[Audio] ONNX model not found at {model_path}")
-            return None
+        if not piper_path or not os.path.exists(piper_path):
+            if os.path.exists(default_piper):
+                piper_path = default_piper
+            else:
+                _chat_log.info(f"[Audio] Piper executable not found at {piper_path}")
+                return None
+                
+        if not model_path or not os.path.exists(model_path):
+            if os.path.exists(default_model):
+                model_path = default_model
+            else:
+                _chat_log.info(f"[Audio] ONNX model not found at {model_path}")
+                return None
 
         # Build flags
-        length_scale     = 1.0 / max(0.1, voice_cfg.get("speed", 1.0))
-        noise_scale      = voice_cfg.get("noise_scale", 0.667)
-        noise_w          = voice_cfg.get("noise_w", 0.8)
-        sentence_silence = voice_cfg.get("sentence_silence", 0.2)
+        length_scale     = round(1.0 / max(0.1, voice_cfg.get("speed", 1.0)), 3)
+        noise_scale      = round(voice_cfg.get("noise_scale", 0.667), 3)
+        noise_w          = round(voice_cfg.get("noise_w", 0.8), 3)
+        sentence_silence = round(voice_cfg.get("sentence_silence", 0.2), 3)
 
         # risposta.wav in zentra/media/audio/
         out = os.path.join(AUDIO_DIR, "risposta.wav")
@@ -161,15 +171,28 @@ def generate_voice_file(text: str, voice_cfg: dict) -> str:
         
         _chat_log.info(f"[Audio] Piper command: {' '.join(command)}")
         global _current_piper_proc
-        proc = subprocess.Popen(
-            command,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
+        
+        kwargs = {
+            "stdin": subprocess.PIPE,
+            "stdout": subprocess.PIPE,
+            "stderr": subprocess.PIPE
+        }
+        import sys
+        if sys.platform == "win32":
+            kwargs["creationflags"] = 0x08000000 # CREATE_NO_WINDOW
+            
+        proc = subprocess.Popen(command, **kwargs)
         _current_piper_proc = proc
-        stdout, stderr = proc.communicate(input=clean_text.encode("utf-8"))
-        _current_piper_proc = None
+        
+        try:
+            stdout, stderr = proc.communicate(input=clean_text.encode("utf-8"), timeout=60)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            stdout, stderr = proc.communicate()
+            _chat_log.error("[Audio] Piper TTS generation timed out after 60 seconds")
+            return None
+        finally:
+            _current_piper_proc = None
 
         if proc.returncode != 0:
             _chat_log.error(f"[Audio] Piper failed (code {proc.returncode}): {stderr.decode('utf-8', errors='ignore')}")
@@ -198,51 +221,31 @@ def stop_voice_generation():
 
 def _maybe_generate_tts(text: str, cfg_mgr):
     """
-    Generate a WAV file via Piper for web playback.
-
-    Logic:
-      - tts_destination == "system" → play via PC speakers (system audio)
-      - tts_destination == "web"    → generate WAV file for browser playback
-      - voice_status == False       → skip TTS entirely
+    Generate TTS audio for the WebUI.
+    Since this route is used exclusively by the WebUI client, we unconditionally 
+    generate a WAV file and defer playback to the browser's audio context.
     """
     global _last_audio_path
     try:
         from zentra.core.audio.device_manager import get_audio_config
         voice_cfg  = get_audio_config()
-        
-        voice_on   = voice_cfg.get("voice_status", False)
-        tts_dest   = voice_cfg.get("tts_destination", "web")
-        
-        # [INTELLIGENT ROUTING] If mode is 'auto' or 'web', force web destination 
-        # since we are inside the WebUI chat route.
-        audio_mode = voice_cfg.get("audio_mode", "auto")
-        if audio_mode in ["auto", "web"]:
-            tts_dest = "web"
-            _chat_log.debug(f"[Chat] Auto/Web mode detected. Forcing web destination.")
+        voice_on   = voice_cfg.get("voice_status", True)
 
-        if tts_dest == "system":
-            from zentra.core.audio import voice
-            import threading
-            _chat_log.info(f"[Chat] Redirecting TTS to PC speakers: {text[:30]}...")
-            threading.Thread(target=voice.speak, args=(text,), daemon=True).start()
-            return "system"  # notify UI to show Stop button
-            
-        if tts_dest != "web":
-            return None                     # Not intended for web
-            
         if not voice_on:
-            return None                     # Voice disabled globally
+            _chat_log.debug("[Chat] TTS skipped: voice_status=False.")
+            return None
 
         path = generate_voice_file(text, voice_cfg)
         if path:
             _last_audio_path = path
-            _chat_log.info(f"[Chat] TTS generated successfully -> {path}")
+            _chat_log.info(f"[Chat] TTS → browser WAV: {path}")
             return "web"
+            
         return None
-
     except Exception as e:
         _chat_log.debug(f"[Chat] TTS error: {e}")
         return None
+
 
 
 
@@ -270,16 +273,35 @@ def init_chat_routes(app, cfg_mgr, root_dir: str, logger):
         from flask_login import current_user
         from zentra.core.auth.auth_manager import auth_mgr
         from zentra.core.i18n.translator import get_translator
+        from zentra.core.system.extension_loader import get_sidebar_widgets
         try:
             profile = auth_mgr.get_profile(current_user.username) if current_user.is_authenticated else None
             translations = get_translator().get_translations()
+
+            # Build the list of sidebar widget template paths for Jinja {% include %}
+            # Extension templates dirs are registered in the Jinja ChoiceLoader at boot,
+            # so we only need the bare filename here.
+            _widgets_templates = []
+            for manifest in get_sidebar_widgets():
+                ext_id = manifest.get("extension_id", "")
+                if ext_id:
+                    _widgets_templates.append(f"{ext_id}_widget.html")
+
+
             # Pass Zentra config as 'zconfig' to avoid conflict with Flask's 'config'
-            resp = make_response(render_template("chat.html", profile=profile, zconfig=cfg_mgr.config, translations=translations))
+            resp = make_response(render_template(
+                "chat.html",
+                profile=profile,
+                zconfig=cfg_mgr.config,
+                translations=translations,
+                sidebar_widgets=_widgets_templates,
+            ))
             resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
             resp.headers["Pragma"] = "no-cache"
             return resp
         except Exception as e:
             return f"<h1>chat.html non trovato</h1><p>{e}</p>", 500
+
 
     @app.route("/api/chat", methods=["POST"])
     def api_chat():

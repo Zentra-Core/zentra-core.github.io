@@ -8,8 +8,8 @@ import subprocess
 import os
 import json
 import time
-import keyboard
 import msvcrt
+import sys
 
 from zentra.core.logging import logger
 from zentra.core.constants import AUDIO_DIR
@@ -47,18 +47,10 @@ def _play_wav(wav_path: str, device_index: int = -1):
         try:
             data, sample_rate = sf.read(wav_path, dtype="float32")
             kwargs = {"samplerate": sample_rate, "blocking": False}
-            if device_index >= 0:
-                kwargs["device"] = device_index
             sd.play(data, **kwargs)
             return len(data) / sample_rate
         except Exception as e:
-            # More descriptive error for device index issues
-            error_msg = str(e)
-            if "Invalid device" in error_msg or "PaErrorCode -9996" in error_msg:
-                logger.info("VOICE", f"sounddevice error: Invalid Output Device (index {device_index}). "
-                            f"Please check your Speaker selection in config_audio.json. Falling back to winsound...")
-            else:
-                logger.debug("VOICE", f"sounddevice playback error: {e} — falling back to winsound")
+            logger.debug("VOICE", f"sounddevice playback error: {e} — falling back to winsound")
             # Fall through to winsound below
     # Fallback: winsound (no device selection, async)
     import winsound as ws
@@ -80,8 +72,6 @@ def speak(text, state=None):
         if not audio_cfg.get("voice_status", True):
             return
             
-        output_device    = audio_cfg.get("output_device_index", -1)
-        
         # --- DYNAMIC PATH RESOLUTION ---
         root = _get_project_root()
         default_piper = _os.path.join(root, "bin", "piper", "piper.exe")
@@ -120,7 +110,6 @@ def speak(text, state=None):
         length_scale, noise_scale, noise_w, sentence_silence = 1.0, 0.667, 0.8, 0.2
         piper_path = _os.path.join(root, "bin", "piper", "piper.exe")
         model_path = _os.path.join(root, "bin", "piper", "it_IT-paola-medium.onnx")
-        output_device = -1
 
     is_speaking = True
     if state:
@@ -139,13 +128,16 @@ def speak(text, state=None):
             "-f", _RISPOSTA_WAV
         ]
 
-        proc = subprocess.Popen(
-            command,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=False
-        )
+        kwargs = {
+            "stdin": subprocess.PIPE,
+            "stdout": subprocess.PIPE,
+            "stderr": subprocess.PIPE,
+            "text": False
+        }
+        if sys.platform == "win32":
+            kwargs["creationflags"] = 0x08000000 # CREATE_NO_WINDOW
+        
+        proc = subprocess.Popen(command, **kwargs)
         _current_piper_proc = proc
         stdout, stderr = proc.communicate(input=clean_text.encode('utf-8'))
         _current_piper_proc = None
@@ -161,7 +153,7 @@ def speak(text, state=None):
 
         wav_path = _RISPOSTA_WAV
         if os.path.exists(wav_path):
-            actual_duration = _play_wav(wav_path, device_index=output_device)
+            actual_duration = _play_wav(wav_path, device_index=-1)
 
             if actual_duration is not None:
                 # sounddevice async path: wait exactly actual_duration, checking for stops
@@ -170,11 +162,6 @@ def speak(text, state=None):
                     if not is_speaking:  # API stop_voice() sets this to False
                         sd.stop()
                         break
-                    if keyboard.is_pressed("esc"):
-                        while msvcrt.kbhit(): msvcrt.getch()
-                        if state: state.last_voice_stop = time.time()
-                        stop_voice()
-                        break
                     time.sleep(0.05)
             else:
                 # winsound async path: estimate duration then watch for ESC
@@ -182,11 +169,6 @@ def speak(text, state=None):
                 start_time = time.time()
                 while (time.time() - start_time) < estimated_duration:
                     if not is_speaking:
-                        break
-                    if keyboard.is_pressed("esc"):
-                        while msvcrt.kbhit(): msvcrt.getch()
-                        if state: state.last_voice_stop = time.time()
-                        stop_voice()
                         break
                     time.sleep(0.05)
 

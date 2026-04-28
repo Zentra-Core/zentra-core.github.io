@@ -200,9 +200,9 @@ def start_wake_sequence(config):
     os.system('cls' if os.name == 'nt' else 'clear')
     
     # Use centralized variables from zentra.core.version
-    print(f"{VERDE}{get_version_string()}{RESET}")
-    print(f"{VERDE}{COPYRIGHT}{RESET}")
-    print(f"{'─' * 55}\n")
+    print(f"{CIANO}{get_version_string()}{RESET}")
+    print(f"{CIANO}{COPYRIGHT}{RESET}")
+    print(f"{CIANO}{'─' * 55}{RESET}\n")
     
     print(f"{CIANO}==================================================={RESET}")
     print(f"{CIANO}  {translator.t('welcome', version=VERSION)}{RESET}")
@@ -252,7 +252,7 @@ def start_wake_sequence(config):
     intro_greeting_ui = get_ui_greeting(config)
  
     # Print in UI locale, speak in VOICE language (Always at startup)
-    print_and_speak(f"{VERDE}[SYSTEM] {RESET}" + intro_greeting_ui, intro_greeting_voc)
+    print_and_speak(f"{CIANO}[SYSTEM] {RESET}" + intro_greeting_ui, intro_greeting_voc)
     
     while msvcrt.kbhit():
         msvcrt.getch()

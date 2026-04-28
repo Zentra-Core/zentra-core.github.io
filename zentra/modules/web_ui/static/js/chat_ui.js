@@ -119,7 +119,10 @@ window.refreshStatus = async function() {
     window.ZentraPersonaName = d.persona || 'Zentra';
 
     const isConnected = !!d.model;
-    if (tbM) tbM.textContent = isConnected ? 'Online' : (window.t ? window.t('webui_chat_offline') : 'Offline');
+    if (tbM) {
+        tbM.textContent = isConnected ? 'Online' : (window.I18N?.webui_chat_offline || 'Offline');
+        tbM.style.color = isConnected ? 'var(--green)' : 'var(--red)';
+    }
     const tbDot = document.getElementById('tb-status-dot');
     if (tbDot) {
         tbDot.style.background = isConnected ? 'var(--green)' : 'var(--red)';
@@ -149,12 +152,15 @@ window.refreshStatus = async function() {
     // PTT can only be ON if MIC is also ON — enforce this dependency client-side
     if (window._applyPTTState) window._applyPTTState(micIsOn && pttIsOn);
     
-    const ac = d.audio_config || {};
-    if (window._applyRoutingState) window._applyRoutingState(ac.stt_source || 'system', ac.tts_destination || 'web');
+
 
   } catch(e) {
+    const tbM = document.getElementById('tb-model');
     const tbDot = document.getElementById('tb-status-dot');
-    if (tbM) tbM.textContent = window.t ? window.t('webui_chat_offline') : 'Offline';
+    if (tbM) {
+        tbM.textContent = (window.I18N && window.I18N.webui_chat_offline) ? window.I18N.webui_chat_offline : 'Offline';
+        tbM.style.color = 'var(--red)';
+    }
     if (tbDot) {
         tbDot.style.background = 'var(--red)';
         tbDot.style.boxShadow = '0 0 8px var(--red)';

@@ -21,6 +21,9 @@ PATH_IDENTITY = os.path.join(BASE_DIR, "core_identity.json")
 # Per-user vault paths
 _USERS_DIR = os.path.join(BASE_DIR, "users")
 
+# Cache to prevent duplicate logs during repeated saves
+_initialized_vaults = set()
+
 
 # ── Vault path helpers ─────────────────────────────────────────────────────────
 
@@ -97,7 +100,10 @@ def initialize_user_vault(user_id: str = "admin"):
     ''')
     conn.commit()
     conn.close()
-    logger.info(f"[MEMORY] Vault initialized for user '{user_id}' at: {db}")
+    
+    if user_id not in _initialized_vaults:
+        logger.info(f"[MEMORY] Vault initialized for user '{user_id}' at: {db}")
+        _initialized_vaults.add(user_id)
 
 
 def maybe_clear_on_restart(config: dict, user_id: str = "admin"):

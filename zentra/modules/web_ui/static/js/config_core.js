@@ -435,7 +435,8 @@ async function saveConfig(silent = false) {
           // setTimeout(() => location.reload(), 1500);
       } else {
           // Provide clear visual feedback for silent background saves
-          setSaveMsg('✓ Changes auto-saved', 'ok');
+          const syncedMsg = (I18N.webui_conf_msg_synced || '✓ Changes auto-saved').replace('✅ ', '✓ ');
+          setSaveMsg(syncedMsg, 'ok');
           // Reset any designated elements that should only be active for one save cycle
           document.querySelectorAll('.save-reset').forEach(el => {
               if (el.type === 'checkbox') el.checked = false;
@@ -497,7 +498,11 @@ async function refreshStatus() {
     setSpanText('s-model', d.model || '—');
     
     const isOnline = !!d.model;
-    setSpanText('hdr-model', isOnline ? 'Online' : (window.I18N?.webui_chat_offline || 'Offline'));
+    const hdrModel = document.getElementById('hdr-model');
+    if (hdrModel) {
+        hdrModel.textContent = isOnline ? 'Online' : (window.I18N?.webui_chat_offline || 'Offline');
+        hdrModel.style.color = isOnline ? 'var(--green)' : 'var(--red)';
+    }
     const hdrDot = document.getElementById('hdr-dot');
     if (hdrDot) {
         hdrDot.style.background = isOnline ? 'var(--green)' : 'var(--red)';
@@ -506,12 +511,26 @@ async function refreshStatus() {
     }
     
     // Conditional visibility for system metrics
-    const dashEnabled = window.cfg?.plugins?.DASHBOARD?.enabled !== false;
+    const dsb = window.cfg?.plugins?.DASHBOARD || {};
+    const globalDashEnabled = dsb.enabled !== false;
+    const webuiDashEnabled = dsb.webui_dashboard_enabled !== false;
+    const webuiTelemetryEnabled = dsb.webui_telemetry_enabled !== false;
+    
+    const liveStatusEl = document.getElementById('live-status');
+    if (liveStatusEl) {
+        liveStatusEl.style.display = (globalDashEnabled && webuiDashEnabled) ? 'flex' : 'none';
+    }
+
+    const dashEnabled = globalDashEnabled && webuiDashEnabled && webuiTelemetryEnabled;
     document.querySelectorAll('.dashboard-only').forEach(el => {
         el.style.display = dashEnabled ? '' : 'none';
     });
   } catch(e) {
-    setSpanText('hdr-model', window.I18N?.webui_chat_offline || 'Offline');
+    const hdrModel = document.getElementById('hdr-model');
+    if (hdrModel) {
+        hdrModel.textContent = window.I18N?.webui_chat_offline || 'Offline';
+        hdrModel.style.color = 'var(--red)';
+    }
     const hdrDot = document.getElementById('hdr-dot');
     if (hdrDot) {
         hdrDot.style.background = 'var(--red)';
@@ -755,6 +774,18 @@ document.addEventListener('change', (e) => {
   const tag = e.target.tagName;
   const type = e.target.type;
   if (tag === 'SELECT' || tag === 'TEXTAREA' || type === 'checkbox' || (tag === 'INPUT' && type !== 'file')) {
+    
+    // Universal Sync for data-plugin toggles to prevent duplicated checkbox shadow state overwrites
+    if (e.target.dataset.plugin) {
+        const pluginTag = e.target.dataset.plugin;
+        document.querySelectorAll(`[data-plugin="${pluginTag}"]`).forEach(cb => {
+            if (cb !== e.target) cb.checked = e.target.checked;
+        });
+        if (typeof syncPluginStateToMemory === 'function') {
+            syncPluginStateToMemory(pluginTag, e.target.checked);
+        }
+    }
+
     // Sync Image Gen enabled status between different UI locations
     if (e.target.id === 'igen-enabled') {
         const other = document.querySelector('[data-plugin="IMAGE_GEN"]');
@@ -797,3 +828,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+
+
+// Zentra File Picker integration is now handled by zentra_file_picker.js

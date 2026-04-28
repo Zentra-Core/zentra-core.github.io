@@ -19,8 +19,8 @@ def _get_schema():
     return SystemConfig
 
 # Project root and Zentra package root
-_PROJECT_ROOT = _os.path.normpath(_os.path.join(_os.path.dirname(__file__), "..", ".."))
-_ZENTRA_DIR = _os.path.join(_PROJECT_ROOT, "zentra")
+_PROJECT_ROOT = _os.path.abspath(_os.path.normpath(_os.path.join(_os.path.dirname(__file__), "..", "..")))
+_ZENTRA_DIR = _os.path.abspath(_os.path.normpath(_os.path.join(_PROJECT_ROOT, "zentra")))
 
 _CONFIG_YAML_PATH = _os.path.join(_ZENTRA_DIR, "config", "data", "system.yaml")
 _CONFIG_JSON_PATH = _os.path.join(_ZENTRA_DIR, "config", "data", "system.json")
@@ -133,6 +133,8 @@ class ConfigManager:
                 flag_path = _os.path.join(_PROJECT_ROOT, ".config_saved_by_app")
                 with open(flag_path, "w") as f:
                     f.write("1")
+                # Small safety pause to ensure metadata is flushed on Windows
+                time.sleep(0.05)
             except Exception:
                 pass
 
@@ -273,16 +275,21 @@ class ConfigManager:
             personality_dict = {str(i + 1): name for i, name in enumerate(files)}
             current_dict = self.config.get("ai", {}).get("available_personalities", {})
             
+            # Robust comparison: ensure all keys are strings for a reliable check
+            current_dict_str = {str(k): v for k, v in current_dict.items()} if isinstance(current_dict, dict) else {}
+            
             # --- ROBUST FALLBACK CHECK ---
             active = self.config.get("ai", {}).get("active_personality")
             # Case-insensitive comparison
             files_lower = [f.lower() for f in files]
-            if active and active.lower() not in files_lower:
+            needs_revert = active and active.lower() not in files_lower
+
+            if needs_revert:
                 logger.warning(f"[CONFIG] Active personality '{active}' not found in filesystem. Reverting to {primary}.")
                 self.set(primary, "ai", "active_personality")
 
             # 4. Save if the list changed or if we reverted the active one
-            if personality_dict != current_dict or (active and active.lower() not in files_lower):
+            if personality_dict != current_dict_str or needs_revert:
                 self.set(personality_dict, "ai", "available_personalities")
                 self.save()
                 logger.info("[CONFIG] Personality list synchronized with filesystem.")

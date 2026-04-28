@@ -1,0 +1,10 @@
+{
+    "extension_id": "quick_links",
+    "parent_plugin": "WEB_UI",
+    "display_name": "Quick Links",
+    "version": "1.0.0",
+    "description": "User-managed shortcut links displayed in the chat sidebar. Add any internal or external URL with a custom label and icon.",
+    "sidebar_widget": true,
+    "eager_load": true,
+    "config_schema": {}
+}

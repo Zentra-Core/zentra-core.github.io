@@ -79,6 +79,31 @@ window.loadChatSessions = async function () {
     updateModeUI();
 };
 
+// ─── Date grouping helpers ────────────────────────────────────────────────────
+
+function _dayKey(dateStr) {
+    // Returns 'YYYY-MM-DD' from 'YYYY-MM-DD HH:MM:SS' or ISO string
+    return dateStr ? dateStr.slice(0, 10) : '';
+}
+
+function _dateSeparatorLabel(dayKey) {
+    if (!dayKey) return '';
+    const today     = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const fmt = d => d.toISOString().slice(0, 10);
+
+    if (dayKey === fmt(today))     return window.I18N?.webui_date_today     || 'Oggi';
+    if (dayKey === fmt(yesterday)) return window.I18N?.webui_date_yesterday  || 'Ieri';
+
+    // Formatted date: "Lun 21 Apr"
+    const [y, m, d] = dayKey.split('-').map(Number);
+    const dateObj = new Date(y, m - 1, d);
+    return dateObj.toLocaleDateString(navigator.language || 'it-IT', {
+        weekday: 'short', day: 'numeric', month: 'short'
+    });
+}
+
 function renderSessionList() {
     const container = document.getElementById('chat-history-list');
     if (!container) return;
@@ -91,33 +116,54 @@ function renderSessionList() {
         return;
     }
 
-    container.innerHTML = sessions.map(s => {
-        const isActive = s.id === activeId;
-        const modeIcon = s.privacy_mode === 'incognito' ? '🕵️' :
-                         s.privacy_mode === 'auto_wipe' ? '🧹' : '';
-        const msgCount = s.message_count || 0;
-        const dateStr  = s.updated_at ? s.updated_at.slice(0, 16).replace('T', ' ') : '';
-        const title    = escapeHistoryHtml(s.title || 'Chat senza titolo');
+    // Group sessions by day (updated_at date)
+    const groups = [];   // [ { dayKey, label, sessions[] } ]
+    const keyMap = {};
+    sessions.forEach(s => {
+        const key = _dayKey(s.updated_at || s.created_at || '');
+        if (!keyMap[key]) {
+            keyMap[key] = { dayKey: key, label: _dateSeparatorLabel(key), sessions: [] };
+            groups.push(keyMap[key]);
+        }
+        keyMap[key].sessions.push(s);
+    });
 
-        const isNormal = s.privacy_mode === 'normal';
-        const actionIcon = isNormal ? (window.chatHistoryState.showArchived ? '♻️' : '✖️') : '🗑️';
-        const actionTitle = isNormal ? (window.chatHistoryState.showArchived ? 'Ripristina' : 'Chiudi (Archivia)') : 'Elimina';
-        const actionFn = isNormal ? `archiveChatSession(event, '${s.id}', ${!window.chatHistoryState.showArchived})` : `deleteChatSession(event, '${s.id}')`;
+    let html = '';
+    groups.forEach(group => {
+        // Date separator header
+        html += `<div class="history-date-group"><span class="history-date-label">${escapeHistoryHtml(group.label)}</span></div>`;
 
-        return `
-        <div class="history-item${isActive ? ' active' : ''}" data-id="${s.id}" onclick="activateChatSession('${s.id}')">
+        group.sessions.forEach(s => {
+            const isActive   = s.id === activeId;
+            const modeIcon   = s.privacy_mode === 'incognito' ? '🕵️' :
+                               s.privacy_mode === 'auto_wipe' ? '🧹' : '';
+            const msgCount   = s.message_count || 0;
+            const timeStr    = s.updated_at ? s.updated_at.slice(11, 16) : '';
+            const title      = escapeHistoryHtml(s.title || 'Chat senza titolo');
+            const isNormal   = s.privacy_mode === 'normal';
+            const actionIcon  = isNormal ? (window.chatHistoryState.showArchived ? '♻️' : '✖️') : '🗑️';
+            const actionTitle = isNormal ? (window.chatHistoryState.showArchived ? (window.I18N?.webui_chat_archive_restore || 'Restore') : (window.I18N?.webui_chat_archive_close || 'Archive')) : (window.I18N?.webui_chat_delete || 'Delete');
+            const actionFn    = isNormal
+                ? `window.archiveChatSession(event, '${s.id}', ${!window.chatHistoryState.showArchived})`
+                : `window.deleteChatSession(event, '${s.id}')`;
+
+            html += `
+        <div class="history-item${isActive ? ' active' : ''}" data-id="${s.id}" onclick="window.activateChatSession('${s.id}')">
           <div class="history-item-main">
             <span class="history-icon">${modeIcon || '💬'}</span>
             <div class="history-item-info">
-              <div class="history-title" title="Doppio click per rinominare" ondblclick="startRenameSession(event, '${s.id}')">${title}</div>
-              <div class="history-meta">${dateStr} · ${msgCount} msg</div>
+              <div class="history-title" title="${window.I18N?.webui_chat_rename_hint || 'Double click to rename'}" ondblclick="window.startRenameSession(event, '${s.id}')">${title}</div>
+              <div class="history-meta">${timeStr} · ${msgCount} msg</div>
             </div>
           </div>
           <div class="history-item-actions">
             <button class="history-action-btn" title="${actionTitle}" onclick="${actionFn}">${actionIcon}</button>
           </div>
         </div>`;
-    }).join('');
+        });
+    });
+
+    container.innerHTML = html;
 }
 
 // ─── Session Actions ──────────────────────────────────────────────────────────
@@ -153,9 +199,6 @@ window.newChatSession = async function (mode = null) {
 window.activateChatSession = async function (sessionId) {
     if (sessionId === window.chatHistoryState.activeSessionId) return;
 
-    // Refresh data to ensure counts are accurate
-    if (window.loadChatSessions) await window.loadChatSessions();
-
     // Fetch messages of the clicked session
     const res = await _historyGet(`/api/chat/sessions/${sessionId}/messages`);
     if (!res.ok) {
@@ -185,15 +228,23 @@ window.activateChatSession = async function (sessionId) {
         window.renderHistoryMessages(res.messages || []);
     }
 
-    renderSessionList();
-    updateModeUI();
+    // Refresh the list to reflect active state and update UI components
+    if (window.loadChatSessions) await window.loadChatSessions();
+
+    // On mobile, close the sidebar automatically when a session is activated
+    const overlay = document.getElementById('mobile-overlay');
+    if (overlay && overlay.classList.contains('active')) {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) sidebar.classList.remove('open');
+        overlay.classList.remove('active');
+    }
 };
 
 window.archiveChatSession = async function (e, sessionId, archiveState = true) {
     e.stopPropagation();
     const msg = archiveState 
-        ? "Chiudere questa conversazione? Verrà nascosta ma non eliminata dal database."
-        : "Ripristinare questa conversazione dall'archivio?";
+        ? (window.I18N?.webui_chat_archive_confirm || "Archive this conversation? It will be hidden but not deleted.")
+        : (window.I18N?.webui_chat_unarchive_confirm || "Restore this conversation from the archive?");
         
     if (!confirm(msg)) return;
     
@@ -222,7 +273,9 @@ window.toggleShowArchived = async function() {
     const btn = document.getElementById('toggle-archive-btn');
     if (btn) {
         btn.textContent = window.chatHistoryState.showArchived ? '💬' : '📂';
-        btn.title = window.chatHistoryState.showArchived ? 'Vedi Chat Attive' : 'Vedi Archivio';
+        btn.title = window.chatHistoryState.showArchived 
+            ? (window.I18N?.webui_chat_archive_view_active || 'View Active Chats') 
+            : (window.I18N?.webui_chat_archive_open || 'Open Archive');
         btn.style.opacity = window.chatHistoryState.showArchived ? '1' : '0.5';
     }
     await window.loadChatSessions();
@@ -230,7 +283,7 @@ window.toggleShowArchived = async function() {
 
 window.deleteChatSession = async function (e, sessionId) {
     e.stopPropagation();
-    if (!confirm('Eliminare questa conversazione? L\'operazione non è reversibile.')) return;
+    if (!confirm(window.I18N?.webui_chat_delete_confirm || 'Delete this conversation? This cannot be undone.')) return;
     await _historyPost(`/api/chat/sessions/${sessionId}`, {}, 'DELETE');
     if (window.chatHistoryState.activeSessionId === sessionId) {
         if (window._clearChatDOM) window._clearChatDOM();
@@ -267,7 +320,7 @@ window.startRenameSession = async function (e, sessionId) {
     e.stopPropagation();
     const item = e.currentTarget;
     const current = item.textContent.trim();
-    const newName = prompt('Rinomina conversazione:', current);
+    const newName = prompt(window.I18N?.webui_chat_rename_prompt || 'Rename conversation:', current);
     if (!newName || newName === current) return;
     const res = await _historyPost(`/api/chat/sessions/${sessionId}`, { title: newName }, 'PATCH');
     if (res.ok) await window.loadChatSessions();

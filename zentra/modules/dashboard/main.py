@@ -97,6 +97,26 @@ class DashboardTools:
         self.desc = translator.t("plugin_dashboard_desc")
         
         self.config_schema = {
+            "webui_dashboard_enabled": {
+                "type": "bool",
+                "default": True,
+                "description": translator.t("plugin_dashboard_webui_dashboard_enabled_desc")
+            },
+            "webui_telemetry_enabled": {
+                "type": "bool",
+                "default": True,
+                "description": translator.t("plugin_dashboard_webui_telemetry_enabled_desc")
+            },
+            "console_dashboard_enabled": {
+                "type": "bool",
+                "default": True,
+                "description": translator.t("plugin_dashboard_console_dashboard_enabled_desc")
+            },
+            "console_telemetry_enabled": {
+                "type": "bool",
+                "default": True,
+                "description": translator.t("plugin_dashboard_console_telemetry_enabled_desc")
+            },
             "monitor_interval": {
                 "type": "int",
                 "default": 2,
@@ -132,7 +152,7 @@ class DashboardTools:
         """
         Returns a summary of system CPU and RAM usage.
         """
-        cpu = psutil.cpu_percent(interval=0.1)
+        cpu = psutil.cpu_percent(interval=None)
         ram = psutil.virtual_memory().percent
         return translator.t("plugin_dashboard_stats_cpu_ram", cpu=cpu, ram=ram)
 
@@ -144,7 +164,7 @@ class DashboardTools:
             return "Modulo GPUtil non installato. Impossibile leggere dati GPU."
         
         try:
-            gpus = GPUtil.getGPUs()
+            gpus = safe_get_gpus()
             if not gpus:
                 return "No dedicated GPU detected."
             
@@ -178,7 +198,7 @@ class DashboardTools:
         Returns a complete report of all hardware resources and AI backend status.
         Useful if the user asks 'how are you' or 'system report'.
         """
-        cpu = psutil.cpu_percent(interval=0.1)
+        cpu = psutil.cpu_percent(interval=None)
         ram = psutil.virtual_memory().percent
         
         with _lock:
@@ -190,7 +210,7 @@ class DashboardTools:
 
         if GPUTIL_AVAILABLE:
             try:
-                gpus = GPUtil.getGPUs()
+                gpus = safe_get_gpus()
                 if gpus:
                     gpu = gpus[0]
                     vram_p = (gpu.memoryUsed / gpu.memoryTotal) * 100 if gpu.memoryTotal > 0 else 0
@@ -207,30 +227,98 @@ class DashboardTools:
 # Istanzia pubblicamente lo strumento per l'esportazione verso il Core
 tools = DashboardTools()
 
+class SimpleGPU:
+    def __init__(self, memoryUsed, memoryTotal, load):
+        self.memoryUsed = float(memoryUsed)
+        self.memoryTotal = float(memoryTotal)
+        self.load = float(load)
+
+def safe_get_gpus():
+    if not GPUTIL_AVAILABLE:
+        return []
+        
+    import subprocess
+    try:
+        # Prepariamo tutto il possibile per nascondere la finestra su Windows
+        creationflags = 0x08000000 if sys.platform == "win32" else 0
+        startupinfo = None
+        if sys.platform == "win32":
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            
+        cmd = ["nvidia-smi", "--query-gpu=memory.used,memory.total,utilization.gpu", "--format=csv,noheader,nounits"]
+        proc = subprocess.Popen(
+            cmd, 
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE,
+            creationflags=creationflags,
+            startupinfo=startupinfo,
+            shell=False # Importante: no shell!
+        )
+        out, _ = proc.communicate(timeout=2)
+        if isinstance(out, bytes):
+            out = out.decode('utf-8').strip()
+        else:
+            out = str(out).strip()
+            
+        if not out:
+            return []
+            
+        gpus = []
+        for line in out.split('\n'):
+            vals = line.split(',')
+            if len(vals) >= 3:
+                # Estraiamo i dati. nvidia-smi non restituisce testo inutile con "nounits"
+                mu = vals[0].strip()
+                mt = vals[1].strip()
+                ld = vals[2].strip()
+                
+                # Falback in caso di "Not Supported"
+                if not mu.isdigit(): mu = '0'
+                if not mt.isdigit(): mt = '1'
+                if not ld.isdigit() and not ld.replace('.', '').isdigit(): ld = '0'
+                
+                # GPUtil formatta il load come 0.0 - 1.0 (percentuale diviso 100)
+                load_float = float(ld) / 100.0
+                gpus.append(SimpleGPU(mu, mt, load_float))
+                
+        return gpus
+    except Exception as e:
+        logger.debug(f"Direct nvidia-smi error: {e}")
+        return []
+
 # --- COMPATIBILITY SHIMS (Legacy call support) ---
-def get_stats():
+def get_stats(config=None):
     """Wrapper per compatibilità con interface.py e ui_updater.py"""
-    # Usiamo un dizionario compatibile con il vecchio formato atteso
-    cpu = psutil.cpu_percent(interval=0.1)
-    ram = psutil.virtual_memory().percent
+    # Se abbiamo il config, controlliamo se la telemetria è abilitata per la console
+    dsb_cfg = config.get("plugins", {}).get("DASHBOARD", {}) if config else {}
+    col_tel = dsb_cfg.get("console_telemetry_enabled", True)
     
+    cpu = 0.0
+    ram = 0.0
+    vram_info = "OFF"
+    gpu_load = "OFF"
+    stato_gpu = "OFF"
+
+    if col_tel:
+        cpu = psutil.cpu_percent(interval=None)
+        ram = psutil.virtual_memory().percent
+        
+        if GPUTIL_AVAILABLE:
+            try:
+                gpus = safe_get_gpus()
+                if gpus:
+                    # Su portatili Dual-GPU, ordinare per maggiore VRAM
+                    gpus.sort(key=lambda x: x.memoryTotal, reverse=True)
+                    gpu = gpus[0]
+                    vram_p = (gpu.memoryUsed / gpu.memoryTotal) * 100 if gpu.memoryTotal > 0 else 0
+                    vram_info = f"{int(vram_p)}% ({int(gpu.memoryUsed)}MB/{int(gpu.memoryTotal)}MB)"
+                    gpu_load = f"{int(gpu.load * 100)}%"
+                    stato_gpu = "WAITING" if vram_p > 80 else "READY"
+            except: pass
+
     with _lock:
         b_status = _backend_status
-
-    vram_info = "N/A"
-    gpu_load = "N/A"
-    stato_gpu = "N/A"
-
-    if GPUTIL_AVAILABLE:
-        try:
-            gpus = GPUtil.getGPUs()
-            if gpus:
-                gpu = gpus[0]
-                vram_p = (gpu.memoryUsed / gpu.memoryTotal) * 100 if gpu.memoryTotal > 0 else 0
-                vram_info = f"{int(vram_p)}% ({int(gpu.memoryUsed)}MB/{int(gpu.memoryTotal)}MB)"
-                gpu_load = f"{int(gpu.load * 100)}%"
-                stato_gpu = "WAITING" if vram_p > 80 else "READY"
-        except: pass
 
     return {
         "cpu": cpu,

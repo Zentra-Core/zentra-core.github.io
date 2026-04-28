@@ -170,7 +170,6 @@ async function tryLoadAudio(bubble) {
   window.currentAudio = window.ZentraTTSPlayer;
   badge.appendChild(window.ZentraTTSPlayer);
   bubble.appendChild(badge);
-  showStopVoiceBtn(true);
   
   window.ZentraTTSPlayer.oncanplaythrough = () => {
     console.log("[Audio] Can play through, attempting autoplay...");
@@ -189,10 +188,12 @@ async function tryLoadAudio(bubble) {
   };
 
   window.ZentraTTSPlayer.onplay = () => {
+      showStopVoiceBtn(true);
       fetch('/api/audio/speaking/start', { method: 'POST' }).catch(() => {});
   };
 
   window.ZentraTTSPlayer.onpause = () => {
+      showStopVoiceBtn(false);
       fetch('/api/audio/speaking/stop', { method: 'POST' }).catch(() => {});
   };
 

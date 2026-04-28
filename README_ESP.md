@@ -3,7 +3,7 @@
   <img src="https://raw.githubusercontent.com/Zentra-Core/zentra-core.github.io/main/zentra/assets/Zentra_Core_Logo.jpg" width="400" alt="Logo de Zentra">
 </p>
 
-# Zentra Core - Versión 0.18.2 (Runtime Alpha)
+# Zentra Core - Versión 0.19.0 (Runtime Alpha)
 Idiomas: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ESP.md)
 
 # 🤖 Zentra Core
@@ -12,7 +12,7 @@ Idiomas: [English](README.md) | [Italiano](README_ITA.md) | [Español](README_ES
 ---
 
 > [!IMPORTANT]
-> **Estado Runtime Alpha**: Zentra Core se encuentra actualmente en `v0.18.2`. Es una Capa Operativa de IA local que conecta el razonamiento de alto nivel con la ejecución del sistema a nivel root.
+> **Estado Runtime Alpha**: Zentra Core se encuentra actualmente en `v0.19.0`. Es una Capa Operativa de IA local que conecta el razonamiento de alto nivel con la ejecución del sistema a nivel root.
 
 ## 🚀 Resumen General
 **Zentra Core** es un **Sistema Operativo IA Nativo y Modular**: un ecosistema local que une el razonamiento de IA con la ejecución del sistema a nivel root y redes avanzadas. Transforma el hardware local en una entidad digital soberana a través de un tablero profesional estilo SO y una infraestructura de seguridad avanzada.
@@ -22,11 +22,11 @@ Basado en tres pilares fundamentales:
 * ⚡ **Velocidad Extrema** — Arquitectura nativa optimizada y sistema de complementos de alto rendimiento para una respuesta instantánea.
 * 🧊 **Simplicidad Total** — Tablero profesional estilo SO y diseño modular que hace intuitiva la orquestación de IA avanzada.
 
-Ahora completamente migrado a una **arquitectura estable de Runtime Alpha**, Zentra 0.18.2 ofrece una interfaz Web dedicada (Chat + Config) e internacionalización completa. Gracias a **LiteLLM**, soporta Ollama, KoboldCpp y los principales proveedores de la nube con streaming en tiempo real y TTS local.
+Ahora completamente migrado a una **arquitectura estable de Runtime Alpha**, Zentra 0.19.0 ofrece una interfaz Web dedicada (Chat + Config) e internacionalización completa. Gracias a **LiteLLM**, soporta Ollama, KoboldCpp y los principales proveedores de la nube con streaming en tiempo real y TTS local.
 
 ---
 
-## ✨ Características Principales (v0.18.2)
+## ✨ Características Principales (v0.19.0)
 * 🎨 **Flux Prompt Studio** — Ingeniería de prompts en tiempo real para Flux.1 con persistenza automatica di metadati sidecar.
 * 🖼️ **Image Metadata Injection** — Los resultados de IA generativa ahora incluyen archivos sidecar JSON (.txt) con prompt, semilla e info del sampler para flujos profesionales.
 * 🎭 **Chat UI Mejorada** — Nuevos encabezados de chat con nombres de Usuario/Persona, marcas de tiempo y mejor posición de botones (Copiar/Editar/Regenerate).
@@ -41,7 +41,7 @@ Ahora completamente migrado a una **arquitectura estable de Runtime Alpha**, Zen
 ---
 
 ## 🧠 Cómo Funciona
-**Zentra Core está actualmente en `v0.15.2`.** Este repositorio contiene el motor, el backend, los módulos de razonamiento de IA y la WebUI nativa principal.
+**Zentra Core está actualmente en `v0.19.0`.** Este repositorio contiene el motor, el backend, los módulos de razonamiento de IA y la WebUI nativa principal.
 * **Plugins** → Acciones y capacidades (sistema, web, multimedia, etc.).
 * **Memory** → Identidad y almacenamiento persistente.
 * **UI** → Capa de interacción con el usuario.
@@ -51,7 +51,8 @@ La IA genera comandos estructurados que son interpretados y ejecutados a través
 
 ---
 
-## ⚡ Inicio Rápido
+## ⚡ Inicio Rápido (Instalación One-Click)
+La forma más sencilla de instalar y configurar Zentra Core desde cero es utilizar el **Asistente de Configuración Universal**.
 
 ### 1. Clonar el repositorio
 ```bash
@@ -59,15 +60,41 @@ git clone https://github.com/Zentra-Core/zentra-core.github.io.git
 cd zentra-core.github.io
 ```
 
-### 2. Instalar dependencias
-```bash
-pip install -r requirements.txt
+### 2. Lanzar el Asistente de Configuración
+Ejecuta el script de inicio para tu plataforma. Esto comprobará automáticamente Python, instalará las dependencias e iniciará el asistente de configuración en tu navegador.
+
+**Windows:**
+```powershell
+.\START_SETUP_HERE_WIN.bat
 ```
 
-### 3. Ejecutar Zentra
+**Linux:**
 ```bash
-python main.py
+bash START_SETUP_HERE_LINUX.sh
 ```
+
+### 3. Componentes Manuales y Scripts de Utilidad
+Si prefieres gestionar los componentes por separado o realizar tareas de mantenimiento manual, utiliza estos scripts dedicados:
+
+| Plataforma | Script | Descripción |
+| :--- | :--- | :--- |
+| **Todas** | `main.py` | Inicia el sistema completo (Tray + WebUI + Backend) |
+| **Windows** | `RESTART_TRAY_ICON_WIN.bat` | Restaurar el icono de bandeja si se cerró |
+| **Linux** | `RESTART_TRAY_ICON_LINUX.sh` | Restaurar el icono de bandeja si se cerró |
+| **Windows** | `scripts\windows\run\ZENTRA_WEB_RUN_WIN.bat` | Inicia SOLO la Interfaz Web y el Servidor |
+| **Linux** | `scripts/linux/run/zentra_web_run.sh` | Inicia SOLO la Interfaz Web y el Servidor |
+| **Windows** | `scripts\windows\run\ZENTRA_CONSOLE_RUN_WIN.bat` | Inicia SOLO la Consola de Terminal (TUI) |
+| **Linux** | `scripts/linux/run/ZENTRA_CONSOLE_RUN.sh` | Inicia SOLO la Consola de Terminal (TUI) |
+| **Windows** | `scripts\windows\setup\INSTALL_ZENTRA_WIN.bat` | Instalación manual de dependencias y Piper |
+| **Linux** | `scripts/linux/setup/INSTALL_ZENTRA_LINUX.sh` | Instalación manual de dependencias y Piper |
+
+### 4. Configuración y Primera Ejecución
+
+### 🛡️ Modo Silencioso (Sin Ventanas)
+Si desea que Zentra Core se ejecute completamente en segundo plano sin ventanas de terminal visibles:
+1.  **Usar el Icono de Bandeja**: Inicie Zentra a través del icono de la bandeja. Gestionará los componentes del sistema de forma invisible en segundo plano.
+3.  **Inicio Silencioso**: Use `START_ZENTRA_SILENT_WIN.vbs` para un inicio 100% invisible (sin ventanas de consola).
+3.  **Recuperación Manual**: Si cierra accidentalmente el icono, use `START_ZENTRA_TRAY_WIN.bat`.
 
 ---
 

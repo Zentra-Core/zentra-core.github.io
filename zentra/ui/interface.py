@@ -22,8 +22,8 @@ except ImportError:
     GPUtil = None
 from zentra.ui import graphics
 from colorama import init, Fore, Back, Style
+from zentra.core.logging import logger
 from zentra.core.system import module_loader, version
-from zentra.core.system.version import get_version_string
 from zentra.core.i18n import translator
 
 # "Inizializzazione Colorama per colori ANSI e sfondi su Windows"
@@ -72,52 +72,36 @@ def get_status_color(s):
     return Fore.WHITE
 
 def setup_console():
-    """Cleans screen and forces UTF-8."""
+    """Cleans screen and forces UTF-8. No scrolling region — we use readline-style redraw."""
     if sys.platform == 'win32':
         os.system('chcp 65001 > nul')
-    # Reset scrolling region and clear screen
-    sys.stdout.write("\033[r")
-    os.system('cls' if os.name == 'nt' else 'clear')
+    
+    from zentra.ui.ui_updater import update_cached_L
+    update_cached_L()
+    
+    # Clear screen fully and reset any previous scrolling region
+    # \033[H homing prevents the header from being drawn twice
+    sys.stdout.write("\033[r\033[2J\033[H")
+    sys.stdout.flush()
 
-def check_ollama():
-    """Checks if Ollama server is active for the status bar."""
-    try:
-        r = requests.get("http://localhost:11434/api/tags", timeout=0.2)
-        return r.status_code == 200
-    except:
-        return False
-def show_complete_ui(config, voice_status, listening_status, system_status="READY", ptt_status=False):
-    """ Draws the complete interface: Blue Bar (Status), Hardware Bar (placeholder) and Footer.
-        The hardware bar will be updated in real-time by ui_updater.
-    """
-    setup_console()
-    
-    # MODIFIED: Reads model from active backend with automatic fallback
-    """
-    Clears the screen and prints the header (Rows 1-4) in the console buffer.
-    Indices: R1=Menu, R2=Status, R3=Hardware.
-    """
-    from zentra.app.model_manager import ModelManager
-    from zentra.core.i18n import translator
-    import shutil
-    import re
-    
-    # 1. CLEAR SCREEN (Ensures Row 1 of Viewport is Row 1 of the header)
-    os.system('cls' if os.name == 'nt' else 'clear')
-    
-    import shutil
-    L = 90
-    try:
-        L = max(90, shutil.get_terminal_size((115, 30)).columns - 1)
-    except: pass
-    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-    
-    # --- ROW 1: TITLE BAR (CYAN) ---
+def move_to_body():
+    """Moves the cursor to the body start (Row 6), right below the header."""
+    sys.stdout.write("\033[6;1H")
+    sys.stdout.flush()
+
+def move_to_prompt():
+    """No-op: prompt now appears naturally — no forced jump to H."""
+    pass
+
+def get_header_row(L=90):
     from zentra.core.system.version import get_version_string
     titolo = f" {get_version_string()} "
-    print(f"\033[46m\033[30m{titolo.center(L)}\033[0m")
-    
-    # --- ROW 2: COMMANDS MENU ---
+    return f"\033[46m\033[30m{titolo.center(L)}\033[0m"
+
+def get_system_menu_row(L=90):
+    from zentra.core.i18n import translator
+    import re
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     comandi = (
         f" {translator.t('menu_help')} | {translator.t('menu_models')} | "
         f"{translator.t('menu_persona')} | {translator.t('menu_mic')} | "
@@ -126,21 +110,22 @@ def show_complete_ui(config, voice_status, listening_status, system_status="READ
     )
     if len(ansi_escape.sub('', comandi)) > L:
         comandi = " F1..F4: Menu | F5: Ref | F6: Voice | F8: PTT | F9: Reb "
-    print(f"{Style.DIM}{comandi.center(L)}{Style.RESET_ALL}")
+    return f"{Style.DIM}{comandi.center(L)}{Style.RESET_ALL}"
+
+def get_status_bar(config, voice_status, listening_status, system_status, L, ptt_status=False):
+    from zentra.app.model_manager import ModelManager
+    from zentra.core.i18n import translator
+    import re
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     
-    # --- ROW 3: STATUS BAR (BLUE) ---
     try:
-        from zentra.app.model_manager import ModelManager
         _, model_eff = ModelManager.get_effective_model_info(config)
     except:
         model_eff = "N/D"
 
-    soul = config.get('ai', {}).get('active_personality', 'N/D')
-    if soul:
-        soul = str(soul).replace('.yaml', '')
-    else:
-        soul = "N/D"
-
+    ai_conf = config.get('ai') or {}
+    soul = str(ai_conf.get('active_personality', 'N/D')).replace('.yaml', '')
+    
     mic_str = "ON" if listening_status else "OFF"
     spk_str = "ON" if voice_status else "OFF"
     ptt_str = "ON" if ptt_status else "OFF"
@@ -153,23 +138,37 @@ def show_complete_ui(config, voice_status, listening_status, system_status="READ
     header_mic = translator.t("header_mic")
     header_voc = translator.t("header_voice")
 
-    info_status_colored = f" {info_status} | {header_mod}: {model_eff} | {header_ani}: {soul} | {header_mic}: {mic_str} | {header_voc}: {spk_str} | PTT: {ptt_str} "
-    vis_len = len(ansi_escape.sub('', info_status_colored))
+    info_str = f" {info_status} | {header_mod}: {model_eff} | {header_ani}: {soul} | {header_mic}: {mic_str} | {header_voc}: {spk_str} | PTT: {ptt_str} "
+    vis_len = len(ansi_escape.sub('', info_str))
     p_left = max(0, L - vis_len) // 2
     p_right = max(0, L - vis_len) - p_left
-    print(f"{Back.BLUE}{Fore.WHITE}{' '*p_left}{info_status_colored}{' '*p_right}{Style.RESET_ALL}")
-    
-    # --- ROW 4: HARDWARE BAR (CYAN) ---
-    hw_row = get_hardware_row(config, dashboard_mod=None)
-    print(hw_row)
-    
-    # --- ROW 5: HINT BAR (Yellow) if PTT is ON ---
-    if ptt_status:
+    return f"{Back.BLUE}{Fore.WHITE}{' '*p_left}{info_str}{' '*p_right}{Style.RESET_ALL}"
+
+def get_ptt_hint_row(L=90, system_status="READY", ptt_status=False):
+    from zentra.core.i18n import translator
+    if "LISTENING" in str(system_status).upper() or "RECORDING" in str(system_status).upper():
+        rec_text = " 🔴 RECORDING... "
+        return f"{Back.RED}{Fore.WHITE}{Style.BRIGHT}{rec_text.center(L)}{Style.RESET_ALL}"
+    elif ptt_status:
         hint_text = f" {translator.t('ptt_hint')} "
-        print(f"{Fore.YELLOW}{hint_text.center(L)}{Style.RESET_ALL}")
+        return f"{Fore.YELLOW}{hint_text.center(L)}{Style.RESET_ALL}"
     else:
-        # Divider line
-        print(f"{Fore.CYAN}{'━' * L}{Style.RESET_ALL}")
+        return f"{Fore.CYAN}{'━' * L}{Style.RESET_ALL}"
+
+
+def show_complete_ui(config, voice_status, listening_status, system_status="READY", ptt_status=False):
+    """ Draws the complete interface: Blue Bar (Status), Hardware Bar and footer. """
+    setup_console()
+    
+    from zentra.ui.ui_updater import get_cached_L
+    L = get_cached_L()
+    
+    # Render all 5 segments using helpers
+    sys.stdout.write(get_header_row(L) + "\n")
+    sys.stdout.write(get_system_menu_row(L) + "\n")
+    sys.stdout.write(get_status_bar(config, voice_status, listening_status, system_status, L, ptt_status) + "\n")
+    sys.stdout.write(get_hardware_row(config) + "\n")
+    sys.stdout.write(get_ptt_hint_row(L, system_status, ptt_status) + "\n")
     
     sys.stdout.write("\n")
     sys.stdout.flush()
@@ -179,16 +178,22 @@ def get_hardware_row(config=None, dashboard_mod=None):
     Returns the formatted string for the hardware row (CPU, RAM, VRAM, backend).
     Guarantees it respects the terminal width to avoid UI corruption/wrap.
     """
-    import re
-    import shutil
-    L = max(90, shutil.get_terminal_size((115, 30)).columns - 1)
+    from zentra.ui.ui_updater import get_cached_L
+    L = get_cached_L()
     
     if dashboard_mod is None:
         dashboard_mod = module_loader.get_plugin_module("DASHBOARD")
+        
+    dsb_config = config.get("plugins", {}).get("DASHBOARD", {}) if config else {}
+    col_dsb = dsb_config.get("console_dashboard_enabled", True)
+    col_tel = dsb_config.get("console_telemetry_enabled", True)
+    
+    if not col_dsb:
+        return f"{Fore.CYAN}{' ' * L}{Style.RESET_ALL}"
     
     if dashboard_mod:
         try:
-            stats = dashboard_mod.get_stats()
+            stats = dashboard_mod.get_stats(config)
             cpu = stats['cpu']
             ram = stats['ram']
             vram = stats['vram']
@@ -214,20 +219,31 @@ def get_hardware_row(config=None, dashboard_mod=None):
                 display_status = backend_status if backend_status else "--"
                 status_color = Fore.YELLOW
 
-            info_hw = translator.t("hardware_line", 
-                cpu=cpu_bar, ram=ram_bar, gpu=stats.get('gpu_load', 'N/D'), vram=vram, 
-                backend=f"{status_color}{display_status}{Style.RESET_ALL}"
-            )
+            if col_tel:
+                info_hw_raw = translator.t("hardware_line", 
+                    cpu=cpu_bar, ram=ram_bar, gpu=stats.get('gpu_load', 'N/D'), vram=vram, 
+                    backend=f"{status_color}{display_status}{Style.RESET_ALL}"
+                )
+            else:
+                # Se la telemetria è disattivata, mostriamo solo lo stato del backend
+                info_hw_raw = f" BACKEND AI: {status_color}{display_status}{Style.RESET_ALL} "
+
+            # Center the row properly respecting ANSI codes
+            import re
+            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+            visible_len = len(ansi_escape.sub('', info_hw_raw))
+            pad_left = max(0, L - visible_len) // 2
+            pad_right = max(0, L - visible_len) - pad_left
+            info_hw = f"{' ' * pad_left}{info_hw_raw}{' ' * pad_right}"
+                
         except Exception as e:
-            info_hw = f"{Fore.RED}-- HARDWARE ERROR: {e} --{Style.RESET_ALL}"
+            info_hw = f"{Fore.RED}-- HARDWARE ERROR: {e} --{Style.RESET_ALL}".center(L)
     else:
-        # Se il plugin è disabilitato, restituiamo una riga vuota di 90 spazi
+        # Se il plugin è disabilitato, restituiamo una riga vuota
         return f"{Fore.CYAN}{' ' * L}{Style.RESET_ALL}"
     
     # Explicitly truncate to avoid wrap-induced scrolling
-    # We limit the visible characters, ANSI codes are extra.
-    # A simple but effective way: ensure the text doesn't exceed a safe width.
-    return f"{Fore.CYAN}{info_hw[:500]}{Style.RESET_ALL}"
+    return f"{Fore.CYAN}{info_hw}{Style.RESET_ALL}"
 
 def update_status_bar_in_place(config, voice_status, listening_status, system_status="READY", ptt_status=False):
     """Updates the status bar (Row 3) in-place without title-bar bloat."""
@@ -241,7 +257,8 @@ def update_status_bar_in_place(config, voice_status, listening_status, system_st
     
     # 2. Rebuild the Status Bar row
     backend_type, model = ModelManager.get_effective_model_info(config)
-    soul = config.get('ai', {}).get('active_personality', 'N/D').replace('.yaml', '')
+    ai_conf = config.get('ai') or {}
+    soul = ai_conf.get('active_personality', 'N/D').replace('.yaml', '')
     
     mic_str = "ON" if listening_status else f"{Fore.RED}OFF{Fore.WHITE}"
     spk_str = "ON" if voice_status else f"{Fore.RED}OFF{Fore.WHITE}"
@@ -270,7 +287,11 @@ def update_status_bar_in_place(config, voice_status, listening_status, system_st
         _update_dashboard_os(formatted_row, 3)
         
         # Update Row 5: Hint or Divider
-        if ptt_status:
+        if "LISTENING" in str(system_status).upper() or "RECORDING" in str(system_status).upper():
+            rec_text = " 🔴 RECORDING... "
+            formatted_hint = f"{Back.RED}{Fore.WHITE}{Style.BRIGHT}{rec_text.center(L)}{Style.RESET_ALL}"
+            _update_dashboard_os(formatted_hint, 5)
+        elif ptt_status:
             hint_text = f" {translator.t('ptt_hint')} "
             formatted_hint = f"{Fore.YELLOW}{hint_text.center(L)}{Style.RESET_ALL}"
             _update_dashboard_os(formatted_hint, 5)
@@ -590,7 +611,7 @@ def show_help():
     setup_console()
 
 def show_web_access_info(config):
-    """Prints Web UI access links if the plugin is active."""
+    """Prints Web UI access links. At startup, it flows from Row 6."""
     web_opts = config.get("plugins", {}).get("WEB_UI", {})
     port = web_opts.get("port", 7070)
     use_https = web_opts.get("https_enabled", False)
@@ -607,26 +628,89 @@ def show_web_access_info(config):
         
     base_url = f"{scheme}://{lan_ip}:{port}"
     
-    import shutil
-    L = max(90, shutil.get_terminal_size((115, 30)).columns - 1)
+    from zentra.ui.ui_updater import get_cached_L
+    L = get_cached_L()
     
-    print(f"{Fore.CYAN}┌{'─' * (L-2)}┐{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}│{Style.RESET_ALL} {Fore.YELLOW}{'WEB INTERFACE ACCESS'.center(L-4)}{Style.RESET_ALL} {Fore.CYAN}│{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}├{'─' * (L-2)}┤{Style.RESET_ALL}")
-    print(f"{Fore.CYAN}│{Style.RESET_ALL}  • {Fore.WHITE}Chat:  {Style.RESET_ALL} {base_url}/chat".ljust(L-1))
-    print(f"{Fore.CYAN}│{Style.RESET_ALL}  • {Fore.WHITE}Config:{Style.RESET_ALL} {base_url}/zentra/config/ui".ljust(L-1))
-    print(f"{Fore.CYAN}│{Style.RESET_ALL}  • {Fore.WHITE}Drive: {Style.RESET_ALL} {base_url}/drive".ljust(L-1))
-    print(f"{Fore.CYAN}└{'─' * (L-2)}┘{Style.RESET_ALL}")
+    # Helper specifically for this function to calculate visible width
+    import re
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    def get_visible_len(s):
+        return len(ansi_escape.sub('', s))
+
+    # Box Drawing
+    border_color = Fore.CYAN
+    title_color = Fore.YELLOW
+    label_color = Fore.WHITE
+    
+    # Top border
+    print(f"{border_color}┌{'─' * (L-2)}┐{RESET}")
+    
+    # Title row
+    title_text = "WEB INTERFACE ACCESS"
+    pad = (L - 2 - len(title_text)) // 2
+    pad_r = (L - 2 - len(title_text)) - pad
+    print(f"{border_color}│{RESET}{' ' * pad}{title_color}{title_text}{RESET}{' ' * pad_r}{border_color}│{RESET}")
+    
+    # Separator
+    print(f"{border_color}├{'─' * (L-2)}┤{RESET}")
+    
+    # Rows
+    for label, url_path in [("Chat:  ", "/chat"), ("Config:", "/zentra/config/ui"), ("Drive: ", "/drive")]:
+        left_part = f"  • {label_color}{label}{RESET} {base_url}{url_path}"
+        visible_l = get_visible_len(left_part)
+        padding = max(0, L - 2 - visible_l)
+        print(f"{border_color}│{RESET}{left_part}{' ' * padding}{border_color}│{RESET}")
+
+    # Bottom border
+    print(f"{border_color}└{'─' * (L-2)}┘{RESET}")
     print()
 
+# --- Readline-style prompt state ---
+# These are set by set_active_prompt() once the main input loop starts.
+_prompt_active = False
+_active_prompt_prefix = ""
+_active_input_buffer = ""
+_current_prompt_len = 0  # kept for backwards compat
+
+def set_active_prompt(prefix: str, buf: str = ""):
+    """Called by the main loop to register the current prompt state for safe log printing."""
+    global _prompt_active, _active_prompt_prefix, _active_input_buffer
+    _prompt_active = True
+    _active_prompt_prefix = prefix
+    _active_input_buffer = buf
+
+def print_scrolling(text):
+    """Readline-style safe print: erases the prompt, prints the message, then redraws the prompt."""
+    from zentra.ui.ui_updater import stdout_lock
+    global _prompt_active, _active_prompt_prefix, _active_input_buffer
+    with stdout_lock:
+        if _prompt_active:
+            # 1. 2K clears entire line, \r moves to the beginning
+            sys.stdout.write("\033[2K\r")
+            # 2. Print the new message on its own line
+            sys.stdout.write(text + "\n")
+            # 3. Reprint the prompt + whatever the user has typed so far
+            sys.stdout.write(_active_prompt_prefix + _active_input_buffer)
+            sys.stdout.flush()
+        else:
+            # During boot: just print normally
+            print(text)
+
 def write_zentra(text):
-    """Prints Zentra's response highlighting it in CYAN."""
+    """Prints Zentra's response safely without clobbering the prompt."""
     from zentra.core.processing import filtri
-    # Ensure terminal safety
     text = filtri.clean_for_video(text)
-    print(Fore.CYAN + "ZENTRA: " + Style.RESET_ALL + text)
+    prefix = f"{Fore.CYAN}ZENTRA:{Style.RESET_ALL} "
+    print_scrolling(prefix + text)
+    print_scrolling("")  # Add an empty line for visual spacing before the prompt
     
 def read_keyboard_input(prefix, current_input):
+    global _current_prompt_len, _active_input_buffer, _active_prompt_prefix
+    # Keep prompt state in sync for readline-style redraw
+    _active_prompt_prefix = prefix
+    _active_input_buffer = current_input
+    _current_prompt_len = len(prefix) + len(current_input)
+    
     if msvcrt.kbhit():
         ch_raw = msvcrt.getch()
         # Function keys F1-F6
@@ -645,9 +729,10 @@ def read_keyboard_input(prefix, current_input):
 
         if ch_raw == b'\x1b':  # ESC
             if current_input:
-                return "CLEAR", ""       # clear all
+                _active_input_buffer = ""
+                return "CLEAR", ""
             else:
-                return "ESC", current_input   # otherwise exit
+                return "ESC", current_input
 
         try: ch = ch_raw.decode('utf-8')
         except: return None, current_input
@@ -656,11 +741,13 @@ def read_keyboard_input(prefix, current_input):
         elif ch == '\b':
             if len(current_input) > 0:
                 current_input = current_input[:-1]
+                _active_input_buffer = current_input
                 sys.stdout.write('\b \b')
                 sys.stdout.flush()
             return "CHAR", current_input
         else:
             current_input += ch
+            _active_input_buffer = current_input
             sys.stdout.write(ch)
             sys.stdout.flush()
             return "CHAR", current_input

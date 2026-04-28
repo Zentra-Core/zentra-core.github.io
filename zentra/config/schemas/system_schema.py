@@ -174,6 +174,10 @@ class PluginDashboard(BaseModel):
     lazy_load: bool = False
     backend_timeout: float = 0.5
     monitor_interval: int = 2
+    webui_dashboard_enabled: bool = True
+    webui_telemetry_enabled: bool = True
+    console_dashboard_enabled: bool = True
+    console_telemetry_enabled: bool = True
 
 class PluginFileManager(BaseModel):
     enabled: bool = True

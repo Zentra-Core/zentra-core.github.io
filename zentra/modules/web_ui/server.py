@@ -73,6 +73,25 @@ class ZentraWebUIServer:
         # Inject translation system and version into Jinja2 templates
         app.jinja_env.globals.update(t=t, version=VERSION)
 
+        # ── Extend Jinja loader to include WEB_UI extension template dirs ──
+        # This allows {% include 'quick_links_widget.html' %} to resolve
+        # templates stored in modules/web_ui/extensions/<ext>/templates/
+        try:
+            from jinja2 import FileSystemLoader, ChoiceLoader
+            _ext_root = os.path.join(base_dir, "extensions")
+            _extra_loaders = []
+            if os.path.isdir(_ext_root):
+                for _ext_name in os.listdir(_ext_root):
+                    _ext_tpl = os.path.join(_ext_root, _ext_name, "templates")
+                    if os.path.isdir(_ext_tpl):
+                        _extra_loaders.append(FileSystemLoader(_ext_tpl))
+            if _extra_loaders:
+                app.jinja_loader = ChoiceLoader([app.jinja_loader] + _extra_loaders)
+        except Exception as _jinja_e:
+            self.logger.warning(f"[WebUI] Could not extend Jinja loader: {_jinja_e}")
+        # ───────────────────────────────────────────────────────────────────
+
+
         # --- ZENTRA AUTH SYSTEM ---
         app.secret_key = self.config_manager.config.get("system", {}).get("flask_secret_key", "zentra_default_secret_key_84nd")
         
@@ -148,6 +167,19 @@ class ZentraWebUIServer:
 
             from .routes_remote_triggers import init_remote_trigger_routes
             init_remote_trigger_routes(app, self.logger, get_state_manager)
+
+            # ── WEB_UI Shared Extensions (sidebar widgets etc.) ──────────────
+            try:
+                from zentra.core.system.extension_loader import (
+                    discover_webui_extensions, load_eager_extensions
+                )
+                _webui_dir = os.path.dirname(__file__)
+                discover_webui_extensions(_webui_dir)
+                load_eager_extensions(app, "WEB_UI")
+                self.logger.info("[WebUI] WEB_UI extensions loaded.")
+            except Exception as _ext_e:
+                self.logger.warning(f"[WebUI] WEB_UI extension discovery error: {_ext_e}")
+            # ─────────────────────────────────────────────────────────────────
 
         except Exception as e:
             import traceback
@@ -332,6 +364,14 @@ if __name__ == "__main__":
     import sys
     from dotenv import load_dotenv
     load_dotenv()
+
+    # Force UTF-8 output encoding on Windows (prevents UnicodeEncodeError with emojis/box-drawing)
+    if sys.platform == "win32":
+        try:
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+            sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+        except AttributeError:
+            pass
     
     # We are in zentra/plugins/web_ui/server.py -> need 3 levels up to reach root
     root = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -379,13 +419,10 @@ if __name__ == "__main__":
     
     sm = StateManager(
         initial_voice_status=acfg.get('voice_status', True),
-        initial_listening_status=acfg.get('listening_status', True),
-        initial_audio_mode=acfg.get('audio_mode', 'auto')
+        initial_listening_status=acfg.get('listening_status', True)
     )
     sm.push_to_talk    = acfg.get('push_to_talk', False)
     sm.ptt_hotkey      = acfg.get('ptt_hotkey', 'ctrl+shift')
-    sm.stt_source      = acfg.get('stt_source', 'system')
-    sm.tts_destination = acfg.get('tts_destination', 'web')
     set_state_manager(sm)
 
     # Start the listening thread (Whisper + PTT)
@@ -409,18 +446,17 @@ if __name__ == "__main__":
 
     def is_webui_already_open(root_dir):
         """Check if a WebUI tab is already active via heartbeat file."""
-        # hb_file is in zentra/logs/
-        import tempfile
+        import json, os, time, tempfile
         hb_file = os.path.join(tempfile.gettempdir(), "zentra_webui_heartbeat.json")
         if not os.path.exists(hb_file): 
             return False
         try:
             with open(hb_file, "r") as f:
                 data = json.load(f)
-                # If any page (chat or config) checked in last 15 seconds, assume open
+                # If any page (chat or config) checked in last 30 seconds, assume open
                 now = time.time()
                 for ts in data.values():
-                    if now - ts < 15: return True
+                    if now - ts < 30: return True
         except: pass
         return False
 
@@ -428,7 +464,7 @@ if __name__ == "__main__":
     def _delayed_browser():
         import time
         import webbrowser
-        time.sleep(1.5)
+        time.sleep(2.0)
         if not is_webui_already_open(root):
             webui_cfg = cfg.config.get("plugins", {}).get("WEB_UI", {})
             scheme = "https" if webui_cfg.get("https_enabled", False) else "http"
@@ -439,7 +475,15 @@ if __name__ == "__main__":
     import threading
     threading.Thread(target=_delayed_browser, daemon=True).start()
 
+    from zentra.core.system import instance_lock
+    if not os.environ.get("ZENTRA_MONITORED_PROCESS"):
+        if not instance_lock.acquire_lock("zentra_web"):
+            print("\n[ERROR] Another instance of Zentra Web is already running.")
+            sys.exit(1)
+
     start_if_needed(cfg, root, port=7070)
+
+
 
     import time
     try:

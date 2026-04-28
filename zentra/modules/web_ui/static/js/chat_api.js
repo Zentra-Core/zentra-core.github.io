@@ -86,6 +86,13 @@ window.sendMessage = async function() {
         if (window.ClientCameraManager) window.ClientCameraManager.showCameraButton(aiBubble);
       } else if(ev.type === 'trace_done') {
         if (window.AgentUI) window.AgentUI.finalize();
+        // Prompt unlock as soon as TEXT is fully rendered (does not wait for Piper audio generation)
+        if (window.chatHistory.length > 0) {
+          window.chatHistory[window.chatHistory.length - 1].content = aiText;
+        }
+        window.isStreaming = false; 
+        if (window.sendBtn) window.sendBtn.disabled = false;
+        
       } else if(ev.type === 'audio_ready') {
         if (window.tryLoadAudio) window.tryLoadAudio(aiBubble);
       } else if(ev.type === 'system_audio_playing') {
@@ -98,19 +105,24 @@ window.sendMessage = async function() {
         aiBubble.innerHTML = window.renderMarkdown(aiText||(ev.type==='error'?'❌ '+ev.text:''));
         evtSrc.close();
         
-        // Final sync 
-        if (window.chatHistory.length > 0) {
-          window.chatHistory[window.chatHistory.length - 1].content = aiText;
-        }
-
-        window.isStreaming = false; if (window.sendBtn) window.sendBtn.disabled = false;
         if (window.loadChatSessions) window.loadChatSessions();
       }
     };
     evtSrc.onerror = () => {
       cursor.remove();
-      if(!aiText) aiBubble.textContent='❌ ' + (window.I18N?.err_connected || 'Connection error');
+      if(!aiText) aiBubble.textContent='❌ ' + (window.I18N?.err_connected || 'Connection error') + ' - Reconnecting...';
+      else aiBubble.innerHTML = window.renderMarkdown(aiText) + '<br><br><span style="color:#f39c12;font-size:0.9em;opacity:0.8;">⚠️ Connection lost. Waiting for Zentra to restart...</span>';
       evtSrc.close(); window.isStreaming = false; if (window.sendBtn) window.sendBtn.disabled = false;
+
+      if (!window.isReconnectingAuto) {
+        window.isReconnectingAuto = true;
+        const poller = setInterval(async () => {
+            try {
+                const r = await fetch('/zentra/status');
+                if(r.ok) { clearInterval(poller); window.location.reload(); }
+            } catch(e) {}
+        }, 2000);
+      }
     };
   } catch(err) {
     cursor.remove();
@@ -168,6 +180,13 @@ window.sendInternalMessage = async function(text) {
         if (window.ClientCameraManager) window.ClientCameraManager.showCameraButton(aiBubble);
       } else if(ev.type === 'trace_done') {
         if (window.AgentUI) window.AgentUI.finalize();
+        // Synchronize and unlock as soon as TEXT finishes
+        if (window.chatHistory.length > 0) {
+          window.chatHistory[window.chatHistory.length - 1].content = aiText;
+        }
+        window.isStreaming = false; 
+        if (window.sendBtn) window.sendBtn.disabled = false;
+
       } else if(ev.type === 'audio_ready') {
         if (window.tryLoadAudio) window.tryLoadAudio(aiBubble);
       } else if(ev.type === 'system_audio_playing') {
@@ -180,19 +199,24 @@ window.sendInternalMessage = async function(text) {
         aiBubble.innerHTML = window.renderMarkdown(aiText||(ev.type==='error'?'❌ '+ev.text:''));
         evtSrc.close();
 
-        // Sync internal history
-        if (window.chatHistory.length > 0) {
-          window.chatHistory[window.chatHistory.length - 1].content = aiText;
-        }
-
-        window.isStreaming = false; if (window.sendBtn) window.sendBtn.disabled = false;
         if (window.loadChatSessions) window.loadChatSessions();
       }
     };
     evtSrc.onerror = () => {
       cursor.remove();
-      if(!aiText) aiBubble.textContent='❌ ' + (window.I18N?.err_connected || 'Connection error');
+      if(!aiText) aiBubble.textContent='❌ ' + (window.I18N?.err_connected || 'Connection error') + ' - Reconnecting...';
+      else aiBubble.innerHTML = window.renderMarkdown(aiText) + '<br><br><span style="color:#f39c12;font-size:0.9em;opacity:0.8;">⚠️ Connection lost. Waiting for Zentra to restart...</span>';
       evtSrc.close(); window.isStreaming = false; if (window.sendBtn) window.sendBtn.disabled = false;
+
+      if (!window.isReconnectingAuto) {
+        window.isReconnectingAuto = true;
+        const poller = setInterval(async () => {
+            try {
+                const r = await fetch('/zentra/status');
+                if(r.ok) { clearInterval(poller); window.location.reload(); }
+            } catch(e) {}
+        }, 2000);
+      }
     };
   } catch(err) {
     cursor.remove();

@@ -11,62 +11,9 @@
       <label class="switch"><input type="checkbox" id="sys-voice-status"><span class="slider"></span></label>
     </div>
     
-    <div class="field" style="margin-top:10px;">
-      <label>{{ t('webui_voice_routing_in') }}</label>
-      <select id="stt-source">
-         <option value="system">{{ t('webui_voice_pc_mic') }}</option>
-         <option value="web">{{ t('webui_voice_web_mic') }}</option>
-      </select>
-    </div>
-    <div class="field" style="margin-top:10px;">
-      <label>{{ t('webui_voice_routing_out') }}</label>
-      <select id="tts-destination">
-         <option value="system">{{ t('webui_voice_pc_speaker') }}</option>
-         <option value="web">{{ t('webui_voice_web_speaker') }}</option>
-      </select>
-    </div>
-    <div class="field" style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border);">
-      <label style="display:flex; align-items:center; gap:6px;">
-        {{ t('webui_voice_dynamic_mode') }}
-        <span style="font-size:11px; color:var(--muted); font-weight:400;">{{ t('webui_voice_dynamic_hint') }}</span>
-      </label>
-      <select id="audio-mode" style="margin-top:6px;">
-         <option value="console">{{ t('webui_voice_mode_pc') }}</option>
-         <option value="web">{{ t('webui_voice_mode_web') }}</option>
-         <option value="auto">{{ t('webui_voice_mode_auto') }}</option>
-      </select>
-      <p style="font-size:11px; color:var(--muted); margin-top:5px;">
-        {{ t('webui_voice_mode_auto_desc') }}
-      </p>
-    </div>
   </div>
 
-  
-  <div class="card">
-    <div class="card-title">Audio Devices</div>
-    <p style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">
-      {{ t('webui_voice_hardware_config_hint') }}
-    </p>
-    <div class="field">
-      <label>Microphone (Input)</label>
-      <div style="display:flex; gap:8px;">
-        <select id="audio-input-device" style="flex:1"></select>
-        <button class="btn btn-secondary" style="padding:4px 12px; font-size:12px;" onclick="applyAudioDevice()">Apply</button>
-      </div>
-    </div>
-    <div class="field" style="margin-top:12px;">
-      <label>Speaker (Output)</label>
-      <div style="display:flex; gap:8px;">
-        <select id="audio-output-device" style="flex:1"></select>
-        <button class="btn btn-secondary" style="padding:4px 12px; font-size:12px;" onclick="applyAudioDevice()">Apply</button>
-      </div>
-    </div>
-    <div style="margin-top: 16px; text-align: right; display: flex; justify-content: space-between; align-items: center;">
-       <span id="audio-scan-status" style="font-size: 12px; color: var(--muted);"></span>
-       <button class="btn btn-secondary" onclick="scanAudioDevices()">Re-scan & Test</button>
-    </div>
-  </div>
-  
+
   <div class="card">
     <div class="card-title">{{ t('webui_conf_bridge_title') }}</div>
     <div class="toggle-row">
@@ -81,7 +28,14 @@
 
   <div class="card">
     <div class="card-title">{{ t('webui_conf_voice_tts_title') }}</div>
-    <div class="field"><label>{{ t('webui_conf_voice_path') }}</label><input type="text" id="v-piper" placeholder="C:\piper\piper.exe"></div>
+    <div class="field">
+      <label>{{ t('webui_conf_voice_path') }}</label>
+      <div style="display:flex; gap:6px; width:100%;">
+        <input type="text" id="v-piper" placeholder="C:\Zentra-Core\bin\piper\piper.exe" style="flex:1;">
+        <button type="button" class="btn btn-secondary" onclick="browsePiperPath()" title="{{ t('webui_conf_voice_browse_title') }}">📁</button>
+        <button type="button" class="btn btn-secondary" onclick="autoFixPiperPath()" title="{{ t('webui_conf_voice_detect_title') }}">🔍 Auto</button>
+      </div>
+    </div>
     <div class="field">
       <label>{{ t('webui_conf_voice_onnx') }}</label>
       <select id="v-onnx-model"></select>
@@ -94,15 +48,24 @@
       <div class="field"><label>{{ t('webui_conf_voice_silence') }}</label><input type="number" id="v-silence" min="0" max="2" step="0.05"></div>
     </div>
     
-    <div style="margin-top:20px; padding-top:15px; border-top: 1px solid var(--border);">
-      <label style="font-size:12px; color:var(--muted); margin-bottom:8px; display:block;">{{ t('webui_voice_test_title') }}</label>
-      <div style="display:flex; gap:10px;">
-        <input type="text" id="v-test-text" placeholder="{{ t('webui_voice_test_ph') }}" style="flex:1;">
-        <button class="btn btn-secondary" onclick="testVoice('web')" title="{{ t('webui_voice_test_web') }}">🌐</button>
-        <button class="btn btn-secondary" onclick="testVoice('console')" title="{{ t('webui_voice_test_pc') }}">💻</button>
-        <button id="v-test-stop" class="btn btn-danger" style="display:none;" onclick="stopVoice()" title="Stop Voice">⏹</button>
+    <!-- Test Voice Section -->
+    <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
+      <div class="card-title" style="font-size:14px; margin-bottom:12px;">{{ t('webui_voice_test_title') }}</div>
+      <div class="field" style="margin-bottom:8px;">
+        <input type="text" id="v-test-text" placeholder="{{ t('webui_voice_test_ph') }}" value="Zentra Core system test, voice generation is operational.">
       </div>
-      <div id="v-test-status" style="font-size:11px; margin-top:5px; color:var(--accent);"></div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button type="button" class="btn btn-primary btn-sm" onclick="testVoice('web')">
+          ▶️ {{ t('webui_voice_test_web') }}
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="testVoice('console')">
+          🖥️ {{ t('webui_voice_test_pc') }}
+        </button>
+        <button type="button" class="btn btn-danger btn-sm" id="v-test-stop" style="display:none;" onclick="stopVoice()">
+          🛑 {{ t('webui_voice_test_stop') }}
+        </button>
+        <span id="v-test-status" style="font-size:12px; color:var(--muted); margin-left:auto;"></span>
+      </div>
     </div>
   </div>
   <div class="card">

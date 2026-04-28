@@ -37,9 +37,15 @@ _cpu_thread.start()
 def get_vram_usage():
     """Returns VRAM usage percentage via nvidia-smi, or 0 if fails."""
     try:
-        # Query used and total memory in MiB
         cmd = ["nvidia-smi", "--query-gpu=memory.used,memory.total", "--format=csv,noheader,nounits"]
-        res = subprocess.check_output(cmd, encoding="utf-8", timeout=2).strip()
+        kwargs = {}
+        if sys.platform == "win32":
+            kwargs["creationflags"] = 0x08000000 # CREATE_NO_WINDOW
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            kwargs["startupinfo"] = startupinfo
+            
+        res = subprocess.check_output(cmd, encoding="utf-8", timeout=2, **kwargs).strip()
         if res:
             used, total = [int(x.strip()) for x in res.split(",")]
             if total > 0:
@@ -51,7 +57,10 @@ def get_vram_usage():
 def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
     # Set global telemetry flag based on DASHBOARD plugin status
     global _cpu_cache
-    _cpu_cache["enabled"] = cfg_mgr.config.get("plugins", {}).get("DASHBOARD", {}).get("enabled", True)
+    dsb_cfg = cfg_mgr.config.get("plugins", {}).get("DASHBOARD", {})
+    global_enabled = dsb_cfg.get("enabled", True)
+    webui_telemetry = dsb_cfg.get("webui_telemetry_enabled", True)
+    _cpu_cache["enabled"] = global_enabled and webui_telemetry
 
     def _sm():
         return get_sm() if callable(get_sm) else get_sm
@@ -106,7 +115,7 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
         resp.headers["Pragma"] = "no-cache"
         resp.headers["Expires"] = "0"
         return resp
-
+    
     @app.route("/zentra/status", methods=["GET"])
     def get_status():
         try:
@@ -118,27 +127,22 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
             else: model = "?"
 
             br      = cfg.get("bridge", {})
-            voice   = cfg.get("voice", {})
-            listen  = cfg.get("listening", {})
-
             flags = [k for k, v in [
                 ("proc",        br.get("use_processor")),
                 ("think-strip", br.get("remove_think_tags")),
                 ("tools",       br.get("enable_tools")),
             ] if v]
 
-            # Read live state from state_manager if available, else fall back to config
+            # Read live state from state_manager if available
             sm = _sm()
             if sm is not None:
                 mic_on     = sm.listening_status
                 tts_on     = sm.voice_status
-                audio_mode = sm.audio_mode
             else:
                 from zentra.core.audio.device_manager import get_audio_config
                 acfg = get_audio_config()
                 mic_on     = acfg.get("listening_status", False)
                 tts_on     = acfg.get("voice_status", False)
-                audio_mode = acfg.get("audio_mode", "auto")
 
             mic_status = "ON" if mic_on else "OFF"
             tts_status = "ON" if tts_on else "OFF"
@@ -146,19 +150,11 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
             from zentra.core.audio.device_manager import get_audio_config, _save_audio_config
             acfg = get_audio_config()
             ptt_on = acfg.get("push_to_talk", False)
-            
-            # ── Integrity Guard ────────────────────────────────────────────────────
-            # PTT requires MIC (continuous listening) to be enabled.
-            # If MIC is OFF but PTT is still ON in config (stale state), correct it
-            # here to ensure the frontend always receives a coherent state.
             if not mic_on and ptt_on:
                 ptt_on = False
                 acfg["push_to_talk"] = False
-                try:
-                    _save_audio_config(acfg)
-                except Exception:
-                    pass
-            # ──────────────────────────────────────────────────────────────────────
+                try: _save_audio_config(acfg)
+                except Exception: pass
             
             ptt_status = "ON" if ptt_on else "OFF"
 
@@ -167,27 +163,39 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
             mtime = os.path.getmtime(config_path) if os.path.exists(config_path) else 0
             ts    = datetime.fromtimestamp(mtime).strftime("%H:%M:%S") if mtime else "?"
 
-            # Granular routing
-            stt_s = sm.stt_source if sm else acfg.get("stt_source", "system")
-            tts_d = sm.tts_destination if sm else acfg.get("tts_destination", "web")
-
             persona = cfg.get("ai", {}).get("active_personality", "?")
             if persona.endswith(".yaml"): persona = persona[:-5]
             
             avatar_path = "/assets/Zentra_Core_Logo_NBG.png"
             try:
-                # Retrieve the full path to the personality folder
                 p_dir = os.path.join(root_dir, "zentra", "personality")
                 p_file = os.path.join(p_dir, f"{persona}.yaml")
                 if os.path.exists(p_file):
                     with open(p_file, "r", encoding="utf-8") as f:
                         data = yaml.safe_load(f)
                         if data and data.get("avatar_image"):
-                            # URL encode the path to handle spaces safely
                             encoded_path = urllib.parse.quote(data.get("avatar_image"))
                             avatar_path = "/assets/" + encoded_path
             except Exception: pass
+            
+            # --- Optimized Telemetry ---
+            dsb_cfg = cfg.get("plugins", {}).get("DASHBOARD", {})
+            global_enabled = dsb_cfg.get("enabled", True)
+            webui_telemetry = dsb_cfg.get("webui_telemetry_enabled", True)
+            telemetry_active = global_enabled and webui_telemetry
+            
+            # Sync background CPU thread enabled state
+            _cpu_cache["enabled"] = telemetry_active
 
+            cpu_val  = None
+            ram_val  = None
+            vram_val = None
+
+            if telemetry_active:
+                cpu_val  = _cpu_cache.get("value", 0)
+                ram_val  = psutil.virtual_memory().percent
+                vram_val = get_vram_usage()
+            
             return jsonify({
                 "backend":    backend.upper(),
                 "model":      model,
@@ -195,17 +203,12 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
                 "avatar":     avatar_path,
                 "avatar_size": cfg.get("ai", {}).get("avatar_size", "medium"),
                 "bridge":     ", ".join(flags) if flags else "default",
-
                 "mic":        mic_status,
                 "tts":        tts_status,
                 "ptt":        ptt_status,
-                "cpu":        _cpu_cache["value"] if _cpu_cache["enabled"] else None,
-                "ram":        psutil.virtual_memory().percent if _cpu_cache["enabled"] else None,
-                "vram":       get_vram_usage() if _cpu_cache["enabled"] else None,
-                "audio_config": {
-                    "stt_source": stt_s,
-                    "tts_destination": tts_d
-                },
+                "cpu":        cpu_val,
+                "ram":        ram_val,
+                "vram":       vram_val,
                 "config":     f"last save {ts}",
             })
         except Exception as exc:
@@ -503,7 +506,50 @@ def init_system_routes(app, cfg_mgr, root_dir, logger, get_sm=None):
                     yield emit(f"❌ Errore: {err_msg[:150]}", "ERR")
 
             yield emit("--- Fine test ---", "DONE")
-
         return Response(stream_with_context(generate()), mimetype="text/event-stream",
                         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+    # ── Diagnostic & Maintenance Endpoints ─────────────────────────────────────
+
+    @app.route("/api/system/diagnostic/full-check", methods=["POST"])
+    def diagnostic_full_check():
+        try:
+            from zentra.setup.engine import check_python_version, check_dependencies, auto_fix_piper_path
+            import io
+            from contextlib import redirect_stdout
+            
+            output = io.StringIO()
+            with redirect_stdout(output):
+                check_python_version()
+                check_dependencies()
+                auto_fix_piper_path()
+            
+            return jsonify({"ok": True, "log": output.getvalue()})
+        except Exception as e:
+            return jsonify({"ok": False, "error": str(e)}), 500
+
+    @app.route("/api/system/diagnostic/fix-paths", methods=["POST"])
+    def diagnostic_fix_paths():
+        try:
+            from zentra.setup.engine import auto_fix_piper_path
+            import io
+            from contextlib import redirect_stdout
+            
+            output = io.StringIO()
+            with redirect_stdout(output):
+                auto_fix_piper_path()
+            
+            return jsonify({"ok": True, "log": output.getvalue()})
+        except Exception as e:
+            return jsonify({"ok": False, "error": str(e)}), 500
+
+    # ── Explorer & Bridge Roots ──────────────────────────────────────────────
+    from zentra.modules.web_ui.routes_explorer import init_explorer_routes
+    from zentra.modules.web_ui.routes_bridge import init_bridge_routes
+    init_explorer_routes(app, logger)
+    init_bridge_routes(app, logger)
+
+
+
+
 

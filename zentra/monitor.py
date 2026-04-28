@@ -9,7 +9,40 @@ import os
 import sys
 import json
 import argparse
+import signal
 from datetime import datetime
+
+# Global reference to child process for signal handling
+_current_child_process = None
+
+def _signal_handler(sig, frame):
+    """Handle termination signals (SIGTERM, SIGINT) and kill the child process."""
+    monitor_log(f"Received signal {sig}. Terminating child process...")
+    if _current_child_process and _current_child_process.poll() is None:
+        try:
+            _current_child_process.terminate()
+            _current_child_process.wait(timeout=5)
+        except Exception:
+            try:
+                _current_child_process.kill()
+            except: pass
+    sys.exit(0)
+
+# Register signal handlers
+signal.signal(signal.SIGTERM, _signal_handler)
+signal.signal(signal.SIGINT, _signal_handler)
+if hasattr(signal, "SIGBREAK"):
+    signal.signal(signal.SIGBREAK, _signal_handler)
+
+# Force UTF-8 output encoding on Windows (prevents UnicodeEncodeError with emojis/box-drawing)
+
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except AttributeError:
+        pass
+
 try:
     from zentra.core.logging.hub import get_hub
 except ImportError:
@@ -34,7 +67,7 @@ MONITOR_LOG = os.path.join(LOGS_DIR, "zentra_monitor.log")
 def monitor_log(msg):
     ts = time.strftime("%Y-%m-%d %H:%M:%S")
     formatted = f"{ts} [MONITOR] {msg}"
-    print(formatted)
+    # Removed print(formatted) as the user requested to keep the console completely clean
     try:
         with open(MONITOR_LOG, "a", encoding="utf-8") as f:
             f.write(formatted + "\n")
@@ -115,41 +148,67 @@ def start_and_monitor(script_to_run):
     last_code_time = get_max_py_mtime(zentra_folder)
     
     # Process startup
+    global _current_child_process
     env = os.environ.copy()
+    env["ZENTRA_MONITORED_PROCESS"] = "1"
     env["PYTHONPATH"] = _ROOT + os.pathsep + env.get("PYTHONPATH", "")
+
+    if "PYTHONIOENCODING" not in env:
+        env["PYTHONIOENCODING"] = "utf-8"
 
     if is_module:
         process = subprocess.Popen([sys.executable, "-m", script_to_run], env=env)
     else:
         process = subprocess.Popen([sys.executable, script_to_run], env=env)
+    
+    _current_child_process = process
 
+    start_time = time.time()
     try:
+        iterations = 0
         while process.poll() is None:
-            time.sleep(1)
+            time.sleep(2)  # Increased sleep for stability
+            iterations += 1
             
+            # Grace period logic: skip checks for the first 10 seconds to allow app stabilization
+            uptime = time.time() - start_time
+            if uptime < 10:
+                # Still in grace period, but keep updating base timestamps to match current state
+                last_config_time = get_file_timestamp(CONFIG_FILE)
+                last_code_time = get_max_py_mtime(zentra_folder)
+                continue
             
-            # 1. system.yaml check
+            # 1. system.yaml check (every 2 seconds)
             current_config_time = get_file_timestamp(CONFIG_FILE)
-            if current_config_time > last_config_time + 1:
+            
+            # Use a slightly more precise threshold check
+            if current_config_time > (last_config_time + 0.1):
                 flag_path = os.path.join(_ROOT, ".config_saved_by_app")
-                if os.path.exists(flag_path):
-                    try: os.remove(flag_path)
-                    except: pass
+                flag_mtime = get_file_timestamp(flag_path)
+                
+                # Safely attribute the config change to the app if the flag was updated roughly at the same time
+                if flag_mtime > 0 and abs(current_config_time - flag_mtime) < 5.0:
+                    monitor_log(f"Config save by app acknowledged (ignoring restart). Timestamp diff: {current_config_time - last_config_time:.3f}s")
                     last_config_time = current_config_time
                     continue
+
                 
-                monitor_log(f"system.yaml change detected. Terminating...")
+                # Unsanctioned change detected
+                monitor_log(f"system.yaml change detected! DIFF: {current_config_time - last_config_time:.3f}s (Old: {last_config_time}, New: {current_config_time}). Terminating...")
                 process.terminate()
                 process.wait(timeout=5)
+                _current_child_process = None
                 return True
 
-            # 2. Code files check (.py)
-            current_code_time = get_max_py_mtime(zentra_folder)
-            if current_code_time > last_code_time + 1:
-                monitor_log(f"Code change detected in zentra/ folder. Restarting...")
-                process.terminate()
-                process.wait(timeout=5)
-                return True
+
+            # 2. Code files check (.py) - Every 10 seconds (5 * 2s)
+            if iterations % 5 == 0:
+                current_code_time = get_max_py_mtime(zentra_folder)
+                if current_code_time > last_code_time + 2:
+                    monitor_log(f"Code change detected in zentra/ folder. Restarting...")
+                    process.terminate()
+                    process.wait(timeout=5)
+                    return True
                 
         # Natural exit:
         if process.returncode == 42:
@@ -201,4 +260,10 @@ if __name__ == "__main__":
                 print(f"\n[MONITOR] unexpected error in watchdog loop: {e}")
                 time.sleep(5) # Long pause before retry if something crashed
     finally:
-        instance_lock.release_lock(lock_name)
+        # Final safety kill for the child process before exiting
+        if _current_child_process and _current_child_process.poll() is None:
+            try: 
+                _current_child_process.terminate()
+                _current_child_process.wait(timeout=2)
+            except: pass
+        instance_lock.release_lock(lock_name)
