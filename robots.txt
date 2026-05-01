@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: https://zentra-core.github.io/sitemap.xml
+Sitemap: https://hecos-project.github.io/sitemap.xml
